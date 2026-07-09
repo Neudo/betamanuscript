@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { handleWaitlistSignup } from "../src/server/waitlist";
+import { handleWaitlistSignup } from "../src/features/waitlist/server";
 import type { WaitlistPayload } from "../src/features/waitlist/types";
 
 type ApiRequest = IncomingMessage & {

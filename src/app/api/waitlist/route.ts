@@ -1,5 +1,5 @@
-import { handleWaitlistSignup } from "../../../server/waitlist";
 import type { WaitlistPayload } from "../../../features/waitlist/types";
+import { handleWaitlistSignup } from "../../../features/waitlist/server";
 
 export async function POST(request: Request) {
   let payload: WaitlistPayload;
