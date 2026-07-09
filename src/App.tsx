@@ -465,7 +465,7 @@ function ProductMockup() {
           className="flex-1 px-3 py-0.5 text-[11px]"
           style={{ background: PAPER, border: "1px solid rgba(28,24,18,0.1)", color: MUTED, fontFamily: MONO }}
         >
-          app.betaquill.com / manuscripts / the-last-cartographer / feedback
+          app.betamanuscript.com / manuscripts / the-last-cartographer / feedback
         </div>
       </div>
 
@@ -560,7 +560,7 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: normalizedEmail,
-          source: "betaquill-waitlist",
+          source: "betamanuscript-waitlist",
           submittedAt: new Date().toISOString(),
           formStartedAt,
           website,
@@ -696,7 +696,7 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <BookOpen size={16} strokeWidth={1.5} style={{ color: OXBLOOD }} />
           <span className="text-base font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-            BetaQuill
+            BetaManuscript
           </span>
         </div>
         <a
@@ -1181,7 +1181,7 @@ export default function App() {
               >
                 If you join the waitlist, I'll follow up personally — not with a marketing
                 sequence, but with one question about your workflow. You'll also receive
-                a launch discount code when BetaQuill is released.
+                a launch discount code when BetaManuscript is released.
               </p>
               <div
                 className="mt-12 pl-5 border-l"
@@ -1252,14 +1252,14 @@ export default function App() {
           <div className="flex items-center gap-2">
             <BookOpen size={14} strokeWidth={1.5} style={{ color: OXBLOOD }} />
             <span className="text-sm font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-              BetaQuill
+              BetaManuscript
             </span>
           </div>
           <div className="text-[11px]" style={{ fontFamily: MONO, color: MUTED }}>
             A workspace for authors who take revision seriously.
           </div>
           <div className="text-[10px]" style={{ fontFamily: MONO, color: "#C8C2B6" }}>
-            © 2026 - BetaQuill
+            © 2026 - BetaManuscript
           </div>
         </div>
       </footer>

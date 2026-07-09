@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       {
-        name: 'betaquill-local-api',
+        name: 'betamanuscript-local-api',
         configureServer(server) {
           server.middlewares.use('/api/waitlist', async (request, response) => {
             const { default: handler } = (await server.ssrLoadModule(

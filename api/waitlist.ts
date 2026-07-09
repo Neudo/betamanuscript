@@ -15,7 +15,7 @@ type WaitlistPayload = {
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const confirmationSubject = "You're on the BetaQuill waitlist";
+const confirmationSubject = "You're on the BetaManuscript waitlist";
 const minimumSubmitTimeMs = 900;
 
 function sendJson(
@@ -139,10 +139,10 @@ function confirmationHtml(email: string) {
     <div style="margin:0;padding:0;background:#F5F0E8;color:#1C1812;font-family:Inter,ui-sans-serif,system-ui,sans-serif;">
       <div style="max-width:560px;margin:0 auto;padding:48px 24px;">
         <p style="margin:0 0 24px;font-family:Georgia,serif;font-size:28px;line-height:1.1;color:#1C1812;">
-          You're on the BetaQuill waitlist.
+          You're on the BetaManuscript waitlist.
         </p>
         <p style="margin:0 0 18px;font-size:16px;line-height:1.7;color:#4A4035;">
-          Thanks for joining. We'll write when BetaQuill is ready and send your waitlist-only launch discount code.
+          Thanks for joining. We'll write when BetaManuscript is ready and send your waitlist-only launch discount code.
         </p>
         <p style="margin:0 0 18px;font-size:16px;line-height:1.7;color:#4A4035;">
           If one part of your beta reading workflow feels painfully manual, reply and tell us what it is. We read every note.
@@ -152,7 +152,7 @@ function confirmationHtml(email: string) {
         </p>
         <div style="height:1px;background:rgba(28,24,18,0.12);margin:0 0 20px;"></div>
         <p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#8B7355;">
-          BetaQuill early access · launch discount reserved
+          BetaManuscript early access · launch discount reserved
         </p>
       </div>
     </div>
@@ -160,15 +160,15 @@ function confirmationHtml(email: string) {
 }
 
 function confirmationText(email: string) {
-  return `You're on the BetaQuill waitlist.
+  return `You're on the BetaManuscript waitlist.
 
-Thanks for joining. We'll write when BetaQuill is ready and send your waitlist-only launch discount code. No spam.
+Thanks for joining. We'll write when BetaManuscript is ready and send your waitlist-only launch discount code. No spam.
 
 If one part of your beta reading workflow feels painfully manual, reply and tell us what it is. We read every note.
 
 Registered email: ${email}
 
-BetaQuill early access`;
+BetaManuscript early access`;
 }
 
 export default async function handler(
