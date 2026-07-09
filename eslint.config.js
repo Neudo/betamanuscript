@@ -1,28 +1,19 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+import queryPlugin from "@tanstack/eslint-plugin-query";
 
-export default tseslint.config(
-  { ignores: ['dist', 'figma-export'] },
+const config = [
+  ...nextVitals,
+  ...nextTs,
+  ...queryPlugin.configs["flat/recommended"],
   {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-    },
+    ignores: [
+      ".next/**",
+      "dist/**",
+      "figma-export/**",
+      "node_modules/**",
+    ],
   },
-)
+];
+
+export default config;

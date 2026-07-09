@@ -1,6 +1,9 @@
+"use client";
+
 import { CSSProperties, FormEvent, ReactNode, useState } from "react";
 import { Check, BookOpen, ChevronRight, Upload, Users, BarChart2, Tag, FileText, MessageSquare, ListChecks } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { submitWaitlist } from "./features/waitlist/api/submit-waitlist";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -15,7 +18,6 @@ const BODY = "#4A4035";
 const MONO = "'DM Mono', monospace";
 const SERIF = "'EB Garamond', serif";
 const SANS = "'Inter', sans-serif";
-const waitlistEndpoint = "/api/waitlist";
 const premiumEase = [0.22, 1, 0.36, 1] as const;
 
 function Reveal({
@@ -465,7 +467,7 @@ function ProductMockup() {
           className="flex-1 px-3 py-0.5 text-[11px]"
           style={{ background: PAPER, border: "1px solid rgba(28,24,18,0.1)", color: MUTED, fontFamily: MONO }}
         >
-          app.betamanuscript.com / manuscripts / the-last-cartographer / feedback
+          app.betaquill.com / manuscripts / the-last-cartographer / feedback
         </div>
       </div>
 
@@ -540,7 +542,7 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
   const [message, setMessage] = useState("");
   const reduceMotion = useReducedMotion();
 
-  async function submitWaitlist(event: FormEvent<HTMLFormElement>) {
+  async function handleWaitlistSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -555,32 +557,13 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
     setMessage("");
 
     try {
-      const response = await fetch(waitlistEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          source: "betamanuscript-waitlist",
-          submittedAt: new Date().toISOString(),
-          formStartedAt,
-          website,
-        }),
+      await submitWaitlist({
+        email: normalizedEmail,
+        source: "betaquill-waitlist",
+        submittedAt: new Date().toISOString(),
+        formStartedAt,
+        website,
       });
-
-      if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as {
-          error?: string;
-          detail?: {
-            message?: string;
-          };
-        } | null;
-        const errorMessage =
-          import.meta.env.DEV && errorPayload?.detail?.message
-            ? `${errorPayload.error}: ${errorPayload.detail.message}`
-            : errorPayload?.error;
-
-        throw new Error(errorMessage ?? "Waitlist endpoint rejected the request");
-      }
 
       setStatus("success");
       setMessage("You're on the list. Check your inbox for the discount note.");
@@ -609,7 +592,7 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
 
   return (
     <form
-      onSubmit={submitWaitlist}
+      onSubmit={handleWaitlistSubmit}
       className="flex flex-col sm:flex-row"
     >
       <input
@@ -696,7 +679,7 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <BookOpen size={16} strokeWidth={1.5} style={{ color: OXBLOOD }} />
           <span className="text-base font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-            BetaManuscript
+            BetaQuill
           </span>
         </div>
         <a
@@ -1172,16 +1155,16 @@ export default function App() {
                 className="text-base leading-relaxed mb-4 max-w-md"
                 style={{ color: "rgba(245,240,232,0.65)", fontWeight: 300, lineHeight: 1.65 }}
               >
-                I'm currently talking with indie authors, book coaches, and editors to
+                I&apos;m currently talking with indie authors, book coaches, and editors to
                 understand what actually hurts during beta reading.
               </p>
               <p
                 className="text-sm leading-relaxed max-w-sm"
                 style={{ color: "rgba(245,240,232,0.45)", fontWeight: 300 }}
               >
-                If you join the waitlist, I'll follow up personally — not with a marketing
-                sequence, but with one question about your workflow. You'll also receive
-                a launch discount code when BetaManuscript is released.
+                If you join the waitlist, I&apos;ll follow up personally — not with a marketing
+                sequence, but with one question about your workflow. You&apos;ll also receive
+                a launch discount code when BetaQuill is released.
               </p>
               <div
                 className="mt-12 pl-5 border-l"
@@ -1195,9 +1178,9 @@ export default function App() {
                     color: "rgba(245,240,232,0.55)",
                   }}
                 >
-                  "After my last beta round I had 47 Google Docs comment threads, three
+                  &ldquo;After my last beta round I had 47 Google Docs comment threads, three
                   spreadsheets, and no idea which problems were real. I needed a way to
-                  separate signal from noise."
+                  separate signal from noise.&rdquo;
                 </p>
                 <div className="text-[10px] mt-3" style={{ fontFamily: MONO, color: "rgba(245,240,232,0.3)" }}>
                   — An indie fantasy author who helped shape this product
@@ -1252,14 +1235,14 @@ export default function App() {
           <div className="flex items-center gap-2">
             <BookOpen size={14} strokeWidth={1.5} style={{ color: OXBLOOD }} />
             <span className="text-sm font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-              BetaManuscript
+              BetaQuill
             </span>
           </div>
           <div className="text-[11px]" style={{ fontFamily: MONO, color: MUTED }}>
             A workspace for authors who take revision seriously.
           </div>
           <div className="text-[10px]" style={{ fontFamily: MONO, color: "#C8C2B6" }}>
-            © 2026 - BetaManuscript
+            © 2026 - BetaQuill
           </div>
         </div>
       </footer>
