@@ -1,4 +1,5 @@
-import { CSSProperties, FormEvent, ReactNode, useState } from "react";
+import { CSSProperties, FormEvent, ReactNode, useRef, useState } from "react";
+import posthog from 'posthog-js';
 import { Check, BookOpen, ChevronRight, Upload, Users, BarChart2, Tag, FileText, MessageSquare, ListChecks } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
@@ -192,7 +193,18 @@ function ReaderPanel() {
   const ann = (id: string) => {
     const a = annotations.find((x) => x.id === id)!;
     return (
-      <Ann tag={a.tag} count={a.comments.length} active={activeId === id} onClick={() => setActiveId(activeId === id ? null : id)}>
+      <Ann
+        tag={a.tag}
+        count={a.comments.length}
+        active={activeId === id}
+        onClick={() => {
+          const next = activeId === id ? null : id;
+          setActiveId(next);
+          if (next) {
+            posthog.capture('annotation_clicked', { tag: a.tag, annotation_id: id, comment_count: a.comments.length });
+          }
+        }}
+      >
         {a.phrase}
       </Ann>
     );
@@ -486,7 +498,12 @@ function ProductMockup() {
           {(["reader", "priorities"] as const).map((t) => (
             <motion.button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => {
+                if (t !== tab) {
+                  posthog.capture('product_tab_switched', { tab });
+                }
+                setTab(t);
+              }}
               className="px-3 py-1 text-[10px] transition-colors cursor-pointer"
               whileHover={reduceMotion ? undefined : { y: -1 }}
               whileTap={reduceMotion ? undefined : { scale: 0.985 }}
@@ -532,12 +549,13 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: string; dark?: boolean }) {
+function WaitlistForm({ label = "Join the waitlist", dark = false, source = "hero" }: { label?: string; dark?: boolean; source?: string }) {
   const [email, setEmail] = useState("");
   const [website, setWebsite] = useState("");
   const [formStartedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const formStartedTracked = useRef(false);
   const reduceMotion = useReducedMotion();
 
   async function submitWaitlist(event: FormEvent<HTMLFormElement>) {
@@ -550,6 +568,8 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
       setMessage("Enter a valid email address.");
       return;
     }
+
+    posthog.capture('waitlist_signup_submitted', { source });
 
     setStatus("loading");
     setMessage("");
@@ -582,11 +602,16 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
         throw new Error(errorMessage ?? "Waitlist endpoint rejected the request");
       }
 
+      posthog.identify(normalizedEmail);
+      posthog.capture('waitlist_signup_completed', { source });
       setStatus("success");
       setMessage("You're on the list. Check your inbox for the discount note.");
       setEmail("");
       setWebsite("");
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
+      posthog.capture('waitlist_signup_failed', { source, error: errMsg });
+      posthog.captureException(error instanceof Error ? error : new Error(errMsg));
       setStatus("error");
       setMessage(
         error instanceof Error
@@ -631,6 +656,10 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
           if (status !== "loading") {
             setStatus("idle");
             setMessage("");
+          }
+          if (!formStartedTracked.current && e.target.value.length > 0) {
+            formStartedTracked.current = true;
+            posthog.capture('waitlist_form_started', { source });
           }
         }}
         placeholder="your@email.com"
@@ -705,6 +734,7 @@ export default function App() {
           style={{ border: "1px solid rgba(28,24,18,0.2)", color: INK, fontFamily: SANS }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(28,24,18,0.05)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}
+          onClick={() => posthog.capture('nav_cta_clicked')}
         >
           Join the waitlist
         </a>
@@ -745,7 +775,7 @@ export default function App() {
             </p>
             
             <div className="max-w-md">
-              <WaitlistForm label="Join the waitlist" />
+              <WaitlistForm label="Join the waitlist" source="hero" />
               <p className="text-[11px] mt-3" style={{ color: MUTED, fontFamily: MONO }}>
                 Early access, launch discount code, and no spam.
               </p>
@@ -1212,7 +1242,7 @@ export default function App() {
               >
                 Request early access
               </div>
-              <WaitlistForm label="Get early access" dark={true} />
+              <WaitlistForm label="Get early access" dark={true} source="cta" />
               <p className="text-[11px] mt-3" style={{ color: "rgba(245,240,232,0.28)", fontFamily: MONO }}>
                 No cost during beta. Launch discount reserved. Unsubscribe anytime.
               </p>
