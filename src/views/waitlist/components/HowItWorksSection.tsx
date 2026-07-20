@@ -51,7 +51,7 @@ export function HowItWorksSection() {
                 "See every annotation by tag and chapter. Spot which issues appear across multiple readers and turn that signal into a revision list.",
             },
           ].map((step, i) => (
-            <Lift key={i} className="relative">
+            <Lift key={i} className="relative p-4">
               <div className="text-[10px] mb-4" style={{ fontFamily: MONO, color: MUTED }}>
                 {step.num}
               </div>

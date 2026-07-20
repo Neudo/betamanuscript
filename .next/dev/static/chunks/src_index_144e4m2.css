@@ -763,6 +763,10 @@ button, input {
   padding: 2rem;
 }
 
+.p-2 {
+  padding: .5rem;
+}
+
 .px-0 {
   padding-left: 0;
   padding-right: 0;
