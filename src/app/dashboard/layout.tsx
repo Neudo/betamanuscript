@@ -1,5 +1,8 @@
 import { DashboardShell } from "@/features/dashboard/components/DashboardShell";
+import { requireWorkspaceAccount } from "@/features/account/server/require-workspace-account";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <DashboardShell>{children}</DashboardShell>;
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const account = await requireWorkspaceAccount("writer");
+
+  return <DashboardShell account={account}>{children}</DashboardShell>;
 }

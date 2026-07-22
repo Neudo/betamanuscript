@@ -3,7 +3,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,18 @@ import { RolePicker } from "./RolePicker";
 type FieldErrors = Partial<Record<"displayName" | "email" | "password", string>>;
 
 export function SignUpForm() {
+  const router = useRouter();
   const [role, setRole] = useState<UserRole>("writer");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const mutation = useMutation({ mutationFn: signUp });
+  const mutation = useMutation({
+    mutationFn: signUp,
+    onSuccess(result) {
+      if (result.status === "authenticated") {
+        router.replace(result.redirectTo);
+        router.refresh();
+      }
+    },
+  });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,18 +55,15 @@ export function SignUpForm() {
     mutation.mutate(result.data);
   }
 
-  if (mutation.isSuccess) {
+  if (mutation.data?.status === "confirmation-required") {
     return (
       <Alert className="border-success/30 bg-success/5">
         <CheckCircle2 className="h-4 w-4 text-success" />
         <AlertTitle>Account created</AlertTitle>
         <AlertDescription className="space-y-3">
-          <p>Check your inbox to confirm your email, then open your workspace.</p>
-          <Button asChild size="sm">
-            <Link href={role === "reader" ? "/reader" : "/dashboard"}>
-              Open workspace
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+          <p>Check your inbox and confirm your email to activate your workspace.</p>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/login">Back to login</Link>
           </Button>
         </AlertDescription>
       </Alert>

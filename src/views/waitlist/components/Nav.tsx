@@ -2,6 +2,7 @@
 
 import { BookOpen } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { INK, OXBLOOD, SANS, SERIF, premiumEase } from "../../../shared/config/design-tokens";
 
 export function Nav() {
@@ -23,15 +24,29 @@ export function Nav() {
           BetaManuscript
         </span>
       </div>
-      <a
-        href="#cta"
-        className="text-sm px-4 py-2 transition-colors"
-        style={{ border: "1px solid rgba(28,24,18,0.2)", color: INK, fontFamily: SANS }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(28,24,18,0.05)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; }}
-      >
-        Join the waitlist
-      </a>
+      <div className="flex items-center gap-2 sm:gap-4">
+        <Link
+          href="/login"
+          className="text-xs transition-colors hover:opacity-65 sm:text-sm"
+          style={{ color: INK, fontFamily: SANS }}
+        >
+          Log in
+        </Link>
+        <Link
+          href="/signup"
+          className="border px-3 py-2 text-xs transition-colors hover:bg-black/[0.04] sm:px-4 sm:text-sm"
+          style={{ borderColor: "rgba(28,24,18,0.2)", color: INK, fontFamily: SANS }}
+        >
+          Register
+        </Link>
+        <a
+          href="#cta"
+          className="hidden px-4 py-2 text-sm transition-colors hover:bg-black/[0.04] md:inline-flex"
+          style={{ border: "1px solid rgba(28,24,18,0.2)", color: INK, fontFamily: SANS }}
+        >
+          Join the waitlist
+        </a>
+      </div>
     </motion.nav>
 
 

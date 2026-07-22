@@ -35,3 +35,7 @@ export function canWrite(role: UserRole) {
 export function getRoleLabel(role: UserRole) {
   return roleOptions.find((option) => option.value === role)?.label ?? role;
 }
+
+export function getWorkspaceHome(role: UserRole) {
+  return role === "reader" ? "/reader" : "/dashboard";
+}

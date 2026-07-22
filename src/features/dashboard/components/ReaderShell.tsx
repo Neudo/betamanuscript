@@ -1,12 +1,21 @@
 "use client";
 
-import { ArrowLeft, BookOpen, List, Menu } from "lucide-react";
+import { BookOpen, List, Menu } from "lucide-react";
 import Link from "next/link";
 import { PropsWithChildren, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-function ReaderSidebar({ onNavigate }: { onNavigate?: () => void }) {
+import { WorkspaceAccountMenu } from "@/features/account/components/WorkspaceAccountMenu";
+import type { AuthenticatedAccount } from "@/features/account/types";
+
+function ReaderSidebar({
+  account,
+  onNavigate,
+}: {
+  account: AuthenticatedAccount;
+  onNavigate?: () => void;
+}) {
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-foreground/10 bg-sidebar">
       <div className="flex h-16 items-center gap-2.5 border-b border-foreground/10 px-5">
@@ -25,25 +34,27 @@ function ReaderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           Reading list
         </Link>
       </nav>
-      <div className="border-t border-foreground/10 p-4">
-        <Button asChild variant="ghost" className="h-auto w-full justify-start px-3 py-2 text-xs text-muted-foreground">
-          <Link href="/dashboard" onClick={onNavigate}>
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to writer view
-          </Link>
-        </Button>
+      <div className="border-t border-foreground/10 p-3 pb-4">
+        <WorkspaceAccountMenu
+          account={account}
+          currentWorkspace="reader"
+          onNavigate={onNavigate}
+        />
       </div>
     </aside>
   );
 }
 
-export function ReaderShell({ children }: PropsWithChildren) {
+export function ReaderShell({
+  account,
+  children,
+}: PropsWithChildren<{ account: AuthenticatedAccount }>) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background md:grid md:h-screen md:grid-cols-[220px_minmax(0,1fr)] md:overflow-hidden">
       <div className="hidden h-screen md:block">
-        <ReaderSidebar />
+        <ReaderSidebar account={account} />
       </div>
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
         <span className="text-base font-semibold">BetaManuscript</span>
@@ -55,7 +66,10 @@ export function ReaderShell({ children }: PropsWithChildren) {
           </SheetTrigger>
           <SheetContent side="left" className="w-[220px] p-0">
             <SheetTitle className="sr-only">Reader navigation</SheetTitle>
-            <ReaderSidebar onNavigate={() => setMobileOpen(false)} />
+            <ReaderSidebar
+              account={account}
+              onNavigate={() => setMobileOpen(false)}
+            />
           </SheetContent>
         </Sheet>
       </div>
