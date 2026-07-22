@@ -31,6 +31,8 @@ import {
   roleOptions,
   type UserRole,
 } from "@/features/account/domain/user-role";
+import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
+import type { ManuscriptSummary } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 import { currentUser, manuscript } from "../data/mock-dashboard";
 
@@ -49,6 +51,12 @@ type WorkspaceSidebarProps = {
 export function WorkspaceSidebar({ onNavigate }: WorkspaceSidebarProps) {
   const pathname = usePathname();
   const [role, setRole] = useState<UserRole>("both");
+  const [activeManuscript, setActiveManuscript] = useState<ManuscriptSummary>({
+    title: manuscript.title,
+    draft: manuscript.draft,
+    chapters: 9,
+    readers: 5,
+  });
 
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-foreground/10 bg-sidebar text-foreground">
@@ -64,11 +72,11 @@ export function WorkspaceSidebar({ onNavigate }: WorkspaceSidebarProps) {
           Manuscript
         </p>
         <div className="flex items-center justify-between gap-1">
-          <p className="truncate text-xs font-medium leading-snug">{manuscript.title}</p>
+          <p className="truncate text-xs font-medium leading-snug">{activeManuscript.title}</p>
           <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={1.5} />
         </div>
         <p className="mt-0.5 font-mono text-[9px] text-muted-foreground">
-          {manuscript.draft} · 9 ch · 5 readers
+          {activeManuscript.draft} · {activeManuscript.chapters} ch · {activeManuscript.readers} readers
         </p>
       </div>
 
@@ -98,10 +106,19 @@ export function WorkspaceSidebar({ onNavigate }: WorkspaceSidebarProps) {
       </nav>
 
       <div className="space-y-0.5 border-t border-foreground/10 px-3 pb-4 pt-3">
-        <Button variant="ghost" className="h-auto w-full justify-start px-3 py-2 text-[11px] text-muted-foreground" size="sm">
-          <Plus className="h-3 w-3" strokeWidth={1.5} />
-          New manuscript
-        </Button>
+        <CreateManuscriptDialog
+          onCreate={(draft) => setActiveManuscript({
+            title: draft.title.trim(),
+            draft: `Draft ${draft.draftNumber}`,
+            chapters: draft.chapters,
+            readers: 0,
+          })}
+        >
+          <Button variant="ghost" className="h-auto w-full justify-start px-3 py-2 text-[11px] text-muted-foreground" size="sm">
+            <Plus className="h-3 w-3" strokeWidth={1.5} />
+            New manuscript
+          </Button>
+        </CreateManuscriptDialog>
         <Button asChild variant="ghost" className={cn("h-auto w-full justify-start border-l-2 border-transparent px-3 py-2 text-[11px] text-muted-foreground", pathname.startsWith("/dashboard/settings") && "border-l-primary bg-foreground/[0.07] text-foreground")} size="sm">
           <Link href="/dashboard/settings" onClick={onNavigate}>
             <Settings className="h-3 w-3" strokeWidth={1.5} />

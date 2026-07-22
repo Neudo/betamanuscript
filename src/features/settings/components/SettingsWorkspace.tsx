@@ -37,7 +37,27 @@ const settingsTabs = [
   ["plan", "Plan", CreditCard],
 ] as const;
 
-export function SettingsWorkspace() {
+const freePlanBenefits = [
+  "Limited to 1 manuscript",
+  "Up to 5 active readers",
+  "Unlimited annotations",
+  "Reader surveys",
+  "Revision priorities",
+  "Data export",
+];
+
+const proPlanBenefits = [
+  "Unlimited manuscripts",
+  "Unlimited active beta readers",
+  "Unlimited annotations",
+  "Reader surveys",
+  "Revision priorities",
+  "Data export",
+];
+
+type SettingsTab = (typeof settingsTabs)[number][0];
+
+export function SettingsWorkspace({ initialTab = "profile" }: { initialTab?: SettingsTab }) {
   const [role, setRole] = useState<UserRole>("both");
   const [copied, setCopied] = useState(false);
 
@@ -47,7 +67,7 @@ export function SettingsWorkspace() {
   }
 
   return (
-    <Tabs defaultValue="profile" orientation="vertical" className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
+    <Tabs defaultValue={initialTab} orientation="vertical" className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
       <aside className="border-b border-foreground/10 bg-sidebar px-3 py-6 md:border-b-0 md:border-r">
         <p className="mb-4 px-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Settings</p>
         <TabsList className="h-auto w-full flex-row flex-wrap items-stretch justify-start gap-1 rounded-none bg-transparent p-0 md:flex-col">
@@ -64,7 +84,53 @@ export function SettingsWorkspace() {
         <TabsContent value="notifications" className="m-0"><SettingsPage title="Notifications"><div className="divide-y divide-foreground/[0.08]">{notificationOptions.map(([title, description], index) => <SettingsRow key={title} label={title} hint={description}><Switch defaultChecked={index !== 2} aria-label={title} /></SettingsRow>)}</div><SettingsFooter><Button size="sm">Save preferences</Button></SettingsFooter></SettingsPage></TabsContent>
         <TabsContent value="portal" className="m-0"><SettingsPage title="Reader portal"><SettingsRow label="Welcome message" hint="Shown before readers open your manuscript."><Textarea className="min-h-28 border-foreground/15 bg-transparent" defaultValue="Thank you for reading. Honest, specific feedback is the most useful gift you can give this draft." /></SettingsRow><SettingsRow label="Show author profile" hint="Display your bio and public links."><Switch defaultChecked /></SettingsRow><SettingsRow label="Portal link" hint="Share this private link with invited readers."><div className="flex gap-2"><Input value="https://betamanuscript.app/read/the-last-cartographer" readOnly className="h-10 border-foreground/15 bg-transparent font-mono text-xs" /><Button variant="outline" size="icon" onClick={copyPortal} aria-label="Copy portal link">{copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}</Button></div></SettingsRow><SettingsFooter><Button size="sm">Save portal</Button></SettingsFooter></SettingsPage></TabsContent>
         <TabsContent value="account" className="m-0"><SettingsPage title="Account"><SettingsRow label="Account role" hint="Controls which workspaces you can access."><div className="space-y-3"><RolePicker value={role} onChange={setRole} compact /><Button size="sm">Update role</Button></div></SettingsRow><SettingsRow label="Password" hint="Update the password used to sign in."><Button variant="outline" size="sm">Change password</Button></SettingsRow><SettingsRow label="Export data" hint="Download your manuscripts, readers, and feedback."><Button variant="outline" size="sm"><Download className="h-3.5 w-3.5" />Export account data</Button></SettingsRow><SettingsRow label="Delete account" hint="Permanently removes all manuscripts and feedback."><DeleteAccount /></SettingsRow></SettingsPage></TabsContent>
-        <TabsContent value="plan" className="m-0"><SettingsPage title="Plan"><SettingsRow label="Current access" hint="Your BetaManuscript account status."><div><p className="font-mono text-[9px] uppercase tracking-widest text-primary">Early access</p><p className="mt-2 text-xl font-medium">Founding workspace</p><p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Your launch discount will be sent by email when paid plans become available.</p></div></SettingsRow><SettingsRow label="Included" hint="Available in your current workspace."><ul className="grid gap-3 text-sm sm:grid-cols-2">{["Unlimited annotations", "Up to 5 active readers", "Reader surveys", "Revision priorities", "Data export"].map((item) => <li key={item} className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" />{item}</li>)}</ul></SettingsRow></SettingsPage></TabsContent>
+        <TabsContent value="plan" className="m-0">
+          <SettingsPage title="Plan">
+            <SettingsRow label="Current plan" hint="Your BetaManuscript workspace limits.">
+              <div>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-primary">Free plan</p>
+                <p className="mt-2 text-xl font-medium">Free</p>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Create your first manuscript and work with up to 5 active beta readers at no cost.
+                </p>
+              </div>
+            </SettingsRow>
+            <SettingsRow label="Included" hint="Available on the free plan.">
+              <ul className="grid gap-3 text-sm sm:grid-cols-2">
+                {freePlanBenefits.map((item) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <Check className="h-3.5 w-3.5 text-success" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </SettingsRow>
+            <SettingsRow label="Pro plan" hint="For writers managing multiple manuscripts and larger reader groups.">
+              <div>
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-primary">Paid plan</p>
+                    <p className="mt-2 text-xl font-medium">Pro</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="text-2xl font-medium text-foreground">$9.99</span> / month
+                  </p>
+                </div>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Remove manuscript and reader limits while keeping every feedback and revision tool in one workspace.
+                </p>
+                <ul className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+                  {proPlanBenefits.map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 text-success" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </SettingsRow>
+          </SettingsPage>
+        </TabsContent>
       </div>
     </Tabs>
   );
