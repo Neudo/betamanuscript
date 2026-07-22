@@ -1,0 +1,3 @@
+-- The local baseline above already contains the optimized indexes and consolidated RLS
+-- policies. This migration preserves the applied remote migration history for fresh
+-- environments without replaying a second set of equivalent DDL statements.

@@ -1,0 +1,2 @@
+-- The local baseline already includes the direct INSERT ... RETURNING-safe RLS
+-- predicates applied to the remote project by this migration.
