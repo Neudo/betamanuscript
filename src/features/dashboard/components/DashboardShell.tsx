@@ -17,7 +17,7 @@ export function DashboardShell({ children }: PropsWithChildren) {
       </div>
 
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
-        <span className="text-base font-semibold">BetaQuill</span>
+        <span className="text-base font-semibold">BetaManuscript</span>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="Open navigation">

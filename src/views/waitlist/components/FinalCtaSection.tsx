@@ -46,7 +46,7 @@ export function FinalCtaSection() {
             >
               If you join the waitlist, I&apos;ll follow up personally — not with a marketing
               sequence, but with one question about your workflow. You&apos;ll also receive
-              a launch discount code when BetaQuill is released.
+              a launch discount code when BetaManuscript is released.
             </p>
             <div
               className="mt-12 pl-5 border-l"

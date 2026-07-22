@@ -55,7 +55,7 @@ export function WorkspaceSidebar({ onNavigate }: WorkspaceSidebarProps) {
       <div className="flex h-16 items-center gap-2.5 border-b border-foreground/10 px-5">
         <BookOpen className="h-[15px] w-[15px] text-primary" strokeWidth={1.5} aria-hidden="true" />
         <Link href="/dashboard" className="text-base font-semibold tracking-normal">
-          BetaQuill
+          BetaManuscript
         </Link>
       </div>
 

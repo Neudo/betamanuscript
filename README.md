@@ -1,6 +1,6 @@
-# BetaQuill
+# BetaManuscript
 
-Waiting page for collecting BetaQuill emails.
+Waiting page for collecting BetaManuscript emails.
 
 ## Development
 
@@ -19,12 +19,12 @@ variables on Vercel:
 
 ```bash
 RESEND_API_KEY=re_xxxxxxxxx
-RESEND_FROM=BetaQuill <hello@your-domain.com>
+RESEND_FROM=BetaManuscript <hello@your-domain.com>
 RESEND_REPLY_TO=
 RESEND_WAITLIST_SEGMENT_ID=seg_xxxxxxxxx
 ```
 
-The API route creates the Resend contact and adds it to the BetaQuill waitlist
+The API route creates the Resend contact and adds it to the BetaManuscript waitlist
 segment, then sends a confirmation email.
-# betaquill
-# betaquill
+# betaManuscript
+

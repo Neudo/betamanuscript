@@ -7,7 +7,7 @@ export function SignUpScreen() {
     <main className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.72fr)]">
       <section className="dashboard-grid hidden border-r p-12 lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="font-display text-2xl font-semibold">
-          BetaQuill
+          BetaManuscript
         </Link>
         <div className="max-w-xl space-y-6">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
@@ -30,7 +30,7 @@ export function SignUpScreen() {
         <div className="w-full max-w-xl space-y-8">
           <div className="space-y-3">
             <Link href="/" className="font-display text-xl font-semibold lg:hidden">
-              BetaQuill
+              BetaManuscript
             </Link>
             <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">
               Create account

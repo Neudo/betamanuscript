@@ -12,7 +12,7 @@ function ReaderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex h-16 items-center gap-2.5 border-b border-foreground/10 px-5">
         <BookOpen className="h-[15px] w-[15px] text-primary" strokeWidth={1.5} />
         <Link href="/reader" className="text-base font-semibold">
-          BetaQuill
+          BetaManuscript
         </Link>
       </div>
       <nav className="flex-1 p-3" aria-label="Reader workspace">
@@ -46,7 +46,7 @@ export function ReaderShell({ children }: PropsWithChildren) {
         <ReaderSidebar />
       </div>
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
-        <span className="text-base font-semibold">BetaQuill</span>
+        <span className="text-base font-semibold">BetaManuscript</span>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="Open navigation">

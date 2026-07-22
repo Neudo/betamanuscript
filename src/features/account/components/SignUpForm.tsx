@@ -100,7 +100,7 @@ export function SignUpForm() {
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">How will you use BetaQuill?</legend>
+        <legend className="text-sm font-medium">How will you use BetaManuscript?</legend>
         <RolePicker value={role} onChange={setRole} />
       </fieldset>
 

@@ -39,7 +39,7 @@ function ProductMockup() {
           className="flex-1 px-3 py-0.5 text-[11px]"
           style={{ background: PAPER, border: "1px solid rgba(28,24,18,0.1)", color: MUTED, fontFamily: MONO }}
         >
-          app.betaquill.com / manuscripts / the-last-cartographer / feedback
+          app.betamanuscript.com / manuscripts / the-last-cartographer / feedback
         </div>
       </div>
 

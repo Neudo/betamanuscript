@@ -19,6 +19,15 @@ const tagCounts: Record<AnnotationTag, number> = {
   "Emotional impact": 2,
 };
 
+const chapterFilters = [
+  { chapter: 2, count: 3 },
+  { chapter: 3, count: 9 },
+  { chapter: 4, count: 4 },
+  { chapter: 5, count: 4 },
+  { chapter: 6, count: 2 },
+  { chapter: 7, count: 2 },
+];
+
 const tagStyles: Record<AnnotationTag, { color: string; background: string }> = {
   Confusing: { color: "#8B1A1A", background: "rgba(139,26,26,.10)" },
   "Pacing issue": { color: "#7A4800", background: "rgba(180,110,0,.10)" },
@@ -29,18 +38,23 @@ const tagStyles: Record<AnnotationTag, { color: string; background: string }> = 
 
 export function FeedbackExplorer() {
   const [selectedTag, setSelectedTag] = useState<AnnotationTag | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+  const [selectedReaderId, setSelectedReaderId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return annotations.filter((annotation) => {
       const matchesTag = selectedTag ? annotation.tag === selectedTag : true;
+      const matchesChapter = selectedChapter ? annotation.chapter === selectedChapter : true;
+      const matchesReader = selectedReaderId ? annotation.readerId === selectedReaderId : true;
       const matchesQuery = normalizedQuery
         ? `${annotation.comment} ${annotation.excerpt} ${annotation.chapterTitle}`.toLowerCase().includes(normalizedQuery)
         : true;
-      return matchesTag && matchesQuery;
+      return matchesTag && matchesChapter && matchesReader && matchesQuery;
     });
-  }, [query, selectedTag]);
+  }, [query, selectedChapter, selectedReaderId, selectedTag]);
+  const annotationCount = selectedTag || selectedChapter || selectedReaderId || query.trim() ? filtered.length : 24;
 
   return (
     <div className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
@@ -55,18 +69,39 @@ export function FeedbackExplorer() {
         </FilterGroup>
 
         <FilterGroup label="Chapter">
-          {[2, 3, 4, 5, 6, 7].map((chapter) => (
-            <div key={chapter} className="flex items-center justify-between px-2 py-1.5 text-xs"><span>Ch {chapter}</span><span className="font-mono text-[9px] text-muted-foreground">{[3, 9, 4, 4, 2, 2][chapter - 2]}</span></div>
+          {chapterFilters.map(({ chapter, count }) => (
+            <button
+              key={chapter}
+              type="button"
+              aria-pressed={selectedChapter === chapter}
+              onClick={() => setSelectedChapter(selectedChapter === chapter ? null : chapter)}
+              className={cn(
+                "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+                selectedChapter === chapter && "bg-foreground/[0.06] text-primary",
+              )}
+            >
+              <span>Ch {chapter}</span>
+              <span className="font-mono text-[9px] text-muted-foreground">{count}</span>
+            </button>
           ))}
         </FilterGroup>
 
         <FilterGroup label="Reader">
           {readers.map((reader) => (
-            <div key={reader.id} className="flex items-center gap-2 px-2 py-1.5 text-xs">
+            <button
+              key={reader.id}
+              type="button"
+              aria-pressed={selectedReaderId === reader.id}
+              onClick={() => setSelectedReaderId(selectedReaderId === reader.id ? null : reader.id)}
+              className={cn(
+                "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+                selectedReaderId === reader.id && "bg-foreground/[0.06] text-primary",
+              )}
+            >
               <span className="grid h-5 w-5 place-items-center rounded-full font-mono text-[8px] font-semibold text-white" style={{ backgroundColor: reader.color }}>{reader.initials}</span>
               <span className="min-w-0 flex-1 truncate">{reader.name}</span>
               <span className="font-mono text-[9px] text-muted-foreground">{reader.annotations}</span>
-            </div>
+            </button>
           ))}
         </FilterGroup>
       </aside>
@@ -81,7 +116,7 @@ export function FeedbackExplorer() {
             <TabsTrigger value="recent" className="h-10 rounded-none border border-foreground/15 px-5 font-mono text-[10px] data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background">Most recent</TabsTrigger>
             <TabsTrigger value="chapter" className="h-10 rounded-none border border-l-0 border-foreground/15 px-5 font-mono text-[10px] data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background">By chapter</TabsTrigger>
           </TabsList>
-          <span className="w-28 shrink-0 text-right font-mono text-[10px] text-muted-foreground">{selectedTag ? tagCounts[selectedTag] : 24} annotations</span>
+          <span className="w-28 shrink-0 text-right font-mono text-[10px] text-muted-foreground">{annotationCount} annotations</span>
         </div>
 
         <TabsContent value="recent" className="m-0 md:flex-1 md:overflow-y-auto">

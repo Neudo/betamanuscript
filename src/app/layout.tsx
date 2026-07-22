@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
 import { DM_Mono, EB_Garamond, Inter } from "next/font/google";
 import "../index.css";
@@ -21,7 +22,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BetaQuill",
+  title: "BetaManuscript",
   description:
     "A workspace for authors to turn beta reader feedback into revision priorities.",
 };
@@ -36,6 +37,15 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${ebGaramond.variable} ${dmMono.variable}`}
     >
+      <head>
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        )}
+      </head>
       <body>
         <Providers>{children}</Providers>
         <Analytics />

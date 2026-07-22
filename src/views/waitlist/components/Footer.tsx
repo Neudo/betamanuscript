@@ -21,14 +21,14 @@ export function Footer() {
             className="text-sm font-semibold"
             style={{ fontFamily: SERIF, color: INK }}
           >
-            BetaQuill
+            BetaManuscript
           </span>
         </div>
         <div className="text-[11px]" style={{ fontFamily: MONO, color: MUTED }}>
           A workspace for authors who take revision seriously.
         </div>
         <div className="text-[10px]" style={{ fontFamily: MONO, color: "#C8C2B6" }}>
-          © 2026 - BetaQuill
+          © 2026 - BetaManuscript
         </div>
       </div>
     </footer>

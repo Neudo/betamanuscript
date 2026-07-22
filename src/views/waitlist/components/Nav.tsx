@@ -20,7 +20,7 @@ export function Nav() {
       <div className="flex items-center gap-2.5">
         <BookOpen size={16} strokeWidth={1.5} style={{ color: OXBLOOD }} />
         <span className="text-base font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-          BetaQuill
+          BetaManuscript
         </span>
       </div>
       <a

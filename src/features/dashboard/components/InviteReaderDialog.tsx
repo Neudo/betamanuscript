@@ -24,7 +24,7 @@ export function InviteReaderDialog({
 }) {
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
-  const portalUrl = "https://betaquill.app/read/the-last-cartographer";
+  const portalUrl = "https://betamanuscript.app/read/the-last-cartographer";
 
   async function copyPortalUrl() {
     await navigator.clipboard.writeText(portalUrl);
