@@ -18,6 +18,7 @@ export type Database = {
           created_at: string;
           display_name: string;
           id: string;
+          plan: Database["public"]["Enums"]["account_plan"];
           role: Database["public"]["Enums"]["user_role"];
           updated_at: string;
           website: string | null;
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string;
           display_name: string;
           id: string;
+          plan?: Database["public"]["Enums"]["account_plan"];
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;
           website?: string | null;
@@ -36,6 +38,7 @@ export type Database = {
           created_at?: string;
           display_name?: string;
           id?: string;
+          plan?: Database["public"]["Enums"]["account_plan"];
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;
           website?: string | null;
@@ -50,6 +53,7 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
+      account_plan: "free" | "pro";
       user_role: "reader" | "writer" | "both";
     };
     CompositeTypes: {
@@ -175,6 +179,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_plan: ["free", "pro"],
       user_role: ["reader", "writer", "both"],
     },
   },

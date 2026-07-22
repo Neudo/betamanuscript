@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronUp, Copy, Plus } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Copy, Plus } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ const statusStyles = {
 
 export function SurveysWorkspace() {
   const editor = useSurveyEditor(initialSurvey);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const selectedChapter = chapters.find((chapter) => chapter.id === editor.survey.delivery.chapterId);
   const deliverySummary =
@@ -69,6 +70,7 @@ export function SurveysWorkspace() {
   function handleCreate(survey: ManuscriptSurvey) {
     editor.replaceSurvey(survey);
     setShowValidation(false);
+    setIsExpanded(true);
   }
 
   return (
@@ -103,10 +105,26 @@ export function SurveysWorkspace() {
                 {deliverySummary} · {editor.survey.questions.length} questions · {editor.survey.responseCount} responses
               </p>
             </div>
-            <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="-mr-2 shrink-0 text-muted-foreground"
+              aria-label={isExpanded ? "Collapse survey" : "Expand survey"}
+              aria-controls="survey-editor"
+              aria-expanded={isExpanded}
+              onClick={() => setIsExpanded((current) => !current)}
+            >
+              {isExpanded ? (
+                <ChevronUp className="h-4 w-4" strokeWidth={1.5} />
+              ) : (
+                <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
+              )}
+            </Button>
           </div>
 
-          <Tabs defaultValue="questions">
+          {isExpanded ? (
+            <Tabs id="survey-editor" defaultValue="questions">
             <div className="flex items-center justify-between border-y border-foreground/10 bg-sidebar/70 px-5">
               <TabsList className="h-11 rounded-none bg-transparent p-0">
                 <TabsTrigger value="questions" className="h-11 rounded-none border-b-2 border-transparent px-0 pr-8 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Questions</TabsTrigger>
@@ -120,7 +138,7 @@ export function SurveysWorkspace() {
             <TabsContent value="questions" className="m-0">
               <form onSubmit={handleSubmit} noValidate>
                 <fieldset className="border-b border-foreground/10 px-5 py-4">
-                  <legend className="mb-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Send after</legend>
+                  <legend className="mb-3 pt-4 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Send after</legend>
                   <RadioGroup
                     value={editor.survey.delivery.scope}
                     onValueChange={(value) => updateDelivery(value as SurveyDelivery["scope"])}
@@ -241,7 +259,8 @@ export function SurveysWorkspace() {
                 <p className="py-10 text-center text-sm text-muted-foreground">No responses yet.</p>
               )}
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          ) : null}
         </section>
       </div>
     </div>

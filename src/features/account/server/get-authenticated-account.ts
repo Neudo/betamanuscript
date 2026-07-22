@@ -3,7 +3,10 @@ import "server-only";
 import { cache } from "react";
 
 import type { UserRole } from "@/features/account/domain/user-role";
-import type { AuthenticatedAccount } from "@/features/account/types";
+import type {
+  AccountPlan,
+  AuthenticatedAccount,
+} from "@/features/account/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const getAuthenticatedAccount = cache(
@@ -20,7 +23,7 @@ export const getAuthenticatedAccount = cache(
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("display_name, role")
+      .select("display_name, role, plan")
       .eq("id", user.id)
       .single();
 
@@ -33,6 +36,7 @@ export const getAuthenticatedAccount = cache(
       email: user.email ?? "",
       displayName: profile.display_name,
       role: profile.role as UserRole,
+      plan: profile.plan as AccountPlan,
     };
   },
 );

@@ -2,24 +2,20 @@
 
 import {
   BookOpen,
-  ChevronDown,
   ClipboardList,
   FileText,
   LayoutGrid,
   MessageSquare,
-  Plus,
   Settings,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { WorkspaceAccountMenu } from "@/features/account/components/WorkspaceAccountMenu";
 import type { AuthenticatedAccount } from "@/features/account/types";
-import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
-import type { ManuscriptSummary } from "@/features/manuscript/types";
+import { ManuscriptSwitcher } from "@/features/manuscript/components/ManuscriptSwitcher";
 import { cn } from "@/lib/utils";
 import { manuscript } from "../data/mock-dashboard";
 
@@ -38,12 +34,6 @@ type WorkspaceSidebarProps = {
 
 export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps) {
   const pathname = usePathname();
-  const [activeManuscript, setActiveManuscript] = useState<ManuscriptSummary>({
-    title: manuscript.title,
-    draft: manuscript.draft,
-    chapters: 9,
-    readers: 5,
-  });
 
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-foreground/10 bg-sidebar text-foreground">
@@ -54,18 +44,19 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
         </Link>
       </div>
 
-      <div className="mx-3 mb-2 mt-4 border border-foreground/10 bg-card/60 px-3 py-2.5">
-        <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-          Manuscript
-        </p>
-        <div className="flex items-center justify-between gap-1">
-          <p className="truncate text-xs font-medium leading-snug">{activeManuscript.title}</p>
-          <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-        </div>
-        <p className="mt-0.5 font-mono text-[9px] text-muted-foreground">
-          {activeManuscript.draft} · {activeManuscript.chapters} ch · {activeManuscript.readers} readers
-        </p>
-      </div>
+      <ManuscriptSwitcher
+        accountPlan={account.plan}
+        initialManuscripts={[
+          {
+            id: manuscript.id,
+            title: manuscript.title,
+            draft: manuscript.draft,
+            chapters: 9,
+            readers: 5,
+          },
+        ]}
+        onNavigate={onNavigate}
+      />
 
       <nav className="mt-2 flex-1 space-y-0.5 px-3" aria-label="Writer workspace">
         {navItems.map((item) => {
@@ -93,19 +84,6 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
       </nav>
 
       <div className="space-y-0.5 border-t border-foreground/10 px-3 pb-4 pt-3">
-        <CreateManuscriptDialog
-          onCreate={(draft) => setActiveManuscript({
-            title: draft.title.trim(),
-            draft: `Draft ${draft.draftNumber}`,
-            chapters: draft.chapters,
-            readers: 0,
-          })}
-        >
-          <Button variant="ghost" className="h-auto w-full justify-start px-3 py-2 text-[11px] text-muted-foreground" size="sm">
-            <Plus className="h-3 w-3" strokeWidth={1.5} />
-            New manuscript
-          </Button>
-        </CreateManuscriptDialog>
         <Button asChild variant="ghost" className={cn("h-auto w-full justify-start border-l-2 border-transparent px-3 py-2 text-[11px] text-muted-foreground", pathname.startsWith("/dashboard/settings") && "border-l-primary bg-foreground/[0.07] text-foreground")} size="sm">
           <Link href="/dashboard/settings" onClick={onNavigate}>
             <Settings className="h-3 w-3" strokeWidth={1.5} />

@@ -43,6 +43,10 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
         sidebar: "hsl(var(--sidebar))",
         surface: "hsl(var(--surface))",
         success: "hsl(var(--success))",

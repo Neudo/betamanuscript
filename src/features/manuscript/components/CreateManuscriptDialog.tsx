@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import type { AccountPlan } from "@/features/account/types";
 import {
   manuscriptGenres,
   manuscriptWizardSteps,
@@ -43,15 +44,22 @@ import type {
 import { cn } from "@/lib/utils";
 
 type CreateManuscriptDialogProps = {
-  children: ReactNode;
+  children?: ReactNode;
   onCreate: (draft: ManuscriptDraft) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  accountPlan?: AccountPlan;
 };
 
 export function CreateManuscriptDialog({
   children,
   onCreate,
+  open: controlledOpen,
+  onOpenChange,
+  accountPlan = "free",
 }: CreateManuscriptDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
   const editor = useCreateManuscript();
   const stepTitle =
     editor.step === "info"
@@ -61,7 +69,8 @@ export function CreateManuscriptDialog({
         : "Beta reader settings";
 
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
+    if (controlledOpen === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
     if (!nextOpen) editor.reset();
   }
 
@@ -73,13 +82,12 @@ export function CreateManuscriptDialog({
     }
 
     onCreate(editor.draft);
-    setOpen(false);
-    editor.reset();
+    handleOpenChange(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children ? <DialogTrigger asChild>{children}</DialogTrigger> : null}
       <DialogContent
         overlayClassName="bg-foreground/45 backdrop-blur-[4px]"
         className="flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[560px] flex-col gap-0 overflow-hidden border-foreground/10 bg-card p-0 shadow-[0_24px_64px_rgba(28,24,18,0.18)] sm:rounded-none [&>button]:right-8 [&>button]:top-7 [&>button]:rounded-none"
@@ -108,6 +116,7 @@ export function CreateManuscriptDialog({
             ) : null}
             {editor.step === "readers" ? (
               <ReaderSettingsStep
+                accountPlan={accountPlan}
                 draft={editor.draft}
                 onChange={editor.updateDraft}
                 onChangePlan={() => handleOpenChange(false)}
@@ -369,10 +378,12 @@ function StructureStep({ draft, onChange }: StepProps) {
 }
 
 function ReaderSettingsStep({
+  accountPlan,
   draft,
   onChange,
   onChangePlan,
-}: StepProps & { onChangePlan: () => void }) {
+}: StepProps & { accountPlan: AccountPlan; onChangePlan: () => void }) {
+  const hasProPlan = accountPlan === "pro";
   const accessOptions: Array<{ id: ManuscriptAccessMode; label: string; description: string }> = [
     { id: "invite", label: "Invite only", description: "You send invitations manually" },
     { id: "open", label: "Open sign-up", description: "Anyone with the link can join" },
@@ -387,23 +398,28 @@ function ReaderSettingsStep({
             id="maximum-readers"
             type="number"
             min={1}
-            max={5}
+            max={hasProPlan ? undefined : 5}
             value={draft.maxReaders}
-            onChange={(event) => onChange({ maxReaders: Math.max(1, Math.min(5, Number(event.target.value))) })}
+            onChange={(event) => {
+              const nextValue = Math.max(1, Number(event.target.value));
+              onChange({ maxReaders: hasProPlan ? nextValue : Math.min(5, nextValue) });
+            }}
             className="h-10 w-20 rounded-none border-foreground/20 bg-background px-3 text-center font-mono text-sm font-normal shadow-none"
           />
           <span className="text-[11px] text-muted-foreground">readers</span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
           <p className="font-mono text-[9px] text-muted-foreground">
-            Your free plan supports up to 5 readers.
+            {hasProPlan
+              ? "Your Pro plan supports unlimited readers."
+              : "Your free plan supports up to 5 readers."}
           </p>
-          <Button asChild variant="link" size="sm" className="h-auto px-0 py-0 text-[10px]">
+          {!hasProPlan ? <Button asChild variant="link" size="sm" className="h-auto px-0 py-0 text-[10px]">
             <Link href="/dashboard/settings?section=plan" onClick={onChangePlan}>
               Change plan for unlimited readers
               <ArrowUpRight className="h-3 w-3" />
             </Link>
-          </Button>
+          </Button> : null}
         </div>
       </div>
 

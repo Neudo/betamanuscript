@@ -17,6 +17,7 @@ export type ManuscriptDraft = {
 };
 
 export type ManuscriptSummary = {
+  id: string;
   title: string;
   draft: string;
   chapters: number;

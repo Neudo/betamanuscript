@@ -8,6 +8,8 @@
     --foreground: 33 22% 9%;
     --card: 36 42% 97%;
     --card-foreground: 33 22% 9%;
+    --popover: 36 42% 97%;
+    --popover-foreground: 33 22% 9%;
     --primary: 0 62% 30%;
     --primary-foreground: 36 42% 97%;
     --secondary: 112 17% 21%;
@@ -26,6 +28,14 @@
     --success: 143 29% 40%;
     --warning: 31 55% 47%;
     --radius: 0.125rem;
+    --layer-sheet-overlay: 80;
+    --layer-sheet: 90;
+    --layer-dialog-overlay: 100;
+    --layer-dialog: 110;
+    --layer-alert-overlay: 120;
+    --layer-alert: 130;
+    --layer-popover: 200;
+    --layer-tooltip: 300;
   }
 
   * {

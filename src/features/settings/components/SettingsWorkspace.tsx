@@ -70,6 +70,8 @@ export function SettingsWorkspace({
   const router = useRouter();
   const [role, setRole] = useState<UserRole>(account.role);
   const [copied, setCopied] = useState(false);
+  const hasProPlan = account.plan === "pro";
+  const currentPlanBenefits = hasProPlan ? proPlanBenefits : freePlanBenefits;
   const roleMutation = useMutation({
     mutationFn: updateRole,
     onSuccess() {
@@ -104,16 +106,18 @@ export function SettingsWorkspace({
           <SettingsPage title="Plan">
             <SettingsRow label="Current plan" hint="Your BetaManuscript workspace limits.">
               <div>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-primary">Free plan</p>
-                <p className="mt-2 text-xl font-medium">Free</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-primary">{hasProPlan ? "Paid plan" : "Free plan"}</p>
+                <p className="mt-2 text-xl font-medium">{hasProPlan ? "Pro" : "Free"}</p>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                  Create your first manuscript and work with up to 5 active beta readers at no cost.
+                  {hasProPlan
+                    ? "Manage unlimited manuscripts and active beta readers from one workspace."
+                    : "Create your first manuscript and work with up to 5 active beta readers at no cost."}
                 </p>
               </div>
             </SettingsRow>
-            <SettingsRow label="Included" hint="Available on the free plan.">
+            <SettingsRow label="Included" hint={`Available on the ${hasProPlan ? "Pro" : "free"} plan.`}>
               <ul className="grid gap-3 text-sm sm:grid-cols-2">
-                {freePlanBenefits.map((item) => (
+                {currentPlanBenefits.map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-success" />
                     {item}
@@ -121,7 +125,7 @@ export function SettingsWorkspace({
                 ))}
               </ul>
             </SettingsRow>
-            <SettingsRow label="Pro plan" hint="For writers managing multiple manuscripts and larger reader groups.">
+            {!hasProPlan ? <SettingsRow label="Pro plan" hint="For writers managing multiple manuscripts and larger reader groups.">
               <div>
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                   <div>
@@ -144,7 +148,7 @@ export function SettingsWorkspace({
                   ))}
                 </ul>
               </div>
-            </SettingsRow>
+            </SettingsRow> : null}
           </SettingsPage>
         </TabsContent>
       </div>
