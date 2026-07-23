@@ -66,6 +66,7 @@ export type ManuscriptWorkspaceBlock = {
 };
 
 export type ManuscriptWorkspaceAnnotation = {
+  chapterBlockId: string;
   id: string;
   chapterId: string;
   comment: string | null;
@@ -73,9 +74,12 @@ export type ManuscriptWorkspaceAnnotation = {
   isSeenByAuthor: boolean;
   quote: string;
   readerName: string;
+  selectionEnd: number;
+  selectionStart: number;
   tag: {
     color: string;
     label: string;
+    slug: string;
   };
 };
 

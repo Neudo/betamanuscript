@@ -41,6 +41,7 @@ const questionTypeLabels: Record<SurveyQuestionType, string> = {
 type SurveyQuestionEditorProps = {
   question: SurveyQuestion;
   canRemove: boolean;
+  isReadOnly?: boolean;
   onChange: (patch: SurveyQuestionPatch) => void;
   onTypeChange: (type: SurveyQuestionType) => void;
   onOptionChange: (optionIndex: number, value: string) => void;
@@ -52,6 +53,7 @@ type SurveyQuestionEditorProps = {
 export function SurveyQuestionEditor({
   question,
   canRemove,
+  isReadOnly = false,
   onChange,
   onTypeChange,
   onOptionChange,
@@ -82,6 +84,7 @@ export function SurveyQuestionEditor({
           id={`${question.id}-prompt`}
           value={question.prompt}
           onChange={(event) => onChange({ prompt: event.target.value })}
+          disabled={isReadOnly}
           className="min-h-11 resize-y rounded-none border-foreground/10 bg-transparent px-3 py-2 text-sm shadow-none"
         />
 
@@ -90,6 +93,7 @@ export function SurveyQuestionEditor({
             <RadioGroup
               value={previewValue}
               onValueChange={setPreviewValue}
+              disabled={isReadOnly}
               className="flex flex-wrap gap-2"
               aria-label="Rating response"
             >
@@ -110,6 +114,7 @@ export function SurveyQuestionEditor({
             <RadioGroup
               value={previewValue}
               onValueChange={setPreviewValue}
+              disabled={isReadOnly}
               className="flex gap-2"
               aria-label="Yes or no response"
             >
@@ -129,11 +134,12 @@ export function SurveyQuestionEditor({
           {question.type === "multiple-choice" ? (
             <div className="space-y-2">
               {question.options.map((option, optionIndex) => (
-                <div key={`${question.id}-${optionIndex}`} className="flex items-center gap-2">
-                  <Checkbox aria-label={`Preview option ${optionIndex + 1}`} />
+                <div key={option.id} className="flex items-center gap-2">
+                  <Checkbox aria-label={`Preview option ${optionIndex + 1}`} disabled={isReadOnly} />
                   <Input
-                    value={option}
+                    value={option.label}
                     onChange={(event) => onOptionChange(optionIndex, event.target.value)}
+                    disabled={isReadOnly}
                     aria-label={`Option ${optionIndex + 1}`}
                     className="h-8 rounded-none border-foreground/15 bg-transparent px-2.5 font-mono text-[10px] font-normal shadow-none"
                   />
@@ -141,7 +147,7 @@ export function SurveyQuestionEditor({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    disabled={question.options.length <= 2}
+                    disabled={isReadOnly || question.options.length <= 2}
                     onClick={() => onRemoveOption(optionIndex)}
                     aria-label={`Remove option ${optionIndex + 1}`}
                   >
@@ -149,7 +155,7 @@ export function SurveyQuestionEditor({
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="ghost" size="sm" onClick={onAddOption} className="text-muted-foreground">
+              <Button type="button" variant="ghost" size="sm" disabled={isReadOnly} onClick={onAddOption} className="text-muted-foreground">
                 <Plus className="h-3.5 w-3.5" />
                 Add option
               </Button>
@@ -160,6 +166,7 @@ export function SurveyQuestionEditor({
             <Textarea
               value={previewText}
               onChange={(event) => setPreviewText(event.target.value)}
+              disabled={isReadOnly}
               placeholder="Reader response"
               aria-label="Open text response"
               className="min-h-20 rounded-none border-foreground/15 bg-transparent text-sm shadow-none"
@@ -173,7 +180,7 @@ export function SurveyQuestionEditor({
           <Label htmlFor={`${question.id}-type`} className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">
             Answer type
           </Label>
-          <Select value={question.type} onValueChange={(value) => onTypeChange(value as SurveyQuestionType)}>
+          <Select disabled={isReadOnly} value={question.type} onValueChange={(value) => onTypeChange(value as SurveyQuestionType)}>
             <SelectTrigger id={`${question.id}-type`} className="h-9 rounded-none border-foreground/15 bg-transparent text-xs shadow-none">
               <SelectValue />
             </SelectTrigger>
@@ -193,6 +200,7 @@ export function SurveyQuestionEditor({
             id={`${question.id}-required`}
             checked={question.required}
             onCheckedChange={(required) => onChange({ required })}
+            disabled={isReadOnly}
           />
         </div>
 
@@ -200,7 +208,7 @@ export function SurveyQuestionEditor({
           type="button"
           variant="ghost"
           size="sm"
-          disabled={!canRemove}
+          disabled={isReadOnly || !canRemove}
           onClick={onRemove}
           className="w-full justify-start text-muted-foreground"
         >

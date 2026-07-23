@@ -59,12 +59,15 @@ type ChapterBlockRow = {
 
 type AnnotationRow = {
   author_seen_at: string | null;
+  chapter_block_id: string;
   chapter_id: string;
   comment: string | null;
   created_at: string;
   id: string;
   quote: string;
   reader_assignment_id: string;
+  selection_end: number;
+  selection_start: number;
   tag_slug: string;
 };
 
@@ -231,7 +234,7 @@ export async function getManuscript(
       .order("position", { ascending: true }),
     supabase
       .from("annotations")
-      .select("id, chapter_id, reader_assignment_id, tag_slug, quote, comment, created_at, author_seen_at")
+      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_slug, quote, selection_start, selection_end, comment, created_at, author_seen_at")
       .in("chapter_id", chapterIds)
       .order("created_at", { ascending: false }),
   ]);
@@ -294,6 +297,7 @@ export async function getManuscript(
     const tag = annotationTagsBySlug.get(annotation.tag_slug);
     const chapterAnnotations = annotationsByChapterId.get(annotation.chapter_id) ?? [];
     chapterAnnotations.push({
+      chapterBlockId: annotation.chapter_block_id,
       chapterId: annotation.chapter_id,
       comment: annotation.comment,
       createdAt: annotation.created_at,
@@ -301,9 +305,12 @@ export async function getManuscript(
       isSeenByAuthor: annotation.author_seen_at !== null,
       quote: annotation.quote,
       readerName: assignment?.reader_display_name ?? assignment?.reader_email ?? "Reader",
+      selectionEnd: annotation.selection_end,
+      selectionStart: annotation.selection_start,
       tag: {
         color: tag?.color ?? "#6B7280",
         label: tag?.label ?? annotation.tag_slug,
+        slug: annotation.tag_slug,
       },
     });
     annotationsByChapterId.set(annotation.chapter_id, chapterAnnotations);

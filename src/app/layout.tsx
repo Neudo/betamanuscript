@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react";
 import { DM_Mono, EB_Garamond, Inter } from "next/font/google";
 import "../index.css";
+import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./providers";
 
 const inter = Inter({
@@ -50,6 +51,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
+        <Toaster />
         <Analytics />
       </body>
     </html>

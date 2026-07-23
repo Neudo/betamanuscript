@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { createId } from "@/features/surveys/data/mock-survey";
 import type {
   ManuscriptSurvey,
   SurveyQuestionPatch,
@@ -47,7 +46,10 @@ export function useSurveyEditor(initialValue: ManuscriptSurvey) {
             type === "multiple-choice"
               ? question.options.length >= 2
                 ? question.options
-                : defaultMultipleChoiceOptions
+                : defaultMultipleChoiceOptions.map((label) => ({
+                    id: createTemporaryId("option"),
+                    label,
+                  }))
               : [],
         };
       }),
@@ -62,7 +64,7 @@ export function useSurveyEditor(initialValue: ManuscriptSurvey) {
           ? {
               ...question,
               options: question.options.map((option, index) =>
-                index === optionIndex ? value : option,
+                index === optionIndex ? { ...option, label: value } : option,
               ),
             }
           : question,
@@ -75,7 +77,16 @@ export function useSurveyEditor(initialValue: ManuscriptSurvey) {
       ...current,
       questions: current.questions.map((question) =>
         question.id === questionId
-          ? { ...question, options: [...question.options, `Option ${question.options.length + 1}`] }
+          ? {
+            ...question,
+            options: [
+              ...question.options,
+              {
+                id: createTemporaryId("option"),
+                label: `Option ${question.options.length + 1}`,
+              },
+            ],
+          }
           : question,
       ),
     }));
@@ -98,7 +109,7 @@ export function useSurveyEditor(initialValue: ManuscriptSurvey) {
       questions: [
         ...current.questions,
         {
-          id: createId("question"),
+          id: createTemporaryId("question"),
           prompt: "Untitled question",
           type: "open-text",
           required: false,
@@ -118,34 +129,11 @@ export function useSurveyEditor(initialValue: ManuscriptSurvey) {
     });
   }, []);
 
-  const saveSurvey = useCallback(() => {
-    if (validateSurvey(survey)) return false;
-    setSavedSurvey(survey);
+  const markSaved = useCallback((savedSurvey: ManuscriptSurvey) => {
+    setSurvey(savedSurvey);
+    setSavedSurvey(savedSurvey);
     setLastSavedAt(new Date());
-    return true;
-  }, [survey]);
-
-  const replaceSurvey = useCallback((nextSurvey: ManuscriptSurvey) => {
-    setSurvey(nextSurvey);
-    setSavedSurvey(nextSurvey);
-    setLastSavedAt(null);
   }, []);
-
-  const duplicateSurvey = useCallback(() => {
-    const duplicated: ManuscriptSurvey = {
-      ...survey,
-      id: createId("survey"),
-      name: `${survey.name} copy`,
-      status: "draft",
-      responseCount: 0,
-      questions: survey.questions.map((question) => ({
-        ...question,
-        id: createId("question"),
-        options: [...question.options],
-      })),
-    };
-    replaceSurvey(duplicated);
-  }, [replaceSurvey, survey]);
 
   return {
     survey,
@@ -160,9 +148,7 @@ export function useSurveyEditor(initialValue: ManuscriptSurvey) {
     removeOption,
     addQuestion,
     removeQuestion,
-    saveSurvey,
-    replaceSurvey,
-    duplicateSurvey,
+    markSaved,
   };
 }
 
@@ -178,10 +164,17 @@ function validateSurvey(survey: ManuscriptSurvey) {
     survey.questions.some(
       (question) =>
         question.type === "multiple-choice" &&
-        (question.options.length < 2 || question.options.some((option) => !option.trim())),
+        (question.options.length < 2 || question.options.some((option) => !option.label.trim())),
     )
   ) {
     return "Multiple-choice questions need at least two named options.";
   }
   return null;
+}
+
+function createTemporaryId(prefix: string) {
+  const id = globalThis.crypto?.randomUUID?.()
+    ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  return `${prefix}-${id}`;
 }

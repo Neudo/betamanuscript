@@ -980,6 +980,10 @@ export type Database = {
           reading_round_id: string
         }[]
       }
+      complete_reader_chapter: {
+        Args: { p_chapter_id: string; p_reader_assignment_id: string }
+        Returns: undefined
+      }
       create_manuscript_from_draft: {
         Args: { p_draft: Json }
         Returns: {

@@ -14,6 +14,35 @@ export type ReaderManuscriptListItem = {
   versionNumber: number;
 };
 
+export type ReaderAnnotationTag = {
+  color: string;
+  label: string;
+  slug: string;
+};
+
+export type ReaderAnnotation = {
+  chapterBlockId: string;
+  chapterId: string;
+  comment: string | null;
+  contextAfter: string | null;
+  contextBefore: string | null;
+  id: string;
+  quote: string;
+  selectionEnd: number;
+  selectionStart: number;
+  tag: ReaderAnnotationTag;
+};
+
+export type ReaderAnnotationDraft = {
+  chapterBlockId: string;
+  chapterId: string;
+  contextAfter: string | null;
+  contextBefore: string | null;
+  quote: string;
+  selectionEnd: number;
+  selectionStart: number;
+};
+
 type ReaderAssignmentRow = {
   id: string;
   status: "completed" | "started";
@@ -118,7 +147,12 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
 
 export type ReaderManuscript = ReaderManuscriptListItem & {
   chapters: Array<{
-    blocks: Array<{ content: string; id: string; position: number }>;
+    blocks: Array<{
+      annotations: ReaderAnnotation[];
+      content: string;
+      id: string;
+      position: number;
+    }>;
     id: string;
     position: number;
     title: string;
@@ -151,10 +185,73 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
 
   if (blocksError) throw new Error(blocksError.message);
 
-  const blocksByChapter = new Map<string, Array<{ content: string; id: string; position: number }>>();
+  const { data: annotationRows, error: annotationsError } = chapterIds.length > 0
+    ? await supabase
+      .from("annotations")
+      .select(`
+        id,
+        chapter_id,
+        chapter_block_id,
+        tag_slug,
+        quote,
+        selection_start,
+        selection_end,
+        context_before,
+        context_after,
+        comment
+      `)
+      .eq("reader_assignment_id", manuscript.assignmentId)
+      .in("chapter_id", chapterIds)
+    : { data: [], error: null };
+
+  if (annotationsError) throw new Error(annotationsError.message);
+
+  const annotationTagSlugs = [...new Set((annotationRows ?? []).map((annotation) => annotation.tag_slug))];
+  const { data: annotationTagRows, error: annotationTagsError } = annotationTagSlugs.length > 0
+    ? await supabase
+      .from("annotation_tags")
+      .select("slug, label, color")
+      .in("slug", annotationTagSlugs)
+    : { data: [], error: null };
+
+  if (annotationTagsError) throw new Error(annotationTagsError.message);
+
+  const annotationTagsBySlug = new Map(
+    (annotationTagRows ?? []).map((tag) => [tag.slug, tag]),
+  );
+  const annotationsByBlock = new Map<string, ReaderAnnotation[]>();
+
+  for (const annotation of annotationRows ?? []) {
+    const tag = annotationTagsBySlug.get(annotation.tag_slug);
+    const annotations = annotationsByBlock.get(annotation.chapter_block_id) ?? [];
+    annotations.push({
+      chapterBlockId: annotation.chapter_block_id,
+      chapterId: annotation.chapter_id,
+      comment: annotation.comment,
+      contextAfter: annotation.context_after,
+      contextBefore: annotation.context_before,
+      id: annotation.id,
+      quote: annotation.quote,
+      selectionEnd: annotation.selection_end,
+      selectionStart: annotation.selection_start,
+      tag: {
+        color: tag?.color ?? "#6B7280",
+        label: tag?.label ?? annotation.tag_slug,
+        slug: annotation.tag_slug,
+      },
+    });
+    annotationsByBlock.set(annotation.chapter_block_id, annotations);
+  }
+
+  const blocksByChapter = new Map<string, ReaderManuscript["chapters"][number]["blocks"]>();
   for (const block of blockRows ?? []) {
     const blocks = blocksByChapter.get(block.chapter_id) ?? [];
-    blocks.push({ content: block.content, id: block.id, position: block.position });
+    blocks.push({
+      annotations: annotationsByBlock.get(block.id) ?? [],
+      content: block.content,
+      id: block.id,
+      position: block.position,
+    });
     blocksByChapter.set(block.chapter_id, blocks);
   }
 
@@ -177,19 +274,98 @@ export async function completeReaderChapter({
   readerAssignmentId: string;
 }) {
   const supabase = createSupabaseBrowserClient();
-  const now = new Date().toISOString();
   const { error } = await supabase
-    .from("chapter_reading_progress")
-    .upsert(
-      {
-        chapter_id: chapterId,
-        completed_at: now,
-        last_read_at: now,
-        reader_assignment_id: readerAssignmentId,
-        status: "completed",
-      },
-      { onConflict: "reader_assignment_id,chapter_id" },
-    );
+    .rpc("complete_reader_chapter", {
+      p_chapter_id: chapterId,
+      p_reader_assignment_id: readerAssignmentId,
+    });
 
   if (error) throw new Error(error.message);
+}
+
+export async function getReaderAnnotationTags(): Promise<ReaderAnnotationTag[]> {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("annotation_tags")
+    .select("slug, label, color")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  return data ?? [];
+}
+
+export type CreateReaderAnnotationInput = ReaderAnnotationDraft & {
+  comment: string;
+  readerAssignmentId: string;
+  tagSlug: string;
+};
+
+export async function createReaderAnnotation({
+  chapterBlockId,
+  chapterId,
+  comment,
+  contextAfter,
+  contextBefore,
+  quote,
+  readerAssignmentId,
+  selectionEnd,
+  selectionStart,
+  tagSlug,
+}: CreateReaderAnnotationInput) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("annotations")
+    .insert({
+      chapter_block_id: chapterBlockId,
+      chapter_id: chapterId,
+      comment: comment.trim() || null,
+      context_after: contextAfter,
+      context_before: contextBefore,
+      quote,
+      reader_assignment_id: readerAssignmentId,
+      selection_end: selectionEnd,
+      selection_start: selectionStart,
+      tag_slug: tagSlug,
+    });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function updateReaderAnnotation({
+  annotationId,
+  comment,
+  tagSlug,
+}: {
+  annotationId: string;
+  comment: string;
+  tagSlug: string;
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("annotations")
+    .update({
+      comment: comment.trim() || null,
+      tag_slug: tagSlug,
+    })
+    .eq("id", annotationId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("This annotation is no longer available.");
+}
+
+export async function deleteReaderAnnotation(annotationId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("annotations")
+    .delete()
+    .eq("id", annotationId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("This annotation is no longer available.");
 }

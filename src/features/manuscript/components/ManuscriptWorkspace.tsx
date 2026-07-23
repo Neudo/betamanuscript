@@ -24,6 +24,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+  annotationBackgroundColor,
+  getTextAnnotationSegments,
+} from "@/features/annotations/lib/text-annotations";
+import {
   useUpdateAnnotationSeenMutation,
   useUpdateChapterStatusMutation,
 } from "@/features/manuscript/hooks/use-manuscript-mutations";
@@ -276,7 +280,13 @@ export function ManuscriptWorkspace() {
             {selectedChapter.blocks.length > 0 ? (
               <div className="mt-10 space-y-6 font-display text-[20px] leading-8 text-foreground/90 sm:text-[22px] sm:leading-9">
                 {selectedChapter.blocks.map((block) => (
-                  <ChapterBlock key={block.id} block={block} />
+                  <ChapterBlock
+                    key={block.id}
+                    block={block}
+                    annotations={selectedChapter.annotations.filter(
+                      (annotation) => annotation.chapterBlockId === block.id,
+                    )}
+                  />
                 ))}
               </div>
             ) : (
@@ -291,20 +301,64 @@ export function ManuscriptWorkspace() {
   );
 }
 
-function ChapterBlock({ block }: { block: ManuscriptWorkspaceBlock }) {
+function ChapterBlock({
+  annotations,
+  block,
+}: {
+  annotations: ManuscriptWorkspaceAnnotation[];
+  block: ManuscriptWorkspaceBlock;
+}) {
   if (block.kind === "scene_break") {
     return <p className="py-3 text-center tracking-[0.35em] text-muted-foreground">* * *</p>;
   }
 
   if (block.kind === "heading") {
-    return <h3 className="pt-3 text-2xl font-medium">{block.content}</h3>;
+    return <h3 className="pt-3 text-2xl font-medium"><AnnotatedChapterText content={block.content} annotations={annotations} /></h3>;
   }
 
   if (block.kind === "blockquote") {
-    return <blockquote className="border-l-2 border-primary/40 pl-5 italic">{block.content}</blockquote>;
+    return <blockquote className="border-l-2 border-primary/40 pl-5 italic"><AnnotatedChapterText content={block.content} annotations={annotations} /></blockquote>;
   }
 
-  return <p>{block.content}</p>;
+  return <p><AnnotatedChapterText content={block.content} annotations={annotations} /></p>;
+}
+
+function AnnotatedChapterText({
+  annotations,
+  content,
+}: {
+  annotations: ManuscriptWorkspaceAnnotation[];
+  content: string;
+}) {
+  const segments = getTextAnnotationSegments(content, annotations);
+
+  return segments.map((segment) => {
+    if (!segment.group) return segment.content;
+
+    const { annotations: groupedAnnotations, color, hasMultipleTags } = segment.group;
+    const count = groupedAnnotations.length;
+    const tagLabel = hasMultipleTags ? "multiple tags" : groupedAnnotations[0].tag.label;
+
+    return (
+      <mark
+        key={segment.key}
+        className="rounded-sm px-0.5 text-inherit decoration-2 underline-offset-4"
+        style={{ backgroundColor: annotationBackgroundColor(color), textDecorationColor: color }}
+        title={`${count} annotation${count > 1 ? "s" : ""} · ${tagLabel}`}
+      >
+        {segment.content}
+        {count > 1 ? (
+          <span
+            className="ml-1 inline-flex h-4 min-w-4 translate-y-[-0.45em] items-center justify-center rounded-full px-1 align-super font-mono text-[8px] leading-none text-white"
+            style={{ backgroundColor: color }}
+            aria-label={`${count} annotations`}
+          >
+            {count}
+          </span>
+        ) : null}
+      </mark>
+    );
+  });
 }
 
 function AnnotationSheet({
