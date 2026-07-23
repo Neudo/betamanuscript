@@ -21,6 +21,14 @@ export type ManuscriptBlockKind =
   | "heading"
   | "blockquote";
 
+export type ImportedManuscriptChapter = {
+  blocks: Array<{
+    content: string;
+    kind: "paragraph";
+  }>;
+  title: string;
+};
+
 export type ManuscriptDraft = {
   title: string;
   logline: string;
@@ -88,6 +96,7 @@ export type ManuscriptWorkspaceData = {
   totalWordCount: number;
   version: {
     id: string;
+    logline: string | null;
     number: number;
     title: string;
   } | null;

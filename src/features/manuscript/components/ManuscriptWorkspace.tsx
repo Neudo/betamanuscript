@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, MessageSquareText, Plus } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ import {
   useManuscripts,
 } from "@/features/manuscript/hooks/use-manuscripts";
 import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
+import { ManuscriptSettingsDialog } from "@/features/manuscript/components/ManuscriptSettingsDialog";
 import type {
   ChapterEditorialStatus,
   ManuscriptWorkspaceAnnotation,
@@ -58,6 +59,8 @@ const annotationDateFormat = new Intl.DateTimeFormat("en-US", {
 });
 
 export function ManuscriptWorkspace() {
+  const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const manuscriptsQuery = useManuscripts();
@@ -66,6 +69,15 @@ export function ManuscriptWorkspace() {
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const updateChapterStatus = useUpdateChapterStatusMutation();
   const updateAnnotationSeen = useUpdateAnnotationSeenMutation();
+
+  function handleManuscriptDeleted() {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("manuscriptId");
+    const queryString = nextSearchParams.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  }
 
   if (!manuscriptId && !manuscriptsQuery.isLoading) {
     return (
@@ -149,14 +161,20 @@ export function ManuscriptWorkspace() {
     <div className="grid min-h-[calc(100vh-3.5rem)] md:h-screen md:grid-cols-[280px_minmax(0,1fr)] md:overflow-hidden">
       <aside className="border-r border-foreground/10 bg-sidebar/70 md:flex md:min-h-0 md:flex-col">
         <div className="border-b border-foreground/10 p-5">
-          <div className="min-w-0">
-            <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-              Manuscript
-            </p>
-            <p className="mt-2 text-sm font-medium leading-snug">{manuscript.title}</p>
-            <p className="mt-1 font-mono text-[9px] text-muted-foreground">
-              Draft {manuscript.version?.number ?? "—"} · {wordCountFormat.format(manuscript.totalWordCount)} words · {completeCount}/{manuscript.chapters.length} complete
-            </p>
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                Manuscript
+              </p>
+              <p className="mt-2 text-sm font-medium leading-snug">{manuscript.title}</p>
+              <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+                Draft {manuscript.version?.number ?? "—"} · {wordCountFormat.format(manuscript.totalWordCount)} words · {completeCount}/{manuscript.chapters.length} complete
+              </p>
+            </div>
+            <ManuscriptSettingsDialog
+              manuscript={manuscript}
+              onDeleted={handleManuscriptDeleted}
+            />
           </div>
         </div>
 

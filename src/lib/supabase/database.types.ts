@@ -973,6 +973,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_reading_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          manuscript_id: string
+          reading_round_id: string
+        }[]
+      }
       create_manuscript_from_draft: {
         Args: { p_draft: Json }
         Returns: {
@@ -980,6 +987,34 @@ export type Database = {
           manuscript_version_id: string
           reading_round_id: string
         }[]
+      }
+      create_reading_invitation: {
+        Args: {
+          p_personal_note: string
+          p_reading_round_id: string
+          p_recipient_email: string
+          p_token_digest: string
+        }
+        Returns: {
+          expires_at: string
+          invitation_id: string
+        }[]
+      }
+      revoke_reading_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
+      renew_reading_invitation: {
+        Args: { p_invitation_id: string; p_token_digest: string }
+        Returns: {
+          expires_at: string
+          personal_note: string
+          recipient_email: string
+        }[]
+      }
+      update_manuscript_settings: {
+        Args: { p_logline: string; p_manuscript_id: string; p_title: string }
+        Returns: undefined
       }
     }
     Enums: {
@@ -990,7 +1025,12 @@ export type Database = {
       manuscript_asset_kind: "cover" | "source_document"
       manuscript_asset_processing_status: "pending" | "available" | "failed"
       manuscript_version_status: "draft" | "ready" | "archived"
-      reader_assignment_status: "active" | "completed" | "revoked"
+      reader_assignment_status:
+        | "active"
+        | "completed"
+        | "revoked"
+        | "pending"
+        | "started"
       reading_access_mode: "invite_only" | "open_signup"
       reading_invitation_status: "pending" | "accepted" | "revoked" | "expired"
       reading_round_status: "draft" | "open" | "closed" | "archived"
@@ -1138,7 +1178,13 @@ export const Constants = {
       manuscript_asset_kind: ["cover", "source_document"],
       manuscript_asset_processing_status: ["pending", "available", "failed"],
       manuscript_version_status: ["draft", "ready", "archived"],
-      reader_assignment_status: ["active", "completed", "revoked"],
+      reader_assignment_status: [
+        "active",
+        "completed",
+        "revoked",
+        "pending",
+        "started",
+      ],
       reading_access_mode: ["invite_only", "open_signup"],
       reading_invitation_status: ["pending", "accepted", "revoked", "expired"],
       reading_round_status: ["draft", "open", "closed", "archived"],

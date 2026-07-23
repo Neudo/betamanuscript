@@ -11,6 +11,10 @@ export function LoginScreen({
   next: string | null;
   error: string | null;
 }) {
+  const signUpHref = next
+    ? `/signup?next=${encodeURIComponent(next)}`
+    : "/signup";
+
   return (
     <AuthScreen
       eyebrow="Welcome back"
@@ -19,7 +23,7 @@ export function LoginScreen({
       footer={
         <p>
           New to BetaManuscript?{" "}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href={signUpHref} className="font-medium text-primary hover:underline">
             Create an account
           </Link>
         </p>

@@ -1,8 +1,13 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Json } from "@/lib/supabase/database.types";
+import {
+  MANUSCRIPT_COVERS_BUCKET,
+  MANUSCRIPT_SOURCES_BUCKET,
+} from "@/features/manuscript/api/manuscript-assets";
 import type {
   ChapterEditorialStatus,
   CreatedManuscript,
+  ImportedManuscriptChapter,
   ManuscriptDraft,
   ManuscriptGenre,
   ManuscriptSummary,
@@ -27,8 +32,14 @@ type ManuscriptSummaryRow = {
 
 type ManuscriptVersionRow = {
   id: string;
+  logline: string | null;
   title: string;
   version_number: number;
+};
+
+type ManuscriptAssetStorageRow = {
+  storage_bucket: string;
+  storage_path: string;
 };
 
 type ManuscriptChapterRow = {
@@ -91,7 +102,7 @@ function toManuscriptSummary(row: ManuscriptSummaryRow): ManuscriptSummary {
   )[0];
   const readers = currentVersion
     ? currentVersion.reading_rounds.flatMap((round) => round.reader_assignments)
-      .filter((assignment) => assignment.status !== "revoked").length
+      .filter((assignment) => assignment.status === "started" || assignment.status === "completed").length
     : 0;
 
   return {
@@ -105,7 +116,15 @@ function toManuscriptSummary(row: ManuscriptSummaryRow): ManuscriptSummary {
   };
 }
 
-function toCreateManuscriptPayload(draft: ManuscriptDraft): Json {
+export type CreateManuscriptInput = {
+  draft: ManuscriptDraft;
+  importedChapters?: ImportedManuscriptChapter[];
+};
+
+function toCreateManuscriptPayload({
+  draft,
+  importedChapters,
+}: CreateManuscriptInput): Json {
   return {
     title: draft.title.trim(),
     logline: draft.logline.trim(),
@@ -117,6 +136,15 @@ function toCreateManuscriptPayload(draft: ManuscriptDraft): Json {
     max_readers: draft.maxReaders,
     access_mode: draft.accessMode === "open" ? "open_signup" : "invite_only",
     reader_note: draft.readerNote.trim(),
+    ...(importedChapters ? {
+      chapters: importedChapters.map((chapter) => ({
+        blocks: chapter.blocks.map((block) => ({
+          content: block.content,
+          kind: block.kind,
+        })),
+        title: chapter.title,
+      })),
+    } : {}),
   };
 }
 
@@ -151,7 +179,7 @@ export async function getManuscript(
 
   const { data: versions, error: versionsError } = await supabase
     .from("manuscript_versions")
-    .select("id, title, version_number")
+    .select("id, title, version_number, logline")
     .eq("manuscript_id", manuscriptId)
     .is("archived_at", null)
     .order("version_number", { ascending: false })
@@ -188,6 +216,7 @@ export async function getManuscript(
       totalWordCount: 0,
       version: {
         id: version.id,
+        logline: version.logline,
         number: version.version_number,
         title: version.title,
       },
@@ -307,6 +336,7 @@ export async function getManuscript(
     ),
     version: {
       id: version.id,
+      logline: version.logline,
       number: version.version_number,
       title: version.title,
     },
@@ -331,12 +361,13 @@ export async function getManuscriptGenres(): Promise<ManuscriptGenre[]> {
   return data ?? [];
 }
 
-export async function createManuscript(
-  draft: ManuscriptDraft,
-): Promise<CreatedManuscript> {
+export async function createManuscript({
+  draft,
+  importedChapters,
+}: CreateManuscriptInput): Promise<CreatedManuscript> {
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("create_manuscript_from_draft", {
-    p_draft: toCreateManuscriptPayload(draft),
+    p_draft: toCreateManuscriptPayload({ draft, importedChapters }),
   });
 
   if (error) throw new Error(error.message);
@@ -383,4 +414,76 @@ export async function updateAnnotationSeenStatus({
     .eq("id", annotationId);
 
   if (error) throw new Error(error.message);
+}
+
+export type UpdateManuscriptSettingsInput = {
+  logline: string;
+  manuscriptId: string;
+  title: string;
+};
+
+export async function updateManuscriptSettings({
+  logline,
+  manuscriptId,
+  title,
+}: UpdateManuscriptSettingsInput) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("update_manuscript_settings", {
+    p_logline: logline,
+    p_manuscript_id: manuscriptId,
+    p_title: title,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteManuscript(manuscriptId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { data: versionRows, error: versionsError } = await supabase
+    .from("manuscript_versions")
+    .select("id")
+    .eq("manuscript_id", manuscriptId);
+
+  if (versionsError) throw new Error(versionsError.message);
+
+  const versionIds = (versionRows ?? []).map((version) => version.id);
+  if (versionIds.length > 0) {
+    const { data: assetRows, error: assetsError } = await supabase
+      .from("manuscript_assets")
+      .select("storage_bucket, storage_path")
+      .in("manuscript_version_id", versionIds);
+
+    if (assetsError) throw new Error(assetsError.message);
+
+    const assetPathsByBucket = new Map<string, string[]>();
+    for (const asset of (assetRows ?? []) as ManuscriptAssetStorageRow[]) {
+      if (
+        asset.storage_bucket !== MANUSCRIPT_COVERS_BUCKET
+        && asset.storage_bucket !== MANUSCRIPT_SOURCES_BUCKET
+      ) {
+        throw new Error("This manuscript has an unsupported file attachment.");
+      }
+
+      const paths = assetPathsByBucket.get(asset.storage_bucket) ?? [];
+      paths.push(asset.storage_path);
+      assetPathsByBucket.set(asset.storage_bucket, paths);
+    }
+
+    for (const [bucket, paths] of assetPathsByBucket) {
+      const { error: storageError } = await supabase.storage.from(bucket).remove(paths);
+      if (storageError) throw new Error(storageError.message);
+    }
+  }
+
+  const { data: deletedManuscript, error: deleteError } = await supabase
+    .from("manuscripts")
+    .delete()
+    .eq("id", manuscriptId)
+    .select("id")
+    .maybeSingle();
+
+  if (deleteError) throw new Error(deleteError.message);
+  if (!deletedManuscript) {
+    throw new Error("This manuscript could not be found or deleted.");
+  }
 }

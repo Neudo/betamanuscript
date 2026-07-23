@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   BookOpen,
+  FileText,
   ImagePlus,
   Trash2,
 } from "lucide-react";
@@ -41,13 +42,20 @@ import { useManuscriptDraft } from "@/features/manuscript/hooks/use-manuscript-d
 import {
   useCreateManuscriptMutation,
   useUploadManuscriptCoverMutation,
+  useUploadManuscriptSourceMutation,
 } from "@/features/manuscript/hooks/use-manuscript-mutations";
 import { useManuscriptGenres } from "@/features/manuscript/hooks/use-manuscripts";
+import {
+  getSourceDocumentError,
+  importSourceDocument,
+  sourceDocumentAccept,
+} from "@/features/manuscript/lib/source-document";
 import type {
   ManuscriptAccessMode,
   ManuscriptDraft,
   ManuscriptGenre,
   CreatedManuscript,
+  ImportedManuscriptChapter,
 } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 
@@ -71,8 +79,14 @@ export function CreateManuscriptDialog({
   const editor = useManuscriptDraft();
   const createMutation = useCreateManuscriptMutation();
   const coverMutation = useUploadManuscriptCoverMutation();
+  const sourceMutation = useUploadManuscriptSourceMutation();
   const genresQuery = useManuscriptGenres(open);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [importedChapters, setImportedChapters] = useState<ImportedManuscriptChapter[] | null>(null);
+  const [sourceImportError, setSourceImportError] = useState<string | null>(null);
+  const [isParsingSource, setIsParsingSource] = useState(false);
+  const sourceImportRun = useRef(0);
   const [createdManuscript, setCreatedManuscript] = useState<CreatedManuscript | null>(null);
   const stepTitle =
     editor.step === "info"
@@ -88,7 +102,13 @@ export function CreateManuscriptDialog({
       editor.reset();
       createMutation.reset();
       coverMutation.reset();
+      sourceMutation.reset();
       setCoverFile(null);
+      setSourceFile(null);
+      setImportedChapters(null);
+      setSourceImportError(null);
+      setIsParsingSource(false);
+      sourceImportRun.current += 1;
       setCreatedManuscript(null);
     }
   }
@@ -96,6 +116,48 @@ export function CreateManuscriptDialog({
   function handleCoverChange(nextCoverFile: File | null) {
     setCoverFile(nextCoverFile);
     coverMutation.reset();
+  }
+
+  async function handleSourceChange(nextSourceFile: File | null) {
+    const currentImportRun = sourceImportRun.current + 1;
+    sourceImportRun.current = currentImportRun;
+    sourceMutation.reset();
+    setSourceImportError(null);
+    setSourceFile(nextSourceFile);
+    setImportedChapters(null);
+
+    if (!nextSourceFile) {
+      setIsParsingSource(false);
+      return;
+    }
+
+    const validationError = getSourceDocumentError(nextSourceFile);
+    if (validationError) {
+      setSourceFile(null);
+      setSourceImportError(validationError);
+      setIsParsingSource(false);
+      return;
+    }
+
+    if (!editor.draft.title.trim()) {
+      editor.updateDraft({ title: getTitleFromFilename(nextSourceFile.name) });
+    }
+
+    setIsParsingSource(true);
+    try {
+      const detectedChapters = await importSourceDocument(nextSourceFile);
+      if (currentImportRun !== sourceImportRun.current) return;
+
+      setImportedChapters(detectedChapters);
+      editor.updateDraft({ chapters: detectedChapters.length });
+    } catch (error) {
+      if (currentImportRun !== sourceImportRun.current) return;
+
+      setSourceFile(null);
+      setSourceImportError(error instanceof Error ? error.message : "The source document could not be imported.");
+    } finally {
+      if (currentImportRun === sourceImportRun.current) setIsParsingSource(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -106,8 +168,18 @@ export function CreateManuscriptDialog({
     }
 
     try {
-      const manuscript = createdManuscript ?? await createMutation.mutateAsync(editor.draft);
+      const manuscript = createdManuscript ?? await createMutation.mutateAsync({
+        draft: editor.draft,
+        importedChapters: importedChapters ?? undefined,
+      });
       setCreatedManuscript(manuscript);
+
+      if (sourceFile) {
+        await sourceMutation.mutateAsync({
+          file: sourceFile,
+          manuscriptVersionId: manuscript.manuscriptVersionId,
+        });
+      }
 
       if (coverFile) {
         await coverMutation.mutateAsync({
@@ -153,8 +225,13 @@ export function CreateManuscriptDialog({
                 genresError={genresQuery.isError}
                 genresLoading={genresQuery.isLoading}
                 coverFile={coverFile}
+                sourceFile={sourceFile}
+                importedChapters={importedChapters}
+                sourceImportError={sourceImportError}
+                isParsingSource={isParsingSource}
                 onChange={editor.updateDraft}
                 onCoverChange={handleCoverChange}
+                onSourceChange={handleSourceChange}
               />
             ) : null}
             {editor.step === "structure" ? (
@@ -162,6 +239,7 @@ export function CreateManuscriptDialog({
                 draft={editor.draft}
                 genres={genresQuery.data ?? []}
                 coverFile={coverFile}
+                importedChapters={importedChapters}
                 onChange={editor.updateDraft}
               />
             ) : null}
@@ -204,20 +282,29 @@ export function CreateManuscriptDialog({
                 size="sm"
                 disabled={
                   !editor.canContinue ||
-                  (editor.step === "readers" && (createMutation.isPending || coverMutation.isPending))
+                  isParsingSource ||
+                  (editor.step === "readers" && (
+                    createMutation.isPending ||
+                    coverMutation.isPending ||
+                    sourceMutation.isPending
+                  ))
                 }
                 className={cn(
                   "h-8 gap-2 px-5 text-xs",
                   editor.step !== "readers" && "bg-foreground text-background hover:bg-foreground/90",
                 )}
               >
-                {editor.step === "readers" && (createMutation.isPending || coverMutation.isPending)
-                  ? coverMutation.isPending
+                {editor.step === "readers" && (createMutation.isPending || coverMutation.isPending || sourceMutation.isPending)
+                  ? sourceMutation.isPending
+                    ? "Uploading manuscript"
+                    : coverMutation.isPending
                     ? "Uploading cover"
                     : "Creating manuscript"
                   : editor.step === "readers"
                     ? createdManuscript
-                      ? coverFile
+                      ? sourceMutation.isError
+                        ? "Retry manuscript upload"
+                        : coverMutation.isError || coverFile
                         ? "Retry cover upload"
                         : "Finish manuscript"
                       : "Create manuscript"
@@ -226,9 +313,11 @@ export function CreateManuscriptDialog({
               </Button>
             </div>
           </footer>
-          {createMutation.isError || coverMutation.isError ? (
+          {createMutation.isError || sourceMutation.isError || coverMutation.isError ? (
             <p className="border-t border-destructive/20 bg-destructive/5 px-8 py-3 text-xs text-destructive">
-              {coverMutation.isError
+              {sourceMutation.isError
+                ? `Your manuscript was created, but its source file could not be uploaded. ${sourceMutation.error.message}`
+                : coverMutation.isError
                 ? `Your manuscript was created, but its cover could not be uploaded. ${coverMutation.error.message}`
                 : createMutation.error?.message}
             </p>
@@ -285,14 +374,24 @@ function BookInfoStep({
   genresError,
   genresLoading,
   coverFile,
+  sourceFile,
+  importedChapters,
+  sourceImportError,
+  isParsingSource,
   onChange,
   onCoverChange,
+  onSourceChange,
 }: StepProps & {
   genres: ManuscriptGenre[];
   genresError: boolean;
   genresLoading: boolean;
   coverFile: File | null;
+  sourceFile: File | null;
+  importedChapters: ImportedManuscriptChapter[] | null;
+  sourceImportError: string | null;
+  isParsingSource: boolean;
   onCoverChange: (file: File | null) => void;
+  onSourceChange: (file: File | null) => void;
 }) {
   function toggleGenre(genreSlug: string) {
     onChange({
@@ -305,6 +404,14 @@ function BookInfoStep({
   return (
     <div className="space-y-5">
       <CoverUpload file={coverFile} onChange={onCoverChange} />
+
+      <SourceDocumentUpload
+        file={sourceFile}
+        importedChapters={importedChapters}
+        error={sourceImportError}
+        isParsing={isParsingSource}
+        onChange={onSourceChange}
+      />
 
       <div>
         <FieldLabel htmlFor="manuscript-title" required>Title</FieldLabel>
@@ -391,10 +498,12 @@ function StructureStep({
   draft,
   genres,
   coverFile,
+  importedChapters,
   onChange,
 }: StepProps & {
   genres: ManuscriptGenre[];
   coverFile: File | null;
+  importedChapters: ImportedManuscriptChapter[] | null;
 }) {
   const coverPreviewUrl = useCoverPreviewUrl(coverFile);
 
@@ -410,12 +519,15 @@ function StructureStep({
             max={200}
             value={draft.chapters}
             onChange={(event) => onChange({ chapters: Math.max(1, Math.min(200, Number(event.target.value))) })}
+            disabled={Boolean(importedChapters)}
             className="h-10 w-20 rounded-none border-foreground/20 bg-background px-3 text-center font-mono text-sm font-normal shadow-none"
           />
           <span className="text-[11px] text-muted-foreground">chapters</span>
         </div>
         <p className="mt-1.5 font-mono text-[9px] text-muted-foreground">
-          You can always adjust this after creating the manuscript.
+          {importedChapters
+            ? "Detected automatically from the source document. Replace or remove the file to set this manually."
+            : "You can always adjust this after creating the manuscript."}
         </p>
       </div>
 
@@ -578,6 +690,113 @@ function ReaderSettingsStep({
   );
 }
 
+function SourceDocumentUpload({
+  file,
+  importedChapters,
+  error,
+  isParsing,
+  onChange,
+}: {
+  file: File | null;
+  importedChapters: ImportedManuscriptChapter[] | null;
+  error: string | null;
+  isParsing: boolean;
+  onChange: (file: File | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+
+  function handleDrop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    setDragging(false);
+    const nextFile = event.dataTransfer.files[0];
+    if (nextFile) onChange(nextFile);
+  }
+
+  return (
+    <div>
+      <FieldLabel htmlFor="source-document-upload">Source manuscript</FieldLabel>
+      <input
+        ref={inputRef}
+        id="source-document-upload"
+        type="file"
+        accept={sourceDocumentAccept}
+        className="sr-only"
+        onChange={(event) => {
+          const nextFile = event.target.files?.[0];
+          event.target.value = "";
+          if (nextFile) onChange(nextFile);
+        }}
+      />
+
+      {file ? (
+        <div className="flex items-start gap-3 border border-foreground/15 bg-sidebar/40 p-3">
+          <div className="grid h-10 w-8 shrink-0 place-items-center border border-foreground/10 bg-background">
+            <FileText className="h-4 w-4 text-muted-foreground" strokeWidth={1.25} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium">{file.name}</p>
+            <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+              {isParsing
+                ? "Detecting chapters…"
+                : importedChapters
+                  ? `${importedChapters.length} chapter${importedChapters.length === 1 ? "" : "s"} detected automatically`
+                  : "Ready to import"}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isParsing}
+                onClick={() => inputRef.current?.click()}
+                className="h-auto rounded-none px-3 py-1.5 text-[11px]"
+              >
+                Replace
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isParsing}
+                onClick={() => onChange(null)}
+                className="h-auto px-3 py-1.5 text-[11px] text-muted-foreground"
+              >
+                <Trash2 className="h-3 w-3" />
+                Remove
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
+          className={cn(
+            "flex min-h-28 w-full flex-col items-center justify-center gap-2 border border-dashed border-foreground/25 px-4 py-4 text-muted-foreground transition-colors",
+            dragging && "border-foreground bg-foreground/[0.03] text-foreground",
+          )}
+        >
+          <FileText className="h-[18px] w-[18px]" strokeWidth={1.25} />
+          <span className="text-center text-[11px]">
+            Drop your manuscript or <span className="underline">browse</span>
+          </span>
+          <span className="text-center font-mono text-[9px]">
+            DOCX, TXT, Markdown · max 20 MB · chapters detected automatically
+          </span>
+        </button>
+      )}
+      {error ? <p className="mt-1 font-mono text-[9px] text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
 function CoverUpload({
   file,
   onChange,
@@ -716,6 +935,11 @@ function useCoverPreviewUrl(file: File | null) {
 
 function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(bytes < 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+function getTitleFromFilename(filename: string) {
+  const basename = filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  return basename.slice(0, 300) || "Untitled manuscript";
 }
 
 function FieldLabel({

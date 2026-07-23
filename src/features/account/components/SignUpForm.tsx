@@ -17,9 +17,15 @@ import { RolePicker } from "./RolePicker";
 
 type FieldErrors = Partial<Record<"displayName" | "email" | "password", string>>;
 
-export function SignUpForm() {
+export function SignUpForm({
+  initialRole,
+  next,
+}: {
+  initialRole: UserRole;
+  next: string | null;
+}) {
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>("writer");
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const mutation = useMutation({
     mutationFn: signUp,
@@ -52,7 +58,7 @@ export function SignUpForm() {
     }
 
     setFieldErrors({});
-    mutation.mutate(result.data);
+    mutation.mutate({ ...result.data, next });
   }
 
   if (mutation.data?.status === "confirmation-required") {

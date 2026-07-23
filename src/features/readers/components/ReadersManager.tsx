@@ -1,20 +1,19 @@
 "use client";
 
-import { Clock3, Mail, MoreHorizontal } from "lucide-react";
+import { Clock3, Mail, RotateCcw, UserRoundX } from "lucide-react";
 import { useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,157 +22,220 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { InviteReaderDialog } from "@/features/dashboard/components/InviteReaderDialog";
 import { PageHeader } from "@/features/dashboard/components/PageHeader";
-import { TagBadge } from "@/features/dashboard/components/TagBadge";
-import { readers } from "@/features/dashboard/data/mock-dashboard";
-import type { Reader } from "@/features/dashboard/types";
+import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
+import type { ReaderStatus } from "@/features/readers/api/readers";
+import {
+  useReaderRounds,
+  useResendReaderInvitation,
+  useRevokeReaderInvitation,
+} from "@/features/readers/hooks/use-readers";
 
-const statusStyles = {
-  finished: "border-success/25 bg-success/10 text-success",
-  reading: "border-sky-800/25 bg-sky-800/10 text-sky-900",
-  inactive: "border-warning/25 bg-warning/10 text-warning",
+const statusStyles: Record<ReaderStatus, string> = {
+  active: "border-sky-800/25 bg-sky-800/10 text-sky-900",
+  completed: "border-success/25 bg-success/10 text-success",
+  pending: "border-warning/25 bg-warning/10 text-warning",
+  revoked: "border-border bg-muted text-muted-foreground",
+  started: "border-sky-800/25 bg-sky-800/10 text-sky-900",
 };
 
+const statusLabels: Record<ReaderStatus, string> = {
+  active: "Started",
+  completed: "Completed",
+  pending: "Pending",
+  revoked: "Revoked",
+  started: "Started",
+};
+
+function formatDate(value: string | null) {
+  if (!value) return "—";
+
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 export function ReadersManager() {
-  const [selectedReader, setSelectedReader] = useState<Reader | null>(null);
-  const totalAnnotations = readers.reduce((total, reader) => total + reader.annotations, 0);
+  const [selectedRoundId, setSelectedRoundId] = useState<string | null>(null);
+  const readerRoundsQuery = useReaderRounds();
+  const resendMutation = useResendReaderInvitation();
+  const revokeMutation = useRevokeReaderInvitation();
+  const readerRounds = readerRoundsQuery.data ?? [];
+  const activeRound = readerRounds.find((round) => round.id === selectedRoundId)
+    ?? readerRounds[0]
+    ?? null;
+
+  const startedCount = activeRound
+    ? activeRound.readers.filter((reader) => reader.status === "started" || reader.status === "completed").length
+    : 0;
+  const pendingCount = activeRound
+    ? activeRound.readers.filter((reader) => reader.status === "pending").length
+    : 0;
+  const completedCount = activeRound
+    ? activeRound.readers.filter((reader) => reader.status === "completed").length
+    : 0;
 
   return (
     <div className="min-h-full">
       <PageHeader
         eyebrow="Readers"
         title="Beta readers"
-        actions={<InviteReaderDialog triggerVariant="default" />}
+        description={activeRound ? `${activeRound.manuscriptTitle} · ${activeRound.versionTitle}` : undefined}
+        actions={activeRound ? <InviteReaderDialog readingRoundId={activeRound.id} triggerVariant="default" /> : undefined}
       />
 
       <div className="max-w-[1100px] space-y-6 p-5 sm:p-8">
-        <section className="grid gap-3 sm:grid-cols-3">
-          {[
-            ["Total readers", "5"],
-            ["Finished", "1 / 5"],
-            ["Total annotations", String(totalAnnotations)],
-          ].map(([label, value]) => (
-            <div key={label} className="border border-foreground/10 bg-card p-5">
-              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
-              <p className="mt-3 text-3xl font-normal">{value}</p>
-            </div>
-          ))}
-        </section>
+        {readerRoundsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading reader invitations…</p>
+        ) : null}
 
-        <Card className="overflow-hidden border-foreground/10">
-          <Table>
-            <TableHeader className="bg-sidebar/70">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="font-mono text-[9px] uppercase tracking-widest">Reader</TableHead>
-                <TableHead className="font-mono text-[9px] uppercase tracking-widest">Status</TableHead>
-                <TableHead className="font-mono text-[9px] uppercase tracking-widest">Progress</TableHead>
-                <TableHead className="font-mono text-[9px] uppercase tracking-widest">Annotations</TableHead>
-                <TableHead className="font-mono text-[9px] uppercase tracking-widest">Last active</TableHead>
-                <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {readers.map((reader) => {
-                const progress = Math.round((reader.chapter / 9) * 100);
-                return (
-                  <TableRow key={reader.id} className="cursor-pointer" onClick={() => setSelectedReader(reader)}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <span className="grid h-8 w-8 place-items-center rounded-full text-xs text-white" style={{ backgroundColor: reader.color }}>
-                          {reader.initials}
-                        </span>
-                        <span>
-                          <span className="block text-xs font-medium">{reader.name}</span>
-                          <span className="block text-[10px] text-muted-foreground">{reader.email}</span>
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`rounded-none font-mono text-[8px] uppercase ${statusStyles[reader.status]}`}>
-                        {reader.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="min-w-36">
-                      <div className="flex items-center gap-3">
-                        <Progress value={progress} className="h-1.5 w-24" />
-                        <span className="font-mono text-[9px] text-muted-foreground">Ch {reader.chapter} / 9</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{reader.annotations}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{reader.lastActive}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon-sm" aria-label={`View ${reader.name}`} onClick={(event) => { event.stopPropagation(); setSelectedReader(reader); }}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+        {readerRoundsQuery.isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{readerRoundsQuery.error.message}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {!readerRoundsQuery.isLoading && !readerRoundsQuery.isError && !activeRound ? (
+          <Card className="border-dashed p-8 text-center">
+            <Mail className="mx-auto h-5 w-5 text-muted-foreground" />
+            <h2 className="mt-4 text-lg font-medium">No manuscript to share yet</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create a manuscript first, then send an email invitation from this page.
+            </p>
+          </Card>
+        ) : null}
+
+        {activeRound ? (
+          <>
+            {readerRounds.length > 1 ? (
+              <div className="max-w-sm space-y-2">
+                <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground" htmlFor="reading-round">
+                  Reading round
+                </label>
+                <Select value={activeRound.id} onValueChange={setSelectedRoundId}>
+                  <SelectTrigger id="reading-round"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {readerRounds.map((round) => (
+                      <SelectItem key={round.id} value={round.id}>
+                        {round.manuscriptTitle} · {round.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+
+            <section className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["Readers started", `${startedCount} / ${activeRound.maxReaders}`],
+                ["Pending invitations", String(pendingCount)],
+                ["Completed", String(completedCount)],
+              ].map(([label, value]) => (
+                <div key={label} className="border border-foreground/10 bg-card p-5">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+                  <p className="mt-3 text-3xl font-normal">{value}</p>
+                </div>
+              ))}
+            </section>
+
+            {startedCount >= activeRound.maxReaders && pendingCount > 0 ? (
+              <Alert className="border-warning/25 bg-warning/5">
+                <Clock3 className="h-4 w-4 text-warning" />
+                <AlertDescription>
+                  The round is currently full. Pending invitations stay pending,
+                  but the next acceptance will be refused until a reader is removed.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Card className="overflow-hidden border-foreground/10">
+              <Table>
+                <TableHeader className="bg-sidebar/70">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Reader</TableHead>
+                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Status</TableHead>
+                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Started</TableHead>
+                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Invitation</TableHead>
+                    <TableHead className="w-44"><span className="sr-only">Actions</span></TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {activeRound.readers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-28 text-center text-sm text-muted-foreground">
+                        No invitations have been sent for this round.
+                      </TableCell>
+                    </TableRow>
+                  ) : activeRound.readers.map((reader) => (
+                    <TableRow key={reader.id}>
+                      <TableCell>
+                        <div>
+                          <span className="block text-xs font-medium">{reader.name ?? reader.email}</span>
+                          <span className="block text-[10px] text-muted-foreground">{reader.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`rounded-none font-mono text-[8px] uppercase ${statusStyles[reader.status]}`}>
+                          {statusLabels[reader.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatDate(reader.startedAt)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {reader.status === "pending" ? (reader.sentAt ? `Sent · expires ${formatDate(reader.expiresAt)}` : "Email not sent") : "Accepted"}
+                      </TableCell>
+                      <TableCell>
+                        {reader.invitationId && reader.status === "pending" ? (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => resendMutation.mutate(reader.invitationId!)}
+                              disabled={resendMutation.isPending}
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              Resend
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => revokeMutation.mutate(reader.invitationId!)}
+                              disabled={revokeMutation.isPending}
+                            >
+                              <UserRoundX className="h-3.5 w-3.5" />
+                              Revoke
+                            </Button>
+                          </div>
+                        ) : reader.invitationId && (reader.status === "started" || reader.status === "completed") ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="ml-auto flex"
+                            onClick={() => revokeMutation.mutate(reader.invitationId!)}
+                            disabled={revokeMutation.isPending}
+                          >
+                            <UserRoundX className="h-3.5 w-3.5" />
+                            Remove
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
 
-        <Alert className="border-warning/25 bg-warning/5">
-          <Clock3 className="h-4 w-4 text-warning" />
-          <AlertDescription>
-            Tom W. has been inactive for 9 days. Consider sending a reminder or removing them from this round.
-          </AlertDescription>
-        </Alert>
+            {resendMutation.isError || revokeMutation.isError ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {resendMutation.error?.message ?? revokeMutation.error?.message}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+          </>
+        ) : null}
       </div>
-
-      <Sheet open={selectedReader !== null} onOpenChange={(open) => { if (!open) setSelectedReader(null); }}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          {selectedReader ? (
-            <>
-              <SheetHeader>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center text-sm text-white" style={{ backgroundColor: selectedReader.color }}>
-                    {selectedReader.initials}
-                  </span>
-                  <div>
-                    <SheetTitle className="text-[28px] font-medium">{selectedReader.name}</SheetTitle>
-                    <SheetDescription>{selectedReader.email}</SheetDescription>
-                  </div>
-                </div>
-              </SheetHeader>
-              <div className="mt-8 grid grid-cols-3 gap-px border bg-border">
-                {[
-                  ["Annotations", selectedReader.annotations],
-                  ["Chapter", `${selectedReader.chapter}/9`],
-                  ["Last active", selectedReader.lastActive],
-                ].map(([label, value]) => (
-                  <div key={label} className="bg-card p-3 text-center">
-                    <p className="font-mono text-[8px] uppercase text-muted-foreground">{label}</p>
-                    <p className="mt-2 text-sm font-medium">{value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-7 space-y-3">
-                <div className="flex justify-between text-xs">
-                  <span>Reading progress</span>
-                  <span className="font-mono text-[9px] text-muted-foreground">{Math.round((selectedReader.chapter / 9) * 100)}%</span>
-                </div>
-                <Progress value={(selectedReader.chapter / 9) * 100} className="h-2" />
-              </div>
-              <div className="mt-7">
-                <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">Most used tags</p>
-                <div className="mt-3 flex gap-2">
-                  <TagBadge tag="Strong line" />
-                  <TagBadge tag="Emotional impact" />
-                </div>
-              </div>
-              <blockquote className="mt-7 border-l-2 border-primary/40 pl-4 font-display text-lg italic leading-7 text-muted-foreground">
-                “Finished this chapter in one sitting. The tension between the personal and political finally clicks.”
-              </blockquote>
-              <Button className="mt-8 w-full">
-                <Mail className="h-4 w-4" />
-                Send reminder
-              </Button>
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

@@ -4,12 +4,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   uploadManuscriptCover,
+  uploadManuscriptSourceDocument,
   type UploadManuscriptCoverInput,
+  type UploadManuscriptSourceInput,
 } from "@/features/manuscript/api/manuscript-assets";
 import {
   createManuscript,
+  deleteManuscript,
+  updateManuscriptSettings,
   updateAnnotationSeenStatus,
   updateChapterEditorialStatus,
+  type UpdateManuscriptSettingsInput,
 } from "@/features/manuscript/api/manuscripts";
 import { manuscriptKeys } from "@/features/manuscript/query-keys";
 import type {
@@ -35,6 +40,45 @@ export function useUploadManuscriptCoverMutation() {
 
   return useMutation<void, Error, UploadManuscriptCoverInput>({
     mutationFn: uploadManuscriptCover,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: manuscriptKeys.all,
+      });
+    },
+  });
+}
+
+export function useUploadManuscriptSourceMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, UploadManuscriptSourceInput>({
+    mutationFn: uploadManuscriptSourceDocument,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: manuscriptKeys.all,
+      });
+    },
+  });
+}
+
+export function useUpdateManuscriptSettingsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, UpdateManuscriptSettingsInput>({
+    mutationFn: updateManuscriptSettings,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: manuscriptKeys.all,
+      });
+    },
+  });
+}
+
+export function useDeleteManuscriptMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: deleteManuscript,
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: manuscriptKeys.all,

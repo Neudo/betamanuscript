@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, UserPlus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -12,7 +13,7 @@ import {
   revisionPriorities,
 } from "../data/mock-dashboard";
 import type { AnnotationTag } from "../types";
-import { InviteReaderDialog } from "./InviteReaderDialog";
+import { Button } from "@/components/ui/button";
 import { TagBadge } from "./TagBadge";
 
 const stats = [
@@ -43,7 +44,12 @@ export function DashboardOverview() {
           <h1 className="text-[28px] font-normal leading-tight tracking-normal">{manuscript.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{manuscript.draft} · Last activity 2 hours ago</p>
         </div>
-        <InviteReaderDialog />
+        <Button asChild size="sm" variant="outline" className="border-primary text-primary">
+          <Link href="/dashboard/readers">
+            <UserPlus className="h-3.5 w-3.5" />
+            Invite reader
+          </Link>
+        </Button>
       </div>
 
       <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">

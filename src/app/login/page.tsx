@@ -15,13 +15,13 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const account = await getAuthenticatedAccount();
 
-  if (account) {
-    redirect(getWorkspaceHome(account.role));
-  }
-
   const { error, next } = await searchParams;
   const safeNext = getSafeInternalPath(Array.isArray(next) ? next[0] : next);
   const authError = Array.isArray(error) ? error[0] : error;
+
+  if (account) {
+    redirect(safeNext ?? getWorkspaceHome(account.role));
+  }
 
   return <LoginScreen next={safeNext} error={authError ?? null} />;
 }
