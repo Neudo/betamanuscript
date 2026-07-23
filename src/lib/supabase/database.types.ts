@@ -973,7 +973,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_manuscript_from_draft: {
+        Args: { p_draft: Json }
+        Returns: {
+          manuscript_id: string
+          manuscript_version_id: string
+          reading_round_id: string
+        }[]
+      }
     }
     Enums: {
       account_plan: "free" | "pro"

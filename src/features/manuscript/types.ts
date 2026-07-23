@@ -2,14 +2,32 @@ export type ManuscriptWizardStep = "info" | "structure" | "readers";
 
 export type ManuscriptAccessMode = "invite" | "open";
 
+export type ManuscriptWordCountBand =
+  | "under_40k"
+  | "40k_80k"
+  | "80k_120k"
+  | "120k_plus";
+
+export type ManuscriptGenre = {
+  slug: string;
+  label: string;
+};
+
+export type ChapterEditorialStatus = "draft" | "needs_work" | "complete";
+
+export type ManuscriptBlockKind =
+  | "paragraph"
+  | "scene_break"
+  | "heading"
+  | "blockquote";
+
 export type ManuscriptDraft = {
   title: string;
   logline: string;
-  genres: string[];
+  genreSlugs: string[];
   draftNumber: number;
-  coverDataUrl: string | null;
   chapters: number;
-  wordCount: string;
+  wordCountBand: ManuscriptWordCountBand | "";
   deadline: string;
   maxReaders: number;
   accessMode: ManuscriptAccessMode;
@@ -20,6 +38,57 @@ export type ManuscriptSummary = {
   id: string;
   title: string;
   draft: string;
+  versionId: string | null;
+  versionNumber: number | null;
   chapters: number;
   readers: number;
+};
+
+export type CreatedManuscript = {
+  manuscriptId: string;
+  manuscriptVersionId: string;
+  readingRoundId: string;
+};
+
+export type ManuscriptWorkspaceBlock = {
+  id: string;
+  kind: ManuscriptBlockKind;
+  content: string;
+  position: number;
+};
+
+export type ManuscriptWorkspaceAnnotation = {
+  id: string;
+  chapterId: string;
+  comment: string | null;
+  createdAt: string;
+  isSeenByAuthor: boolean;
+  quote: string;
+  readerName: string;
+  tag: {
+    color: string;
+    label: string;
+  };
+};
+
+export type ManuscriptWorkspaceChapter = {
+  annotations: ManuscriptWorkspaceAnnotation[];
+  blocks: ManuscriptWorkspaceBlock[];
+  editorialStatus: ChapterEditorialStatus;
+  id: string;
+  position: number;
+  title: string;
+  wordCount: number;
+};
+
+export type ManuscriptWorkspaceData = {
+  chapters: ManuscriptWorkspaceChapter[];
+  id: string;
+  title: string;
+  totalWordCount: number;
+  version: {
+    id: string;
+    number: number;
+    title: string;
+  } | null;
 };

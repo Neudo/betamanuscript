@@ -1,4 +1,8 @@
-import type { ManuscriptDraft, ManuscriptWizardStep } from "@/features/manuscript/types";
+import type {
+  ManuscriptDraft,
+  ManuscriptWizardStep,
+  ManuscriptWordCountBand,
+} from "@/features/manuscript/types";
 
 export const manuscriptWizardSteps: Array<{ id: ManuscriptWizardStep; label: string }> = [
   { id: "info", label: "Book info" },
@@ -6,33 +10,23 @@ export const manuscriptWizardSteps: Array<{ id: ManuscriptWizardStep; label: str
   { id: "readers", label: "Beta readers" },
 ];
 
-export const manuscriptGenres = [
-  "Literary fiction",
-  "Fantasy",
-  "Science fiction",
-  "Historical fiction",
-  "Thriller / Mystery",
-  "Romance",
-  "Horror",
-  "Young adult",
-  "Other",
-];
-
-export const manuscriptWordCounts = [
-  "Under 40k",
-  "40k-80k",
-  "80k-120k",
-  "120k+",
+export const manuscriptWordCountOptions: Array<{
+  value: ManuscriptWordCountBand;
+  label: string;
+}> = [
+  { value: "under_40k", label: "Under 40k" },
+  { value: "40k_80k", label: "40k-80k" },
+  { value: "80k_120k", label: "80k-120k" },
+  { value: "120k_plus", label: "120k+" },
 ];
 
 export const initialManuscriptDraft: ManuscriptDraft = {
   title: "",
   logline: "",
-  genres: [],
+  genreSlugs: [],
   draftNumber: 1,
-  coverDataUrl: null,
   chapters: 12,
-  wordCount: "",
+  wordCountBand: "",
   deadline: "",
   maxReaders: 5,
   accessMode: "invite",

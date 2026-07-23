@@ -13,6 +13,7 @@ import {
   DragEvent,
   FormEvent,
   ReactNode,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -31,21 +32,28 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import type { AccountPlan } from "@/features/account/types";
+import { getCoverFileError } from "@/features/manuscript/api/manuscript-assets";
 import {
-  manuscriptGenres,
   manuscriptWizardSteps,
-  manuscriptWordCounts,
+  manuscriptWordCountOptions,
 } from "@/features/manuscript/data/create-manuscript";
-import { useCreateManuscript } from "@/features/manuscript/hooks/use-create-manuscript";
+import { useManuscriptDraft } from "@/features/manuscript/hooks/use-manuscript-draft";
+import {
+  useCreateManuscriptMutation,
+  useUploadManuscriptCoverMutation,
+} from "@/features/manuscript/hooks/use-manuscript-mutations";
+import { useManuscriptGenres } from "@/features/manuscript/hooks/use-manuscripts";
 import type {
   ManuscriptAccessMode,
   ManuscriptDraft,
+  ManuscriptGenre,
+  CreatedManuscript,
 } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 
 type CreateManuscriptDialogProps = {
   children?: ReactNode;
-  onCreate: (draft: ManuscriptDraft) => void;
+  onCreated?: (manuscript: CreatedManuscript) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   accountPlan?: AccountPlan;
@@ -53,14 +61,19 @@ type CreateManuscriptDialogProps = {
 
 export function CreateManuscriptDialog({
   children,
-  onCreate,
+  onCreated,
   open: controlledOpen,
   onOpenChange,
   accountPlan = "free",
 }: CreateManuscriptDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
-  const editor = useCreateManuscript();
+  const editor = useManuscriptDraft();
+  const createMutation = useCreateManuscriptMutation();
+  const coverMutation = useUploadManuscriptCoverMutation();
+  const genresQuery = useManuscriptGenres(open);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [createdManuscript, setCreatedManuscript] = useState<CreatedManuscript | null>(null);
   const stepTitle =
     editor.step === "info"
       ? "Tell us about the book"
@@ -71,18 +84,43 @@ export function CreateManuscriptDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen === undefined) setInternalOpen(nextOpen);
     onOpenChange?.(nextOpen);
-    if (!nextOpen) editor.reset();
+    if (!nextOpen) {
+      editor.reset();
+      createMutation.reset();
+      coverMutation.reset();
+      setCoverFile(null);
+      setCreatedManuscript(null);
+    }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleCoverChange(nextCoverFile: File | null) {
+    setCoverFile(nextCoverFile);
+    coverMutation.reset();
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (editor.step !== "readers") {
       if (editor.canContinue) editor.nextStep();
       return;
     }
 
-    onCreate(editor.draft);
-    handleOpenChange(false);
+    try {
+      const manuscript = createdManuscript ?? await createMutation.mutateAsync(editor.draft);
+      setCreatedManuscript(manuscript);
+
+      if (coverFile) {
+        await coverMutation.mutateAsync({
+          file: coverFile,
+          manuscriptVersionId: manuscript.manuscriptVersionId,
+        });
+      }
+
+      onCreated?.(manuscript);
+      handleOpenChange(false);
+    } catch {
+      // The mutation state renders the database error beneath the form.
+    }
   }
 
   return (
@@ -109,10 +147,23 @@ export function CreateManuscriptDialog({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
             {editor.step === "info" ? (
-              <BookInfoStep draft={editor.draft} onChange={editor.updateDraft} />
+              <BookInfoStep
+                draft={editor.draft}
+                genres={genresQuery.data ?? []}
+                genresError={genresQuery.isError}
+                genresLoading={genresQuery.isLoading}
+                coverFile={coverFile}
+                onChange={editor.updateDraft}
+                onCoverChange={handleCoverChange}
+              />
             ) : null}
             {editor.step === "structure" ? (
-              <StructureStep draft={editor.draft} onChange={editor.updateDraft} />
+              <StructureStep
+                draft={editor.draft}
+                genres={genresQuery.data ?? []}
+                coverFile={coverFile}
+                onChange={editor.updateDraft}
+              />
             ) : null}
             {editor.step === "readers" ? (
               <ReaderSettingsStep
@@ -151,17 +202,37 @@ export function CreateManuscriptDialog({
               <Button
                 type="submit"
                 size="sm"
-                disabled={!editor.canContinue}
+                disabled={
+                  !editor.canContinue ||
+                  (editor.step === "readers" && (createMutation.isPending || coverMutation.isPending))
+                }
                 className={cn(
                   "h-8 gap-2 px-5 text-xs",
                   editor.step !== "readers" && "bg-foreground text-background hover:bg-foreground/90",
                 )}
               >
-                {editor.step === "readers" ? "Create manuscript" : "Continue"}
+                {editor.step === "readers" && (createMutation.isPending || coverMutation.isPending)
+                  ? coverMutation.isPending
+                    ? "Uploading cover"
+                    : "Creating manuscript"
+                  : editor.step === "readers"
+                    ? createdManuscript
+                      ? coverFile
+                        ? "Retry cover upload"
+                        : "Finish manuscript"
+                      : "Create manuscript"
+                    : "Continue"}
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
           </footer>
+          {createMutation.isError || coverMutation.isError ? (
+            <p className="border-t border-destructive/20 bg-destructive/5 px-8 py-3 text-xs text-destructive">
+              {coverMutation.isError
+                ? `Your manuscript was created, but its cover could not be uploaded. ${coverMutation.error.message}`
+                : createMutation.error?.message}
+            </p>
+          ) : null}
         </form>
       </DialogContent>
     </Dialog>
@@ -208,18 +279,32 @@ type StepProps = {
   onChange: (patch: Partial<ManuscriptDraft>) => void;
 };
 
-function BookInfoStep({ draft, onChange }: StepProps) {
-  function toggleGenre(genre: string) {
+function BookInfoStep({
+  draft,
+  genres,
+  genresError,
+  genresLoading,
+  coverFile,
+  onChange,
+  onCoverChange,
+}: StepProps & {
+  genres: ManuscriptGenre[];
+  genresError: boolean;
+  genresLoading: boolean;
+  coverFile: File | null;
+  onCoverChange: (file: File | null) => void;
+}) {
+  function toggleGenre(genreSlug: string) {
     onChange({
-      genres: draft.genres.includes(genre)
-        ? draft.genres.filter((item) => item !== genre)
-        : [...draft.genres, genre],
+      genreSlugs: draft.genreSlugs.includes(genreSlug)
+        ? draft.genreSlugs.filter((item) => item !== genreSlug)
+        : [...draft.genreSlugs, genreSlug],
     });
   }
 
   return (
     <div className="space-y-5">
-      <CoverUpload value={draft.coverDataUrl} onChange={(coverDataUrl) => onChange({ coverDataUrl })} />
+      <CoverUpload file={coverFile} onChange={onCoverChange} />
 
       <div>
         <FieldLabel htmlFor="manuscript-title" required>Title</FieldLabel>
@@ -253,12 +338,12 @@ function BookInfoStep({ draft, onChange }: StepProps) {
           Genres
         </legend>
         <div className="flex flex-wrap gap-1.5">
-          {manuscriptGenres.map((genre, index) => {
-            const selected = draft.genres.includes(genre);
+          {genres.map((genre, index) => {
+            const selected = draft.genreSlugs.includes(genre.slug);
 
             return (
               <Label
-                key={genre}
+                key={genre.slug}
                 htmlFor={`manuscript-genre-${index}`}
                 className={cn(
                   "relative cursor-pointer border border-foreground/20 px-2.5 py-1.5 text-[11px] font-normal text-foreground/75",
@@ -268,14 +353,16 @@ function BookInfoStep({ draft, onChange }: StepProps) {
                 <Checkbox
                   id={`manuscript-genre-${index}`}
                   checked={selected}
-                  onCheckedChange={() => toggleGenre(genre)}
+                  onCheckedChange={() => toggleGenre(genre.slug)}
                   className="sr-only"
                 />
-                {genre}
+                {genre.label}
               </Label>
             );
           })}
         </div>
+        {genresLoading ? <p className="mt-2 text-[11px] text-muted-foreground">Loading genres…</p> : null}
+        {genresError ? <p className="mt-2 text-[11px] text-destructive">Genres could not be loaded.</p> : null}
       </fieldset>
 
       <div>
@@ -300,7 +387,17 @@ function BookInfoStep({ draft, onChange }: StepProps) {
   );
 }
 
-function StructureStep({ draft, onChange }: StepProps) {
+function StructureStep({
+  draft,
+  genres,
+  coverFile,
+  onChange,
+}: StepProps & {
+  genres: ManuscriptGenre[];
+  coverFile: File | null;
+}) {
+  const coverPreviewUrl = useCoverPreviewUrl(coverFile);
+
   return (
     <div className="space-y-5">
       <div>
@@ -324,18 +421,22 @@ function StructureStep({ draft, onChange }: StepProps) {
 
       <div>
         <FieldLabel>Approximate word count</FieldLabel>
-        <RadioGroup value={draft.wordCount} onValueChange={(wordCount) => onChange({ wordCount })} className="flex flex-wrap gap-2">
-          {manuscriptWordCounts.map((wordCount) => (
+        <RadioGroup
+          value={draft.wordCountBand}
+          onValueChange={(wordCountBand) => onChange({ wordCountBand: wordCountBand as ManuscriptDraft["wordCountBand"] })}
+          className="flex flex-wrap gap-2"
+        >
+          {manuscriptWordCountOptions.map((wordCount) => (
             <Label
-              key={wordCount}
-              htmlFor={`word-count-${wordCount}`}
+              key={wordCount.value}
+              htmlFor={`word-count-${wordCount.value}`}
               className={cn(
                 "relative cursor-pointer border border-foreground/20 px-3 py-2 text-[11px] font-normal text-foreground/75",
-                draft.wordCount === wordCount && "border-foreground bg-foreground text-background",
+                draft.wordCountBand === wordCount.value && "border-foreground bg-foreground text-background",
               )}
             >
-              <RadioGroupItem id={`word-count-${wordCount}`} value={wordCount} className="sr-only" />
-              {wordCount}
+              <RadioGroupItem id={`word-count-${wordCount.value}`} value={wordCount.value} className="sr-only" />
+              {wordCount.label}
             </Label>
           ))}
         </RadioGroup>
@@ -356,8 +457,15 @@ function StructureStep({ draft, onChange }: StepProps) {
       </div>
 
       <div className="flex items-center gap-4 border border-foreground/10 bg-sidebar/40 p-4">
-        {draft.coverDataUrl ? (
-          <Image src={draft.coverDataUrl} alt="Cover preview" width={36} height={50} unoptimized className="h-[50px] w-9 shrink-0 object-cover" />
+        {coverPreviewUrl ? (
+          <Image
+            src={coverPreviewUrl}
+            alt="Cover preview"
+            width={36}
+            height={50}
+            unoptimized
+            className="h-[50px] w-9 shrink-0 border border-foreground/10 object-cover"
+          />
         ) : (
           <div className="grid h-[50px] w-9 shrink-0 place-items-center border border-foreground/10 bg-foreground/[0.07]">
             <BookOpen className="h-3 w-3 text-muted-foreground" strokeWidth={1.25} />
@@ -368,8 +476,15 @@ function StructureStep({ draft, onChange }: StepProps) {
           <p className="mb-1 text-sm font-medium">{draft.title || "Untitled"}</p>
           <p className="font-mono text-[9px] text-muted-foreground">
             Draft {draft.draftNumber} · {draft.chapters} ch
-            {draft.wordCount ? ` · ${draft.wordCount}` : ""}
-            {draft.genres.length > 0 ? ` · ${draft.genres.join(", ")}` : ""}
+            {draft.wordCountBand
+              ? ` · ${manuscriptWordCountOptions.find((option) => option.value === draft.wordCountBand)?.label}`
+              : ""}
+            {draft.genreSlugs.length > 0
+              ? ` · ${draft.genreSlugs
+                .map((slug) => genres.find((genre) => genre.slug === slug)?.label)
+                .filter(Boolean)
+                .join(", ")}`
+              : ""}
           </p>
         </div>
       </div>
@@ -463,35 +578,39 @@ function ReaderSettingsStep({
   );
 }
 
-function CoverUpload({ value, onChange }: { value: string | null; onChange: (value: string | null) => void }) {
+function CoverUpload({
+  file,
+  onChange,
+}: {
+  file: File | null;
+  onChange: (file: File | null) => void;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const previewUrl = useCoverPreviewUrl(file);
 
-  function readFile(file: File) {
-    if (!file.type.startsWith("image/")) {
-      setError("Choose a JPG, PNG or WEBP image.");
+  function selectFile(nextFile: File) {
+    const validationError = getCoverFileError(nextFile);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      onChange(typeof event.target?.result === "string" ? event.target.result : null);
-      setError(null);
-    };
-    reader.readAsDataURL(file);
+    setError(null);
+    onChange(nextFile);
   }
 
   function handleDrop(event: DragEvent<HTMLButtonElement>) {
     event.preventDefault();
     setDragging(false);
-    const file = event.dataTransfer.files[0];
-    if (file) readFile(file);
+    const nextFile = event.dataTransfer.files[0];
+    if (nextFile) selectFile(nextFile);
   }
 
   return (
     <div>
-      <FieldLabel htmlFor="cover-upload">Cover image</FieldLabel>
+      <FieldLabel htmlFor="cover-upload">Book cover</FieldLabel>
       <input
         ref={inputRef}
         id="cover-upload"
@@ -499,21 +618,49 @@ function CoverUpload({ value, onChange }: { value: string | null; onChange: (val
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) readFile(file);
+          const nextFile = event.target.files?.[0];
+          event.target.value = "";
+          if (nextFile) selectFile(nextFile);
         }}
       />
 
-      {value ? (
+      {file && previewUrl ? (
         <div className="flex items-start gap-4">
-          <Image src={value} alt="Cover preview" width={80} height={112} unoptimized className="h-28 w-20 shrink-0 border border-foreground/15 object-cover shadow-[2px_3px_8px_rgba(28,24,18,0.12)]" />
-          <div className="flex flex-col gap-2 pt-1">
-            <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()} className="h-auto rounded-none px-3 py-1.5 text-[11px]">
-              <ImagePlus className="h-3 w-3" />Replace
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)} className="h-auto justify-start px-3 py-1.5 text-[11px] text-muted-foreground">
-              <Trash2 className="h-3 w-3" />Remove
-            </Button>
+          <Image
+            src={previewUrl}
+            alt="Cover preview"
+            width={80}
+            height={112}
+            unoptimized
+            className="h-28 w-20 shrink-0 border border-foreground/15 object-cover shadow-[2px_3px_8px_rgba(28,24,18,0.12)]"
+          />
+          <div className="min-w-0 pt-1">
+            <p className="truncate text-xs font-medium">{file.name}</p>
+            <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+              {formatFileSize(file.size)} · Uploads when the manuscript is created
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => inputRef.current?.click()}
+                className="h-auto rounded-none px-3 py-1.5 text-[11px]"
+              >
+                <ImagePlus className="h-3 w-3" />
+                Replace
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onChange(null)}
+                className="h-auto px-3 py-1.5 text-[11px] text-muted-foreground"
+              >
+                <Trash2 className="h-3 w-3" />
+                Remove
+              </Button>
+            </div>
           </div>
         </div>
       ) : (
@@ -535,12 +682,40 @@ function CoverUpload({ value, onChange }: { value: string | null; onChange: (val
           <span className="text-center text-[11px]">
             Drop an image or <span className="underline">browse</span>
           </span>
-          <span className="font-mono text-[9px]">JPG, PNG, WEBP - recommended 2:3 ratio</span>
+          <span className="font-mono text-[9px]">JPG, PNG, WEBP · max 5 MB · recommended 2:3 ratio</span>
         </button>
       )}
-      {error ? <p className="mt-1 font-mono text-[9px] text-primary">{error}</p> : null}
+      {error ? <p className="mt-1 font-mono text-[9px] text-destructive">{error}</p> : null}
     </div>
   );
+}
+
+function useCoverPreviewUrl(file: File | null) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) return;
+
+    let active = true;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (active && typeof reader.result === "string") {
+        setPreviewUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    return () => {
+      active = false;
+      reader.abort();
+    };
+  }, [file]);
+
+  return file ? previewUrl : null;
+}
+
+function formatFileSize(bytes: number) {
+  return `${(bytes / 1024 / 1024).toFixed(bytes < 1024 * 1024 ? 1 : 0)} MB`;
 }
 
 function FieldLabel({

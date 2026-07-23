@@ -11,7 +11,7 @@ import type {
   ManuscriptWizardStep,
 } from "@/features/manuscript/types";
 
-export function useCreateManuscript() {
+export function useManuscriptDraft() {
   const [step, setStep] = useState<ManuscriptWizardStep>("info");
   const [draft, setDraft] = useState<ManuscriptDraft>(initialManuscriptDraft);
 

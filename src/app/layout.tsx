@@ -39,6 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${ebGaramond.variable} ${dmMono.variable}`}
     >
       <head>
+        <meta name="google-site-verification" content="4CJoR1L_QByu5LWxKrQldEOgOaEjDBvhH7zA1W4CZKQ" />
         {process.env.NODE_ENV === "development" && (
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"
