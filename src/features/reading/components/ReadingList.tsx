@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, BookOpen, CalendarDays } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -101,8 +102,17 @@ function ReadingCard({ item }: { item: ReaderManuscriptListItem }) {
     <Card className="group relative overflow-hidden border-foreground/10 p-0 transition-colors hover:border-primary/35">
       <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
       <div className="grid gap-5 p-5 pl-7 sm:grid-cols-[78px_1fr] sm:p-6 sm:pl-8">
-        <div className="flex aspect-[2/3] w-[78px] items-center justify-center bg-primary text-primary-foreground shadow-sm">
-          <BookOpen className="h-5 w-5 opacity-60" strokeWidth={1.25} />
+        <div className="relative flex aspect-[2/3] w-[78px] items-center justify-center overflow-hidden bg-primary text-primary-foreground shadow-sm">
+          {item.coverUrl ? (
+            <Image
+              src={item.coverUrl}
+              alt={`${item.title} cover`}
+              fill
+              sizes="78px"
+              unoptimized
+              className="object-cover"
+            />
+          ) : <BookOpen className="h-5 w-5 opacity-60" strokeWidth={1.25} />}
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-3">

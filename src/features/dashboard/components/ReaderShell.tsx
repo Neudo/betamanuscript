@@ -1,7 +1,8 @@
 "use client";
 
-import { BookOpen, List, Menu } from "lucide-react";
+import { BookOpen, ClipboardCheck, List, Menu } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ function ReaderSidebar({
   account: AuthenticatedAccount;
   onNavigate?: () => void;
 }) {
+  const pathname = usePathname();
+
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-foreground/10 bg-sidebar">
       <div className="flex h-16 items-center gap-2.5 border-b border-foreground/10 px-5">
@@ -28,10 +31,26 @@ function ReaderSidebar({
         <Link
           href="/reader"
           onClick={onNavigate}
-          className="flex h-10 items-center gap-3 border-l-2 border-l-primary bg-foreground/[0.07] px-3 text-sm"
+          className={`flex h-10 items-center gap-3 border-l-2 px-3 text-sm transition-colors ${
+            pathname === "/reader"
+              ? "border-l-primary bg-foreground/[0.07]"
+              : "border-l-transparent hover:bg-foreground/[0.05]"
+          }`}
         >
           <List className="h-4 w-4" strokeWidth={1.5} />
           Reading list
+        </Link>
+        <Link
+          href="/reader/surveys"
+          onClick={onNavigate}
+          className={`mt-1 flex h-10 items-center gap-3 border-l-2 px-3 text-sm transition-colors ${
+            pathname === "/reader/surveys"
+              ? "border-l-primary bg-foreground/[0.07]"
+              : "border-l-transparent hover:bg-foreground/[0.05]"
+          }`}
+        >
+          <ClipboardCheck className="h-4 w-4" strokeWidth={1.5} />
+          Sent surveys
         </Link>
       </nav>
       <div className="border-t border-foreground/10 p-3 pb-4">

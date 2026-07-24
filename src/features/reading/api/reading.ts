@@ -6,6 +6,7 @@ export type ReaderManuscriptListItem = {
   closingNote: string | null;
   completedChapterIds: string[];
   completedChapters: number;
+  coverUrl: string | null;
   deadline: string | null;
   id: string;
   latestChapterId: string | null;
@@ -21,6 +22,7 @@ export type ReaderManuscriptListItem = {
 
 export type ReaderAnnotationTag = {
   color: string;
+  id: string;
   label: string;
   slug: string;
 };
@@ -76,6 +78,22 @@ export type ReaderSurveyAnswer = {
   textValue?: string;
 };
 
+export type ReaderSurveyAnswerValue = boolean | number | string | string[];
+
+export type ReaderSubmittedSurvey = {
+  answers: Record<string, ReaderSurveyAnswerValue>;
+  canEdit: boolean;
+  manuscriptId: string;
+  manuscriptTitle: string;
+  name: string;
+  questions: ReaderSurveyQuestion[];
+  readerAssignmentId: string;
+  submissionId: string;
+  submittedAt: string | null;
+  surveyId: string;
+  updatedAt: string;
+};
+
 type ReaderAssignmentRow = {
   id: string;
   status: "completed" | "started";
@@ -99,6 +117,12 @@ type ChapterProgressRow = {
   last_read_at: string;
   reader_assignment_id: string;
   status: "completed" | "in_progress";
+};
+
+type ManuscriptCoverRow = {
+  manuscript_version_id: string;
+  storage_bucket: string;
+  storage_path: string;
 };
 
 export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]> {
@@ -125,7 +149,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
   const versionIds = rows.flatMap((row) => row.reading_rounds?.manuscript_versions?.id ?? []);
   const assignmentIds = rows.map((row) => row.id);
 
-  const [chaptersResult, progressResult] = await Promise.all([
+  const [chaptersResult, progressResult, coversResult] = await Promise.all([
     versionIds.length > 0
       ? supabase
         .from("manuscript_chapters")
@@ -138,10 +162,32 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
         .select("reader_assignment_id, chapter_id, status, last_read_at")
         .in("reader_assignment_id", assignmentIds)
       : Promise.resolve({ data: [], error: null }),
+    versionIds.length > 0
+      ? supabase
+        .from("manuscript_assets")
+        .select("manuscript_version_id, storage_bucket, storage_path")
+        .in("manuscript_version_id", versionIds)
+        .eq("asset_kind", "cover")
+        .eq("processing_status", "available")
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (chaptersResult.error) throw new Error(chaptersResult.error.message);
   if (progressResult.error) throw new Error(progressResult.error.message);
+  if (coversResult.error) throw new Error(coversResult.error.message);
+
+  const coverUrlByVersionId = new Map<string, string>();
+  await Promise.all(
+    ((coversResult.data ?? []) as ManuscriptCoverRow[]).map(async (cover) => {
+      const { data } = await supabase.storage
+        .from(cover.storage_bucket)
+        .createSignedUrl(cover.storage_path, 60 * 60);
+
+      if (data?.signedUrl) {
+        coverUrlByVersionId.set(cover.manuscript_version_id, data.signedUrl);
+      }
+    }),
+  );
 
   const totalByVersion = new Map<string, number>();
   for (const chapter of chaptersResult.data ?? []) {
@@ -189,6 +235,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       closingNote: readingRound.reader_closing_note,
       completedChapterIds: completedChapterIdsByAssignment.get(assignment.id) ?? [],
       completedChapters,
+      coverUrl: coverUrlByVersionId.get(version.id) ?? null,
       deadline: readingRound.reading_deadline,
       id: version.manuscript_id,
       latestChapterId: latestProgressByAssignment.get(assignment.id)?.chapter_id ?? null,
@@ -251,7 +298,7 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
         id,
         chapter_id,
         chapter_block_id,
-        tag_slug,
+        tag_id,
         quote,
         selection_start,
         selection_end,
@@ -265,23 +312,23 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
 
   if (annotationsError) throw new Error(annotationsError.message);
 
-  const annotationTagSlugs = [...new Set((annotationRows ?? []).map((annotation) => annotation.tag_slug))];
-  const { data: annotationTagRows, error: annotationTagsError } = annotationTagSlugs.length > 0
+  const annotationTagIds = [...new Set((annotationRows ?? []).map((annotation) => annotation.tag_id))];
+  const { data: annotationTagRows, error: annotationTagsError } = annotationTagIds.length > 0
     ? await supabase
-      .from("annotation_tags")
-      .select("slug, label, color")
-      .in("slug", annotationTagSlugs)
+      .from("manuscript_annotation_tags")
+      .select("id, slug, label, color")
+      .in("id", annotationTagIds)
     : { data: [], error: null };
 
   if (annotationTagsError) throw new Error(annotationTagsError.message);
 
-  const annotationTagsBySlug = new Map(
-    (annotationTagRows ?? []).map((tag) => [tag.slug, tag]),
+  const annotationTagsById = new Map(
+    (annotationTagRows ?? []).map((tag) => [tag.id, tag]),
   );
   const annotationsByBlock = new Map<string, ReaderAnnotation[]>();
 
   for (const annotation of annotationRows ?? []) {
-    const tag = annotationTagsBySlug.get(annotation.tag_slug);
+    const tag = annotationTagsById.get(annotation.tag_id);
     const annotations = annotationsByBlock.get(annotation.chapter_block_id) ?? [];
     annotations.push({
       chapterBlockId: annotation.chapter_block_id,
@@ -295,8 +342,9 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
       selectionStart: annotation.selection_start,
       tag: {
         color: tag?.color ?? "#6B7280",
-        label: tag?.label ?? annotation.tag_slug,
-        slug: annotation.tag_slug,
+        id: annotation.tag_id,
+        label: tag?.label ?? "Unknown tag",
+        slug: tag?.slug ?? "unknown",
       },
     });
     annotationsByBlock.set(annotation.chapter_block_id, annotations);
@@ -370,6 +418,34 @@ type OpenedReaderSurveyRow = {
 type ReaderSurveySubmissionRow = {
   status: "in_progress" | "submitted";
   survey_id: string;
+};
+
+type SubmittedReaderSurveyRow = {
+  id: string;
+  reader_assignment_id: string;
+  submitted_at: string | null;
+  survey_id: string;
+  updated_at: string;
+  surveys: {
+    id: string;
+    name: string;
+    status: "active" | "closed" | "draft";
+    reading_rounds: {
+      manuscript_versions: {
+        manuscript_id: string;
+        title: string;
+      } | null;
+    } | null;
+  } | null;
+};
+
+type SubmittedReaderSurveyAnswerRow = {
+  boolean_value: boolean | null;
+  number_value: number | null;
+  selected_option_id: string | null;
+  survey_question_id: string;
+  survey_submission_id: string;
+  text_value: string | null;
 };
 
 const readerSurveyQuestionType: Record<
@@ -532,7 +608,175 @@ export async function submitReaderSurvey({
   readerAssignmentId: string;
   surveyId: string;
 }) {
-  const serializedAnswers: Json[] = answers.map((answer) => {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("submit_reader_survey", {
+    p_answers: serializeReaderSurveyRpcAnswers(answers),
+    p_reader_assignment_id: readerAssignmentId,
+    p_survey_id: surveyId,
+  });
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Your survey response could not be saved.");
+
+  return data;
+}
+
+export async function getReaderSubmittedSurveys(): Promise<ReaderSubmittedSurvey[]> {
+  const supabase = createSupabaseBrowserClient();
+  const { data: submissionRows, error: submissionsError } = await supabase
+    .from("survey_submissions")
+    .select(`
+      id,
+      reader_assignment_id,
+      survey_id,
+      submitted_at,
+      updated_at,
+      surveys!inner (
+        id,
+        name,
+        status,
+        reading_rounds!inner (
+          manuscript_versions!inner (manuscript_id, title)
+        )
+      )
+    `)
+    .eq("status", "submitted")
+    .order("updated_at", { ascending: false });
+
+  if (submissionsError) throw new Error(submissionsError.message);
+
+  const submissions = (submissionRows ?? []) as unknown as SubmittedReaderSurveyRow[];
+  if (submissions.length === 0) return [];
+
+  const surveyIds = [...new Set(submissions.map((submission) => submission.survey_id))];
+  const submissionIds = submissions.map((submission) => submission.id);
+  const { data: questionRows, error: questionsError } = await supabase
+    .from("survey_questions")
+    .select("id, survey_id, position, question_type, prompt, is_required")
+    .in("survey_id", surveyIds)
+    .order("position", { ascending: true });
+
+  if (questionsError) throw new Error(questionsError.message);
+
+  const questions = (questionRows ?? []) as DueSurveyQuestionRow[];
+  const questionIds = questions.map((question) => question.id);
+  const [optionsResult, answersResult] = await Promise.all([
+    questionIds.length > 0
+      ? supabase
+        .from("survey_question_options")
+        .select("id, survey_question_id, position, label")
+        .in("survey_question_id", questionIds)
+        .order("position", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("survey_answers")
+      .select("survey_submission_id, survey_question_id, text_value, number_value, boolean_value, selected_option_id")
+      .in("survey_submission_id", submissionIds),
+  ]);
+
+  if (optionsResult.error) throw new Error(optionsResult.error.message);
+  if (answersResult.error) throw new Error(answersResult.error.message);
+
+  const optionsByQuestionId = new Map<string, ReaderSurveyOption[]>();
+  for (const option of (optionsResult.data ?? []) as DueSurveyOptionRow[]) {
+    const options = optionsByQuestionId.get(option.survey_question_id) ?? [];
+    options.push({ id: option.id, label: option.label });
+    optionsByQuestionId.set(option.survey_question_id, options);
+  }
+
+  const questionsBySurveyId = new Map<string, ReaderSurveyQuestion[]>();
+  for (const question of questions) {
+    const surveyQuestions = questionsBySurveyId.get(question.survey_id) ?? [];
+    surveyQuestions.push({
+      id: question.id,
+      options: optionsByQuestionId.get(question.id) ?? [],
+      prompt: question.prompt,
+      required: question.is_required,
+      type: readerSurveyQuestionType[question.question_type],
+    });
+    questionsBySurveyId.set(question.survey_id, surveyQuestions);
+  }
+
+  const answersBySubmissionId = new Map<string, Map<string, SubmittedReaderSurveyAnswerRow[]>>();
+  for (const answer of (answersResult.data ?? []) as SubmittedReaderSurveyAnswerRow[]) {
+    const answersByQuestionId = answersBySubmissionId.get(answer.survey_submission_id) ?? new Map();
+    const questionAnswers = answersByQuestionId.get(answer.survey_question_id) ?? [];
+    questionAnswers.push(answer);
+    answersByQuestionId.set(answer.survey_question_id, questionAnswers);
+    answersBySubmissionId.set(answer.survey_submission_id, answersByQuestionId);
+  }
+
+  return submissions.flatMap((submission) => {
+    const survey = submission.surveys;
+    const version = survey?.reading_rounds?.manuscript_versions;
+    if (!survey || !version) return [];
+
+    const questionsForSurvey = questionsBySurveyId.get(survey.id) ?? [];
+    const answerRowsByQuestionId = answersBySubmissionId.get(submission.id)
+      ?? new Map<string, SubmittedReaderSurveyAnswerRow[]>();
+    const answers: Record<string, ReaderSurveyAnswerValue> = {};
+
+    for (const question of questionsForSurvey) {
+      const answerRows = answerRowsByQuestionId.get(question.id) ?? [];
+      if (question.type === "multiple-choice") {
+        const selectedOptionIds = answerRows.flatMap((answer) => (
+          answer.selected_option_id ? [answer.selected_option_id] : []
+        ));
+        if (selectedOptionIds.length > 0) answers[question.id] = selectedOptionIds;
+        continue;
+      }
+
+      const answer = answerRows[0];
+      if (!answer) continue;
+      if (question.type === "rating" && answer.number_value !== null) {
+        answers[question.id] = answer.number_value;
+      } else if (question.type === "yes-no" && answer.boolean_value !== null) {
+        answers[question.id] = answer.boolean_value;
+      } else if (question.type === "open-text" && answer.text_value !== null) {
+        answers[question.id] = answer.text_value;
+      }
+    }
+
+    return [{
+      answers,
+      canEdit: survey.status === "active",
+      manuscriptId: version.manuscript_id,
+      manuscriptTitle: version.title,
+      name: survey.name,
+      questions: questionsForSurvey,
+      readerAssignmentId: submission.reader_assignment_id,
+      submissionId: submission.id,
+      submittedAt: submission.submitted_at,
+      surveyId: submission.survey_id,
+      updatedAt: submission.updated_at,
+    } satisfies ReaderSubmittedSurvey];
+  });
+}
+
+export async function updateReaderSurveyResponse({
+  answers,
+  readerAssignmentId,
+  surveyId,
+}: {
+  answers: ReaderSurveyAnswer[];
+  readerAssignmentId: string;
+  surveyId: string;
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("update_reader_survey_response", {
+    p_answers: serializeReaderSurveyRpcAnswers(answers),
+    p_reader_assignment_id: readerAssignmentId,
+    p_survey_id: surveyId,
+  });
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Your survey response could not be updated.");
+
+  return data;
+}
+
+function serializeReaderSurveyRpcAnswers(answers: ReaderSurveyAnswer[]): Json[] {
+  return answers.map((answer) => {
     const serialized: { [key: string]: Json | undefined } = {
       question_id: answer.questionId,
     };
@@ -544,25 +788,35 @@ export async function submitReaderSurvey({
 
     return serialized;
   });
-
-  const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("submit_reader_survey", {
-    p_answers: serializedAnswers,
-    p_reader_assignment_id: readerAssignmentId,
-    p_survey_id: surveyId,
-  });
-
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Your survey response could not be saved.");
-
-  return data;
 }
 
-export async function getReaderAnnotationTags(): Promise<ReaderAnnotationTag[]> {
+type ReaderAnnotationTagScopeRow = {
+  reading_rounds: {
+    manuscript_versions: {
+      manuscript_id: string;
+    } | null;
+  } | null;
+};
+
+export async function getReaderAnnotationTags(
+  readerAssignmentId: string,
+): Promise<ReaderAnnotationTag[]> {
   const supabase = createSupabaseBrowserClient();
+  const { data: assignment, error: assignmentError } = await supabase
+    .from("reader_assignments")
+    .select(`reading_rounds!inner (manuscript_versions!inner (manuscript_id))`)
+    .eq("id", readerAssignmentId)
+    .maybeSingle();
+
+  if (assignmentError) throw new Error(assignmentError.message);
+  const manuscriptId = (assignment as unknown as ReaderAnnotationTagScopeRow | null)
+    ?.reading_rounds?.manuscript_versions?.manuscript_id;
+  if (!manuscriptId) return [];
+
   const { data, error } = await supabase
-    .from("annotation_tags")
-    .select("slug, label, color")
+    .from("manuscript_annotation_tags")
+    .select("id, slug, label, color")
+    .eq("manuscript_id", manuscriptId)
     .eq("is_active", true)
     .order("sort_order", { ascending: true });
 
@@ -574,7 +828,7 @@ export async function getReaderAnnotationTags(): Promise<ReaderAnnotationTag[]> 
 export type CreateReaderAnnotationInput = ReaderAnnotationDraft & {
   comment: string;
   readerAssignmentId: string;
-  tagSlug: string;
+  tagId: string;
 };
 
 export async function createReaderAnnotation({
@@ -587,7 +841,7 @@ export async function createReaderAnnotation({
   readerAssignmentId,
   selectionEnd,
   selectionStart,
-  tagSlug,
+  tagId,
 }: CreateReaderAnnotationInput) {
   const supabase = createSupabaseBrowserClient();
   const { error } = await supabase
@@ -602,7 +856,7 @@ export async function createReaderAnnotation({
       reader_assignment_id: readerAssignmentId,
       selection_end: selectionEnd,
       selection_start: selectionStart,
-      tag_slug: tagSlug,
+      tag_id: tagId,
     });
 
   if (error) throw new Error(error.message);
@@ -611,18 +865,18 @@ export async function createReaderAnnotation({
 export async function updateReaderAnnotation({
   annotationId,
   comment,
-  tagSlug,
+  tagId,
 }: {
   annotationId: string;
   comment: string;
-  tagSlug: string;
+  tagId: string;
 }) {
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("annotations")
     .update({
       comment: comment.trim() || null,
-      tag_slug: tagSlug,
+      tag_id: tagId,
     })
     .eq("id", annotationId)
     .select("id")

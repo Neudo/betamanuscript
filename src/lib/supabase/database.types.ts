@@ -53,7 +53,7 @@ export type Database = {
           reader_assignment_id: string
           selection_end: number
           selection_start: number
-          tag_slug: string
+          tag_id: string
           updated_at: string
         }
         Insert: {
@@ -70,7 +70,7 @@ export type Database = {
           reader_assignment_id: string
           selection_end: number
           selection_start?: number
-          tag_slug: string
+          tag_id: string
           updated_at?: string
         }
         Update: {
@@ -87,7 +87,7 @@ export type Database = {
           reader_assignment_id?: string
           selection_end?: number
           selection_start?: number
-          tag_slug?: string
+          tag_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -113,11 +113,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "annotations_tag_slug_fkey"
-            columns: ["tag_slug"]
+            foreignKeyName: "annotations_tag_id_fkey"
+            columns: ["tag_id"]
             isOneToOne: false
-            referencedRelation: "annotation_tags"
-            referencedColumns: ["slug"]
+            referencedRelation: "manuscript_annotation_tags"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -299,6 +299,50 @@ export type Database = {
             columns: ["manuscript_version_id"]
             isOneToOne: false
             referencedRelation: "manuscript_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manuscript_annotation_tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          manuscript_id: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          manuscript_id: string
+          slug: string
+          sort_order: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          manuscript_id?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manuscript_annotation_tags_manuscript_id_fkey"
+            columns: ["manuscript_id"]
+            isOneToOne: false
+            referencedRelation: "manuscripts"
             referencedColumns: ["id"]
           },
         ]
@@ -1021,6 +1065,14 @@ export type Database = {
         Returns: undefined
       }
       submit_reader_survey: {
+        Args: {
+          p_answers: Json
+          p_reader_assignment_id: string
+          p_survey_id: string
+        }
+        Returns: string
+      }
+      update_reader_survey_response: {
         Args: {
           p_answers: Json
           p_reader_assignment_id: string

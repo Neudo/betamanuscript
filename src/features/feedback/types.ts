@@ -20,6 +20,7 @@ export type FeedbackChapter = {
 
 export type FeedbackAnnotation = {
   chapter: FeedbackChapter;
+  chapterBlockId: string;
   comment: string | null;
   createdAt: string;
   id: string;

@@ -104,7 +104,7 @@ type AnnotationRow = {
   id: string;
   quote: string;
   reader_assignment_id: string;
-  tag_slug: string;
+  tag_id: string;
 };
 
 type AnnotationTagRow = DashboardTag;
@@ -180,7 +180,7 @@ export async function getDashboardOverview(
     chapterIds.length > 0
       ? supabase
         .from("annotations")
-        .select("id, chapter_id, reader_assignment_id, tag_slug, quote, comment, created_at")
+        .select("id, chapter_id, reader_assignment_id, tag_id, quote, comment, created_at")
         .in("chapter_id", chapterIds)
         .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
@@ -200,7 +200,7 @@ export async function getDashboardOverview(
   const annotations = (annotationsResult.data ?? []) as AnnotationRow[];
   const surveyIds = ((surveysResult.data ?? []) as SurveyRow[]).map((survey) => survey.id);
   const assignmentIds = assignments.map((assignment) => assignment.id);
-  const tagSlugs = [...new Set(annotations.map((annotation) => annotation.tag_slug))];
+  const tagIds = [...new Set(annotations.map((annotation) => annotation.tag_id))];
 
   const [progressResult, tagsResult, surveySubmissionsResult] = await Promise.all([
     assignmentIds.length > 0
@@ -209,11 +209,11 @@ export async function getDashboardOverview(
         .select("reader_assignment_id, chapter_id, status, last_read_at")
         .in("reader_assignment_id", assignmentIds)
       : Promise.resolve({ data: [], error: null }),
-    tagSlugs.length > 0
+    tagIds.length > 0
       ? supabase
-        .from("annotation_tags")
-        .select("slug, label, color")
-        .in("slug", tagSlugs)
+        .from("manuscript_annotation_tags")
+        .select("id, slug, label, color")
+        .in("id", tagIds)
       : Promise.resolve({ data: [], error: null }),
     surveyIds.length > 0
       ? supabase
@@ -230,7 +230,7 @@ export async function getDashboardOverview(
 
   const progressRows = (progressResult.data ?? []) as ChapterProgressRow[];
   const tagsBySlug = new Map(
-    ((tagsResult.data ?? []) as AnnotationTagRow[]).map((tag) => [tag.slug, tag]),
+    ((tagsResult.data ?? []) as Array<AnnotationTagRow & { id: string }>).map((tag) => [tag.id, tag]),
   );
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const completedReadersByChapterId = new Map<string, Set<string>>();
@@ -272,10 +272,10 @@ export async function getDashboardOverview(
       id: annotation.id,
       quote: annotation.quote,
       reader,
-      tag: tagsBySlug.get(annotation.tag_slug) ?? {
+      tag: tagsBySlug.get(annotation.tag_id) ?? {
         color: "#6B7280",
-        label: annotation.tag_slug,
-        slug: annotation.tag_slug,
+        label: "Unknown tag",
+        slug: "unknown",
       },
     } satisfies DashboardAnnotation];
   });

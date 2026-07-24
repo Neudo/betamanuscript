@@ -58,14 +58,14 @@ export function ReaderAnnotationSheet({
   readerAssignmentId,
 }: ReaderAnnotationSheetProps) {
   const isEditing = Boolean(annotation);
-  const tagsQuery = useReaderAnnotationTags();
+  const tagsQuery = useReaderAnnotationTags(readerAssignmentId);
   const createAnnotation = useCreateReaderAnnotation();
   const updateAnnotation = useUpdateReaderAnnotation();
   const deleteAnnotation = useDeleteReaderAnnotation();
-  const [tagSlug, setTagSlug] = useState(annotation?.tag.slug ?? "");
+  const [tagId, setTagId] = useState(annotation?.tag.id ?? "");
   const [comment, setComment] = useState(annotation?.comment ?? "");
   const tags = tagsQuery.data ?? [];
-  const selectedTagSlug = tagSlug || tags[0]?.slug || "";
+  const selectedTagId = tagId || tags[0]?.id || "";
   const quote = annotation?.quote ?? draft?.quote ?? "";
   const isPending = createAnnotation.isPending || updateAnnotation.isPending || deleteAnnotation.isPending;
 
@@ -74,14 +74,14 @@ export function ReaderAnnotationSheet({
   }, [tagsQuery.error, tagsQuery.isError]);
 
   function saveAnnotation() {
-    if (!selectedTagSlug) return;
+    if (!selectedTagId) return;
 
     if (annotation) {
       updateAnnotation.mutate(
         {
           annotationId: annotation.id,
           comment,
-          tagSlug: selectedTagSlug,
+          tagId: selectedTagId,
         },
         {
           onError(error) {
@@ -103,7 +103,7 @@ export function ReaderAnnotationSheet({
         ...draft,
         comment,
         readerAssignmentId,
-        tagSlug: selectedTagSlug,
+        tagId: selectedTagId,
       },
       {
         onError(error) {
@@ -165,13 +165,13 @@ export function ReaderAnnotationSheet({
                   <Tags className="h-3.5 w-3.5" />
                   Tag
                 </Label>
-                <Select value={selectedTagSlug} onValueChange={setTagSlug} disabled={tagsQuery.isLoading || isPending}>
+                <Select value={selectedTagId} onValueChange={setTagId} disabled={tagsQuery.isLoading || isPending}>
                   <SelectTrigger id="reader-annotation-tag" className="border-foreground/15 bg-card">
                     <SelectValue placeholder="Choose a tag" />
                   </SelectTrigger>
                   <SelectContent>
                     {tags.map((tag) => (
-                      <SelectItem key={tag.slug} value={tag.slug}>
+                      <SelectItem key={tag.id} value={tag.id}>
                         <span className="flex items-center gap-2">
                           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
                           {tag.label}
@@ -220,7 +220,7 @@ export function ReaderAnnotationSheet({
                     </AlertDialogContent>
                   </AlertDialog>
                 ) : <span />}
-                <Button onClick={saveAnnotation} disabled={isPending || !selectedTagSlug}>
+                <Button onClick={saveAnnotation} disabled={isPending || !selectedTagId}>
                   {isPending ? "Saving…" : isEditing ? "Save changes" : "Save annotation"}
                 </Button>
               </div>

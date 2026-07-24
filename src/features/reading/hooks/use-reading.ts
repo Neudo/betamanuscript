@@ -10,8 +10,10 @@ import {
   getReaderDueSurveys,
   getReaderManuscript,
   getReaderManuscripts,
+  getReaderSubmittedSurveys,
   submitReaderSurvey,
   updateReaderAnnotation,
+  updateReaderSurveyResponse,
 } from "@/features/reading/api/reading";
 import { dashboardKeys } from "@/features/dashboard/query-keys";
 
@@ -19,7 +21,8 @@ export const readingKeys = {
   all: ["reader-manuscripts"] as const,
   detail: (manuscriptId: string) => [...readingKeys.all, "detail", manuscriptId] as const,
   list: () => [...readingKeys.all, "list"] as const,
-  tags: () => [...readingKeys.all, "annotation-tags"] as const,
+  submittedSurveys: () => [...readingKeys.all, "submitted-surveys"] as const,
+  tags: (readerAssignmentId: string) => [...readingKeys.all, "annotation-tags", readerAssignmentId] as const,
 };
 
 export function useReaderManuscripts() {
@@ -39,10 +42,11 @@ export function useReaderManuscript(manuscriptId: string) {
   });
 }
 
-export function useReaderAnnotationTags() {
+export function useReaderAnnotationTags(readerAssignmentId: string) {
   return useQuery({
-    queryKey: readingKeys.tags(),
-    queryFn: getReaderAnnotationTags,
+    queryKey: readingKeys.tags(readerAssignmentId),
+    queryFn: () => getReaderAnnotationTags(readerAssignmentId),
+    enabled: Boolean(readerAssignmentId),
     staleTime: 5 * 60_000,
   });
 }
@@ -67,11 +71,33 @@ export function useReaderDueSurveys() {
   });
 }
 
+export function useReaderSubmittedSurveys() {
+  return useQuery({
+    queryKey: readingKeys.submittedSurveys(),
+    queryFn: getReaderSubmittedSurveys,
+    staleTime: 30_000,
+  });
+}
+
 export function useSubmitReaderSurvey() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: submitReaderSurvey,
+    async onSuccess() {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
+    },
+  });
+}
+
+export function useUpdateReaderSurveyResponse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateReaderSurveyResponse,
     async onSuccess() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),

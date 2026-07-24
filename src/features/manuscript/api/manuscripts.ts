@@ -72,7 +72,7 @@ type AnnotationRow = {
   reader_assignment_id: string;
   selection_end: number;
   selection_start: number;
-  tag_slug: string;
+  tag_id: string;
 };
 
 type ReaderAssignmentRow = {
@@ -254,7 +254,7 @@ export async function getManuscript(
       .order("position", { ascending: true }),
     supabase
       .from("annotations")
-      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_slug, quote, selection_start, selection_end, comment, created_at, author_seen_at")
+      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, selection_start, selection_end, comment, created_at, author_seen_at")
       .in("chapter_id", chapterIds)
       .order("created_at", { ascending: false }),
   ]);
@@ -265,7 +265,7 @@ export async function getManuscript(
   const blocks = (blocksResult.data ?? []) as ChapterBlockRow[];
   const annotations = (annotationsResult.data ?? []) as AnnotationRow[];
   const readerAssignmentIds = [...new Set(annotations.map((annotation) => annotation.reader_assignment_id))];
-  const tagSlugs = [...new Set(annotations.map((annotation) => annotation.tag_slug))];
+  const tagIds = [...new Set(annotations.map((annotation) => annotation.tag_id))];
 
   const [readerAssignmentsResult, annotationTagsResult] = await Promise.all([
     readerAssignmentIds.length > 0
@@ -274,11 +274,11 @@ export async function getManuscript(
         .select("id, reader_display_name, reader_email")
         .in("id", readerAssignmentIds)
       : Promise.resolve({ data: [], error: null }),
-    tagSlugs.length > 0
+    tagIds.length > 0
       ? supabase
-        .from("annotation_tags")
-        .select("slug, label, color")
-        .in("slug", tagSlugs)
+        .from("manuscript_annotation_tags")
+        .select("id, slug, label, color")
+        .in("id", tagIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -295,8 +295,8 @@ export async function getManuscript(
       assignment,
     ]),
   );
-  const annotationTagsBySlug = new Map(
-    ((annotationTagsResult.data ?? []) as AnnotationTagRow[]).map((tag) => [tag.slug, tag]),
+  const annotationTagsById = new Map(
+    ((annotationTagsResult.data ?? []) as Array<AnnotationTagRow & { id: string }>).map((tag) => [tag.id, tag]),
   );
   const blocksByChapterId = new Map<string, ManuscriptWorkspaceBlock[]>();
   const annotationsByChapterId = new Map<string, ManuscriptWorkspaceAnnotation[]>();
@@ -314,7 +314,7 @@ export async function getManuscript(
 
   for (const annotation of annotations) {
     const assignment = readerAssignmentsById.get(annotation.reader_assignment_id);
-    const tag = annotationTagsBySlug.get(annotation.tag_slug);
+    const tag = annotationTagsById.get(annotation.tag_id);
     const chapterAnnotations = annotationsByChapterId.get(annotation.chapter_id) ?? [];
     chapterAnnotations.push({
       chapterBlockId: annotation.chapter_block_id,
@@ -329,8 +329,8 @@ export async function getManuscript(
       selectionStart: annotation.selection_start,
       tag: {
         color: tag?.color ?? "#6B7280",
-        label: tag?.label ?? annotation.tag_slug,
-        slug: annotation.tag_slug,
+        label: tag?.label ?? "Unknown tag",
+        slug: tag?.slug ?? "unknown",
       },
     });
     annotationsByChapterId.set(annotation.chapter_id, chapterAnnotations);

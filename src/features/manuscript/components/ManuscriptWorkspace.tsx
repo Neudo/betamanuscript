@@ -67,6 +67,8 @@ export function ManuscriptWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
+  const focusedAnnotationIdFromUrl = searchParams.get("annotationId");
+  const selectedChapterIdFromUrl = searchParams.get("chapterId");
   const manuscriptsQuery = useManuscripts();
   const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
   const manuscriptQuery = useManuscript(manuscriptId);
@@ -127,7 +129,7 @@ export function ManuscriptWorkspace() {
   const workspace = manuscript;
 
   const selectedChapter = manuscript.chapters.find(
-    (chapter) => chapter.id === selectedChapterId,
+    (chapter) => chapter.id === (selectedChapterId ?? selectedChapterIdFromUrl),
   ) ?? manuscript.chapters[0];
   const completeCount = manuscript.chapters.filter(
     (chapter) => chapter.editorialStatus === "complete",
@@ -145,6 +147,10 @@ export function ManuscriptWorkspace() {
     );
   }
 
+  const focusedAnnotationId = selectedChapter.annotations.some(
+    (annotation) => annotation.id === focusedAnnotationIdFromUrl,
+  ) ? focusedAnnotationIdFromUrl : null;
+
   function handleStatusChange(status: ChapterEditorialStatus) {
     updateChapterStatus.mutate({
       chapterId: selectedChapter.id,
@@ -159,6 +165,25 @@ export function ManuscriptWorkspace() {
       isSeen: !annotation.isSeenByAuthor,
       manuscriptId: workspace.id,
     });
+  }
+
+  function handleChapterSelect(chapterId: string) {
+    setSelectedChapterId(chapterId);
+    if (!focusedAnnotationIdFromUrl) return;
+
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("annotationId");
+    nextSearchParams.set("chapterId", chapterId);
+    router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
+  }
+
+  function handleAnnotationFocusDismiss() {
+    if (!focusedAnnotationIdFromUrl) return;
+
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("annotationId");
+    const queryString = nextSearchParams.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   }
 
   return (
@@ -196,7 +221,7 @@ export function ManuscriptWorkspace() {
               <button
                 key={chapter.id}
                 type="button"
-                onClick={() => setSelectedChapterId(chapter.id)}
+                onClick={() => handleChapterSelect(chapter.id)}
                 className={cn(
                   "grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 border-l-2 border-l-transparent px-4 py-4 text-left transition-colors hover:bg-foreground/[0.035]",
                   selectedChapter.id === chapter.id && "border-l-primary bg-foreground/[0.055]",
@@ -241,7 +266,9 @@ export function ManuscriptWorkspace() {
             <AnnotationSheet
               annotations={selectedChapter.annotations}
               chapterPosition={selectedChapter.position}
+              focusedAnnotationId={focusedAnnotationId}
               isUpdating={updateAnnotationSeen.isPending}
+              onFocusedAnnotationDismiss={handleAnnotationFocusDismiss}
               onToggleSeen={handleAnnotationSeen}
             />
             <Select
@@ -283,6 +310,7 @@ export function ManuscriptWorkspace() {
                   <ChapterBlock
                     key={block.id}
                     block={block}
+                    focusedAnnotationId={focusedAnnotationId}
                     annotations={selectedChapter.annotations.filter(
                       (annotation) => annotation.chapterBlockId === block.id,
                     )}
@@ -304,31 +332,35 @@ export function ManuscriptWorkspace() {
 function ChapterBlock({
   annotations,
   block,
+  focusedAnnotationId,
 }: {
   annotations: ManuscriptWorkspaceAnnotation[];
   block: ManuscriptWorkspaceBlock;
+  focusedAnnotationId: string | null;
 }) {
   if (block.kind === "scene_break") {
     return <p className="py-3 text-center tracking-[0.35em] text-muted-foreground">* * *</p>;
   }
 
   if (block.kind === "heading") {
-    return <h3 className="pt-3 text-2xl font-medium"><AnnotatedChapterText content={block.content} annotations={annotations} /></h3>;
+    return <h3 className="pt-3 text-2xl font-medium"><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} /></h3>;
   }
 
   if (block.kind === "blockquote") {
-    return <blockquote className="border-l-2 border-primary/40 pl-5 italic"><AnnotatedChapterText content={block.content} annotations={annotations} /></blockquote>;
+    return <blockquote className="border-l-2 border-primary/40 pl-5 italic"><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} /></blockquote>;
   }
 
-  return <p><AnnotatedChapterText content={block.content} annotations={annotations} /></p>;
+  return <p><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} /></p>;
 }
 
 function AnnotatedChapterText({
   annotations,
   content,
+  focusedAnnotationId,
 }: {
   annotations: ManuscriptWorkspaceAnnotation[];
   content: string;
+  focusedAnnotationId: string | null;
 }) {
   const segments = getTextAnnotationSegments(content, annotations);
 
@@ -338,11 +370,21 @@ function AnnotatedChapterText({
     const { annotations: groupedAnnotations, color, hasMultipleTags } = segment.group;
     const count = groupedAnnotations.length;
     const tagLabel = hasMultipleTags ? "multiple tags" : groupedAnnotations[0].tag.label;
+    const isFocused = focusedAnnotationId !== null && groupedAnnotations.some(
+      (annotation) => annotation.id === focusedAnnotationId,
+    );
 
     return (
       <mark
         key={segment.key}
-        className="rounded-sm px-0.5 text-inherit decoration-2 underline-offset-4"
+        ref={isFocused ? (node) => {
+          if (!node) return;
+          requestAnimationFrame(() => node.scrollIntoView({ behavior: "smooth", block: "center" }));
+        } : undefined}
+        className={cn(
+          "rounded-sm px-0.5 text-inherit decoration-2 underline-offset-4",
+          isFocused && "ring-2 ring-primary ring-offset-2",
+        )}
         style={{ backgroundColor: annotationBackgroundColor(color), textDecorationColor: color }}
         title={`${count} annotation${count > 1 ? "s" : ""} · ${tagLabel}`}
       >
@@ -364,18 +406,29 @@ function AnnotatedChapterText({
 function AnnotationSheet({
   annotations,
   chapterPosition,
+  focusedAnnotationId,
   isUpdating,
+  onFocusedAnnotationDismiss,
   onToggleSeen,
 }: {
   annotations: ManuscriptWorkspaceAnnotation[];
   chapterPosition: number;
+  focusedAnnotationId: string | null;
   isUpdating: boolean;
+  onFocusedAnnotationDismiss: () => void;
   onToggleSeen: (annotation: ManuscriptWorkspaceAnnotation) => void;
 }) {
   const seenCount = annotations.filter((annotation) => annotation.isSeenByAuthor).length;
+  const focusedAnnotation = annotations.find((annotation) => annotation.id === focusedAnnotationId) ?? null;
+  const [isOpen, setIsOpen] = useState(false);
+
+  function handleOpenChange(open: boolean) {
+    if (!open && focusedAnnotation) onFocusedAnnotationDismiss();
+    setIsOpen(open);
+  }
 
   return (
-    <Sheet>
+    <Sheet open={isOpen || Boolean(focusedAnnotation)} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm">
           <MessageSquareText className="h-3.5 w-3.5" />
@@ -397,9 +450,14 @@ function AnnotationSheet({
             return (
               <article
                 key={annotation.id}
+                ref={annotation.id === focusedAnnotationId ? (node) => {
+                  if (!node) return;
+                  requestAnimationFrame(() => node.scrollIntoView({ behavior: "smooth", block: "center" }));
+                } : undefined}
                 className={cn(
                   "border border-foreground/10 p-4",
                   isSeen && "bg-muted/55 text-muted-foreground",
+                  annotation.id === focusedAnnotationId && "ring-2 ring-primary ring-offset-2",
                 )}
               >
                 <div className="flex items-center gap-3">

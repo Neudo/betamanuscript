@@ -1,12 +1,15 @@
 "use client";
 
-import { LoaderCircle, Search } from "lucide-react";
+import { Eye, LoaderCircle, Search } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FeedbackTagManagerDialog } from "@/features/feedback/components/FeedbackTagManagerDialog";
 import { useManuscriptFeedback } from "@/features/feedback/hooks/use-feedback";
 import type { FeedbackAnnotation, FeedbackTag } from "@/features/feedback/types";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
@@ -89,7 +92,7 @@ function FeedbackExplorerContent({
   return (
     <div className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
       <aside className="border-b border-foreground/10 bg-sidebar px-5 py-7 md:overflow-y-auto md:border-b-0 md:border-r">
-        <FilterGroup label="Tag">
+        <FilterGroup label="Tag" action={<FeedbackTagManagerDialog manuscriptId={manuscriptId} />}>
           {tags.map((tag) => (
             <button
               key={tag.slug}
@@ -167,6 +170,7 @@ function FeedbackExplorerContent({
           <FeedbackState
             annotations={filtered}
             isLoading={isLoading}
+            manuscriptId={manuscriptId}
             error={queryError}
             emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
               ? "No annotations match these filters."
@@ -179,6 +183,7 @@ function FeedbackExplorerContent({
             <FeedbackState
               annotations={[]}
               isLoading={isLoading}
+              manuscriptId={manuscriptId}
               error={queryError}
               emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
                 ? "No annotations match these filters."
@@ -189,7 +194,14 @@ function FeedbackExplorerContent({
               {groupByChapter(filtered).map(([chapter, chapterAnnotations]) => (
                 <section key={chapter.id} className="border-b border-foreground/10 py-5">
                   <p className="mb-2 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Chapter {chapter.position} — {chapter.title}</p>
-                  {chapterAnnotations.map((annotation) => <AnnotationRow key={annotation.id} annotation={annotation} compact />)}
+                  {chapterAnnotations.map((annotation) => (
+                    <AnnotationRow
+                      key={annotation.id}
+                      annotation={annotation}
+                      compact
+                      manuscriptId={manuscriptId}
+                    />
+                  ))}
                 </section>
               ))}
             </div>
@@ -252,8 +264,24 @@ function groupByChapter(annotations: FeedbackAnnotation[]) {
     .map((group) => [group.chapter, group.annotations] as const);
 }
 
-function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return <section className="mb-7"><p className="mb-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p><div>{children}</div></section>;
+function FilterGroup({
+  action,
+  children,
+  label,
+}: {
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <section className="mb-7">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+        {action}
+      </div>
+      <div>{children}</div>
+    </section>
+  );
 }
 
 function EmptyFilter() {
@@ -265,11 +293,13 @@ function FeedbackState({
   emptyMessage,
   error,
   isLoading,
+  manuscriptId,
 }: {
   annotations: FeedbackAnnotation[];
   emptyMessage: string;
   error: Error | null;
   isLoading: boolean;
+  manuscriptId: string | null;
 }) {
   if (isLoading) {
     return <div className="grid min-h-52 place-items-center"><LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
@@ -283,10 +313,36 @@ function FeedbackState({
     return <p className="px-5 py-16 text-center text-sm text-muted-foreground sm:px-7">{emptyMessage}</p>;
   }
 
-  return <div className="divide-y divide-foreground/[0.08] px-5 sm:px-7">{annotations.map((annotation) => <AnnotationRow key={annotation.id} annotation={annotation} />)}</div>;
+  return (
+    <div className="divide-y divide-foreground/[0.08] px-5 sm:px-7">
+      {annotations.map((annotation) => (
+        <AnnotationRow
+          key={annotation.id}
+          annotation={annotation}
+          manuscriptId={manuscriptId}
+        />
+      ))}
+    </div>
+  );
 }
 
-function AnnotationRow({ annotation, compact = false }: { annotation: FeedbackAnnotation; compact?: boolean }) {
+function AnnotationRow({
+  annotation,
+  compact = false,
+  manuscriptId,
+}: {
+  annotation: FeedbackAnnotation;
+  compact?: boolean;
+  manuscriptId: string | null;
+}) {
+  const href = manuscriptId
+    ? `/dashboard/manuscript?${new URLSearchParams({
+      annotationId: annotation.id,
+      chapterId: annotation.chapter.id,
+      manuscriptId,
+    }).toString()}`
+    : null;
+
   return (
     <article className={cn("grid grid-cols-[30px_minmax(0,1fr)] gap-3 py-5", compact && "py-4")}>
       <span className="grid h-7 w-7 place-items-center rounded-full font-mono text-[9px] font-semibold text-white" style={{ backgroundColor: annotation.reader.color }}>{annotation.reader.initials}</span>
@@ -296,6 +352,13 @@ function AnnotationRow({ annotation, compact = false }: { annotation: FeedbackAn
           <FeedbackTagBadge tag={annotation.tag} />
           <span className="font-mono text-[9px] text-muted-foreground">Ch {annotation.chapter.position} — {annotation.chapter.title}</span>
           <span className="ml-auto font-mono text-[9px] text-muted-foreground">{formatAnnotationDate(annotation.createdAt)}</span>
+          {href ? (
+            <Button asChild variant="ghost" size="icon-sm" className="-mr-2" title="Open passage and comment">
+              <Link href={href} aria-label={`Open feedback from ${annotation.reader.name} in the manuscript`}>
+                <Eye className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          ) : null}
         </div>
         <blockquote className="border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
         {annotation.comment ? <p className="mt-2.5 text-sm leading-6 text-foreground/85">{annotation.comment}</p> : null}
