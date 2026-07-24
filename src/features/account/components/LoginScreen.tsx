@@ -29,11 +29,17 @@ export function LoginScreen({
         </p>
       }
     >
-      {error === "confirmation" ? (
+      {error === "confirmation" || error === "oauth" ? (
         <Alert variant="destructive">
-          <AlertTitle>Confirmation link could not be verified</AlertTitle>
+          <AlertTitle>
+            {error === "oauth"
+              ? "Google sign-in could not be completed"
+              : "Confirmation link could not be verified"}
+          </AlertTitle>
           <AlertDescription>
-            Request a new confirmation email or try logging in again.
+            {error === "oauth"
+              ? "Try again, or use your email and password instead."
+              : "Request a new confirmation email or try logging in again."}
           </AlertDescription>
         </Alert>
       ) : null}

@@ -57,17 +57,12 @@ export function SurveysWorkspace() {
   const manuscriptsQuery = useManuscripts();
   const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
   const surveysQuery = useManuscriptSurveys(manuscriptId);
-  const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
   const createSurveyMutation = useCreateSurvey(manuscriptId);
 
   const data = surveysQuery.data;
   const chapters = data?.chapters ?? [];
   const surveys = data?.surveys ?? [];
-  const selectedSurvey = surveys.find((survey) => survey.id === selectedSurveyId)
-    ?? surveys[0]
-    ?? null;
-
   function createNewSurvey({
     delivery,
     name,
@@ -90,7 +85,6 @@ export function SurveysWorkspace() {
         onError: (error) => toast.error(error.message),
         onSuccess: (survey) => {
           setExpandedSurveyId(survey.id);
-          setSelectedSurveyId(survey.id);
           toast.success("Survey created.");
         },
       },
@@ -146,36 +140,22 @@ export function SurveysWorkspace() {
           <EmptyState message="Create a manuscript before setting up reader surveys." />
         ) : !data?.readingRoundId ? (
           <EmptyState message="This manuscript does not have a reading round yet." />
-        ) : !selectedSurvey ? (
+        ) : surveys.length === 0 ? (
           <EmptyState message="No surveys yet. Create one to collect structured feedback from readers." />
         ) : (
-          <>
-            {surveys.length > 1 ? (
-              <div className="mb-4 max-w-sm space-y-2">
-                <Label htmlFor="survey-picker" className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Survey</Label>
-                <Select value={selectedSurvey.id} onValueChange={setSelectedSurveyId}>
-                  <SelectTrigger id="survey-picker" className="rounded-none border-foreground/15 bg-card shadow-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {surveys.map((survey) => (
-                      <SelectItem key={survey.id} value={survey.id}>{survey.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
-
-            <SurveyEditor
-              key={selectedSurvey.id}
-              chapters={chapters}
-              defaultExpanded={expandedSurveyId === selectedSurvey.id}
-              isDuplicating={createSurveyMutation.isPending}
-              manuscriptId={manuscriptId}
-              onDuplicate={() => duplicateSurvey(selectedSurvey)}
-              survey={selectedSurvey}
-            />
-          </>
+          <div className="space-y-4">
+            {surveys.map((survey) => (
+              <SurveyEditor
+                key={survey.id}
+                chapters={chapters}
+                defaultExpanded={expandedSurveyId === survey.id}
+                isDuplicating={createSurveyMutation.isPending}
+                manuscriptId={manuscriptId}
+                onDuplicate={() => duplicateSurvey(survey)}
+                survey={survey}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

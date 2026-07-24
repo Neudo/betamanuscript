@@ -1,11 +1,9 @@
 "use client";
 
-import { MessageSquare, UserPlus } from "lucide-react";
-import Link from "next/link";
+import { MessageSquare } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
   type DashboardAnnotation,
   type DashboardOverviewData,
@@ -13,6 +11,7 @@ import {
 } from "@/features/dashboard/api/dashboard";
 import { useDashboardOverview } from "@/features/dashboard/hooks/use-dashboard-overview";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
 import { cn } from "@/lib/utils";
 
 import { TagBadge } from "./TagBadge";
@@ -38,7 +37,6 @@ export function DashboardOverview() {
   return (
     <DashboardContent
       data={overviewQuery.data}
-      manuscriptId={manuscriptId}
       selectedTagSlug={selectedTagSlug}
       onSelectTag={(tagSlug) => setSelectedTagSlug((current) => current === tagSlug ? null : tagSlug)}
     />
@@ -47,12 +45,10 @@ export function DashboardOverview() {
 
 function DashboardContent({
   data,
-  manuscriptId,
   onSelectTag,
   selectedTagSlug,
 }: {
   data: DashboardOverviewData;
-  manuscriptId: string;
   onSelectTag: (tagSlug: string) => void;
   selectedTagSlug: string | null;
 }) {
@@ -81,12 +77,9 @@ function DashboardContent({
           <h1 className="text-[28px] font-normal leading-tight tracking-normal">{data.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{data.draftLabel} · {formatActivityDate(data.lastActivityAt)}</p>
         </div>
-        <Button asChild size="sm" variant="outline" className="border-primary text-primary">
-          <Link href={`/dashboard/readers?manuscriptId=${manuscriptId}`}>
-            <UserPlus className="h-3.5 w-3.5" />
-            Invite reader
-          </Link>
-        </Button>
+        {data.readingRoundId ? (
+          <InviteReaderDialog readingRoundId={data.readingRoundId} triggerVariant="outline" />
+        ) : null}
       </div>
 
       <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">

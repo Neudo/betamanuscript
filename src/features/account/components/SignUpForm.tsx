@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "../api/sign-up";
+import { signInWithGoogle } from "../api/sign-in-with-google";
 import type { UserRole } from "../domain/user-role";
 import { signUpSchema } from "../schemas/sign-up.schema";
+import { GoogleMark } from "./GoogleMark";
 import { RolePicker } from "./RolePicker";
 
 type FieldErrors = Partial<Record<"displayName" | "email" | "password", string>>;
@@ -35,6 +37,9 @@ export function SignUpForm({
         router.refresh();
       }
     },
+  });
+  const googleMutation = useMutation({
+    mutationFn: () => signInWithGoogle({ intent: "signup", next, role }),
   });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -117,16 +122,35 @@ export function SignUpForm({
         <RolePicker value={role} onChange={setRole} />
       </fieldset>
 
-      {mutation.isError ? (
+      {mutation.isError || googleMutation.isError ? (
         <Alert variant="destructive">
           <AlertTitle>Could not create your account</AlertTitle>
-          <AlertDescription>{mutation.error.message}</AlertDescription>
+          <AlertDescription>
+            {mutation.error?.message ?? googleMutation.error?.message}
+          </AlertDescription>
         </Alert>
       ) : null}
 
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? "Creating account..." : "Create account"}
         <ArrowRight className="h-4 w-4" />
+      </Button>
+
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">or</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={googleMutation.isPending}
+        onClick={() => googleMutation.mutate()}
+      >
+        <GoogleMark />
+        {googleMutation.isPending ? "Connecting to Google..." : "Continue with Google"}
       </Button>
     </form>
   );

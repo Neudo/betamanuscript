@@ -46,14 +46,14 @@ export default function RootLayout({
         <Providers>{children}</Providers>
         <Toaster />
         <Analytics />
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="https://unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
-      {process.env.NODE_ENV === "development" && (
-        <Script
-          src="https://unpkg.com/react-grab/dist/index.global.js"
-          crossOrigin="anonymous"
-          strategy="beforeInteractive"
-        />
-      )}
     </html>
   );
 }

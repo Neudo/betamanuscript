@@ -12,7 +12,7 @@ export function Nav() {
     <>
       {/* Nav */}
     <motion.nav
-      className="sticky top-0 z-20 border-b px-6 md:px-12 py-4 flex items-center justify-between"
+      className="sticky top-0 z-20 flex items-center justify-between border-b px-6 py-4 md:px-12"
       style={{ borderColor: "rgba(28,24,18,0.1)", background: "rgba(245,240,232,0.94)", backdropFilter: "blur(8px)" }}
       initial={reduceMotion ? false : { opacity: 0, y: -10 }}
       animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
@@ -24,6 +24,13 @@ export function Nav() {
           BetaManuscript
         </span>
       </div>
+      <Link
+        href="/pricing"
+        className="absolute left-1/2 hidden -translate-x-1/2 text-xs transition-colors hover:opacity-65 md:block"
+        style={{ color: INK, fontFamily: SANS }}
+      >
+        Pricing
+      </Link>
       <div className="flex items-center gap-2 sm:gap-4">
         <Link
           href="/login"

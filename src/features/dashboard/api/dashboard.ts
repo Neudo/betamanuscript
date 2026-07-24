@@ -50,6 +50,7 @@ export type DashboardOverviewData = {
   maxReaders: number;
   mostAnnotatedChapter: DashboardChapter | null;
   readers: DashboardReader[];
+  readingRoundId: string | null;
   recentAnnotations: DashboardAnnotation[];
   revisionPriorities: DashboardPriority[];
   startedReaders: number;
@@ -300,6 +301,7 @@ export async function getDashboardOverview(
     maxReaders: round?.max_readers ?? 0,
     mostAnnotatedChapter,
     readers,
+    readingRoundId: round?.id ?? null,
     recentAnnotations: dashboardAnnotations.slice(0, 6),
     revisionPriorities: collectRevisionPriorities(dashboardAnnotations),
     startedReaders: readers.filter((reader) => reader.status !== "pending").length,
@@ -322,6 +324,7 @@ function createEmptyDashboard(title: string): DashboardOverviewData {
     maxReaders: 0,
     mostAnnotatedChapter: null,
     readers: [],
+    readingRoundId: null,
     recentAnnotations: [],
     revisionPriorities: [],
     startedReaders: 0,

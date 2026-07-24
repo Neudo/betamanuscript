@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Bell, BookOpen, Check, Copy, CreditCard, Download, Shield, Trash2, Upload, UserRound } from "lucide-react";
+import { Bell, BookOpen, Check, CreditCard, Download, ExternalLink, Shield, Trash2, Upload, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -58,6 +58,26 @@ const proPlanBenefits = [
   "Data export",
 ];
 
+const paidPlanOptions = [
+  {
+    interval: "Monthly",
+    price: "$9.99",
+    cadence: "/ month",
+    description: "Flexible monthly billing. Cancel anytime.",
+    checkoutUrl: process.env.NEXT_PUBLIC_STRIPE_BETAMANUSCRIPT_PRO_MONTHLY_PAYMENT_LINK,
+    cta: "Choose monthly",
+  },
+  {
+    interval: "Yearly",
+    price: "$99.99",
+    cadence: "/ year",
+    description: "Save $19.89 compared to paying monthly.",
+    checkoutUrl: process.env.NEXT_PUBLIC_STRIPE_BETAMANUSCRIPT_PRO_YEARLY_PAYMENT_LINK,
+    cta: "Choose yearly",
+    badge: "Best value",
+  },
+] as const;
+
 type SettingsTab = (typeof settingsTabs)[number][0];
 
 export function SettingsWorkspace({
@@ -69,7 +89,6 @@ export function SettingsWorkspace({
 }) {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>(account.role);
-  const [copied, setCopied] = useState(false);
   const hasProPlan = account.plan === "pro";
   const currentPlanBenefits = hasProPlan ? proPlanBenefits : freePlanBenefits;
   const roleMutation = useMutation({
@@ -78,11 +97,6 @@ export function SettingsWorkspace({
       router.refresh();
     },
   });
-
-  async function copyPortal() {
-    await navigator.clipboard.writeText("https://betamanuscript.app/read/the-last-cartographer");
-    setCopied(true);
-  }
 
   return (
     <Tabs defaultValue={initialTab} orientation="vertical" className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
@@ -100,7 +114,7 @@ export function SettingsWorkspace({
       <div className="min-w-0 md:h-full md:overflow-y-auto">
         <TabsContent value="profile" className="m-0"><SettingsPage title="Profile"><ProfileSettings account={account} /></SettingsPage></TabsContent>
         <TabsContent value="notifications" className="m-0"><SettingsPage title="Notifications"><div className="divide-y divide-foreground/[0.08]">{notificationOptions.map(([title, description], index) => <SettingsRow key={title} label={title} hint={description}><Switch defaultChecked={index !== 2} aria-label={title} /></SettingsRow>)}</div><SettingsFooter><Button size="sm">Save preferences</Button></SettingsFooter></SettingsPage></TabsContent>
-        <TabsContent value="portal" className="m-0"><SettingsPage title="Reader portal"><SettingsRow label="Welcome message" hint="Shown before readers open your manuscript."><Textarea className="min-h-28 border-foreground/15 bg-transparent" defaultValue="Thank you for reading. Honest, specific feedback is the most useful gift you can give this draft." /></SettingsRow><SettingsRow label="Show author profile" hint="Display your bio and public links."><Switch defaultChecked /></SettingsRow><SettingsRow label="Portal link" hint="Share this private link with invited readers."><div className="flex gap-2"><Input value="https://betamanuscript.app/read/the-last-cartographer" readOnly className="h-10 border-foreground/15 bg-transparent font-mono text-xs" /><Button variant="outline" size="icon" onClick={copyPortal} aria-label="Copy portal link">{copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}</Button></div></SettingsRow><SettingsFooter><Button size="sm">Save portal</Button></SettingsFooter></SettingsPage></TabsContent>
+        <TabsContent value="portal" className="m-0"><SettingsPage title="Reader portal"><SettingsRow label="Welcome message" hint="Shown before readers open your manuscript."><Textarea className="min-h-28 border-foreground/15 bg-transparent" defaultValue="Thank you for reading. Honest, specific feedback is the most useful gift you can give this draft." /></SettingsRow><SettingsRow label="Show author profile" hint="Display your bio and public links."><Switch defaultChecked /></SettingsRow><SettingsFooter><Button size="sm">Save portal</Button></SettingsFooter></SettingsPage></TabsContent>
         <TabsContent value="account" className="m-0"><SettingsPage title="Account"><SettingsRow label="Account role" hint="Controls which workspaces you can access."><div className="space-y-3"><RolePicker value={role} onChange={setRole} compact /><Button size="sm" disabled={roleMutation.isPending || role === account.role} onClick={() => roleMutation.mutate({ accountId: account.id, role })}>{roleMutation.isPending ? "Updating..." : "Update role"}</Button>{roleMutation.isError ? <p className="text-xs text-destructive">{roleMutation.error.message}</p> : null}</div></SettingsRow><SettingsRow label="Password" hint="Update the password used to sign in."><Button variant="outline" size="sm">Change password</Button></SettingsRow><SettingsRow label="Export data" hint="Download your manuscripts, readers, and feedback."><Button variant="outline" size="sm"><Download className="h-3.5 w-3.5" />Export account data</Button></SettingsRow><SettingsRow label="Delete account" hint="Permanently removes all manuscripts and feedback."><DeleteAccount /></SettingsRow></SettingsPage></TabsContent>
         <TabsContent value="plan" className="m-0">
           <SettingsPage title="Plan">
@@ -127,26 +141,27 @@ export function SettingsWorkspace({
             </SettingsRow>
             {!hasProPlan ? <SettingsRow label="Pro plan" hint="For writers managing multiple manuscripts and larger reader groups.">
               <div>
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-[9px] uppercase tracking-widest text-primary">Paid plan</p>
-                    <p className="mt-2 text-xl font-medium">Pro</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="text-2xl font-medium text-foreground">$9.99</span> / month
-                  </p>
-                </div>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+                <p className="max-w-xl text-sm leading-6 text-muted-foreground">
                   Remove manuscript and reader limits while keeping every feedback and revision tool in one workspace.
                 </p>
-                <ul className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-                  {proPlanBenefits.map((item) => (
-                    <li key={item} className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 text-success" />
-                      {item}
-                    </li>
+                <div className="mt-5 grid gap-4 border border-foreground/15 sm:grid-cols-2">
+                  {paidPlanOptions.map((option) => (
+                    <section key={option.interval} className="relative flex min-h-64 flex-col border-t border-foreground/10 p-5 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
+                      {option.badge ? <span className="absolute right-0 top-0 bg-primary px-2.5 py-1 font-mono text-[8px] uppercase tracking-widest text-primary-foreground">{option.badge}</span> : null}
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary">{option.interval}</p>
+                      <p className="mt-5 font-display text-4xl leading-none tracking-tight">
+                        {option.price} <span className="font-sans text-sm text-muted-foreground">{option.cadence}</span>
+                      </p>
+                      <p className="mt-3 text-xs leading-5 text-muted-foreground">{option.description}</p>
+                      <ul className="mt-5 space-y-2 text-xs text-muted-foreground">
+                        {proPlanBenefits.slice(0, 3).map((item) => (
+                          <li key={item} className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" />{item}</li>
+                        ))}
+                      </ul>
+                      <PaymentLinkButton href={option.checkoutUrl} label={option.cta} />
+                    </section>
                   ))}
-                </ul>
+                </div>
               </div>
             </SettingsRow> : null}
           </SettingsPage>
@@ -180,6 +195,20 @@ function SettingsRow({ label, hint, children }: { label: string; hint: string; c
 
 function SettingsFooter({ children }: { children: React.ReactNode }) {
   return <div className="flex justify-end py-5">{children}</div>;
+}
+
+function PaymentLinkButton({ href, label }: { href?: string; label: string }) {
+  if (!href) {
+    return <Button size="sm" className="mt-auto w-full" disabled>Checkout unavailable</Button>;
+  }
+
+  return (
+    <Button asChild size="sm" className="mt-auto w-full">
+      <a href={href} target="_blank" rel="noreferrer">
+        {label}<ExternalLink className="h-3.5 w-3.5" />
+      </a>
+    </Button>
+  );
 }
 
 function DeleteAccount() {

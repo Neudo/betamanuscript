@@ -394,15 +394,25 @@ function ReaderAnnotatedBlock({
         const tagLabel = hasMultipleTags ? "multiple tags" : annotations[0].tag.label;
 
         return (
-          <button
+          <span
             key={segment.key}
-            type="button"
+            role="button"
+            tabIndex={0}
             className={cn(
               "inline cursor-pointer rounded-sm border-0 px-0.5 text-inherit decoration-2 underline-offset-4 transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hasMultipleTags && "font-medium",
             )}
             style={{ backgroundColor: annotationBackgroundColor(color), textDecorationColor: color }}
+            data-annotation-id={annotations[0].id}
+            data-annotation-count={count}
+            data-annotation-tag={tagLabel}
             onClick={(event) => {
+              event.stopPropagation();
+              onAnnotationClick(annotations[0]);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
               event.stopPropagation();
               onAnnotationClick(annotations[0]);
             }}
@@ -418,7 +428,7 @@ function ReaderAnnotatedBlock({
                 {count}
               </span>
             ) : null}
-          </button>
+          </span>
         );
       })}
     </p>
