@@ -2,9 +2,9 @@
 
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { WaitlistForm } from "../../../features/waitlist";
+import Link from "next/link";
 import { Reveal } from "../../../shared/ui/motion";
-import { INK, MONO, PAPER, SERIF, SANS, premiumEase } from "../../../shared/config/design-tokens";
+import { INK, MONO, OXBLOOD, PAPER, SERIF, SANS, premiumEase } from "../../../shared/config/design-tokens";
 
 export function FinalCtaSection() {
   const reduceMotion = useReducedMotion();
@@ -31,22 +31,21 @@ export function FinalCtaSection() {
                 letterSpacing: "-0.02em",
               }}
             >
-              Help shape a better beta reading workflow.
+              Bring clarity to your next beta reading round.
             </h2>
             <p
               className="text-base leading-relaxed mb-4 max-w-md"
               style={{ color: "rgba(245,240,232,0.65)", fontWeight: 300, lineHeight: 1.65 }}
             >
-              I&apos;m currently talking with indie authors, book coaches, and editors to
-              understand what actually hurts during beta reading.
+              Organize your manuscript, invite the readers you trust, and keep their feedback
+              connected to the passages that need your attention.
             </p>
             <p
               className="text-sm leading-relaxed max-w-sm"
               style={{ color: "rgba(245,240,232,0.45)", fontWeight: 300 }}
             >
-              If you join the waitlist, I&apos;ll follow up personally — not with a marketing
-              sequence, but with one question about your workflow. You&apos;ll also receive
-              a launch discount code when BetaManuscript is released.
+              Review tagged annotations by chapter and category, notice the patterns across
+              readers, and move into revision with a clearer sense of what matters.
             </p>
             <div
               className="mt-12 pl-5 border-l"
@@ -75,11 +74,17 @@ export function FinalCtaSection() {
               className="text-sm mb-4"
               style={{ color: "rgba(245,240,232,0.75)", fontFamily: SANS }}
             >
-              Request early access
+              Start your workspace
             </div>
-            <WaitlistForm label="Get early access" dark={true} />
+            <Link
+              href="/signup"
+              className="inline-flex w-full items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:bg-[#ede8dc] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f0e8]"
+              style={{ background: PAPER, borderColor: PAPER, color: OXBLOOD, fontFamily: SANS }}
+            >
+              Start for free
+            </Link>
             <p className="text-[11px] mt-3" style={{ color: "rgba(245,240,232,0.28)", fontFamily: MONO }}>
-              No cost during beta. Launch discount reserved. Unsubscribe anytime.
+              Free to start • No credit card required • Cancel anytime
             </p>
             <div className="mt-10 space-y-4">
               {[

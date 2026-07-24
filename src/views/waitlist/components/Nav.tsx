@@ -37,15 +37,8 @@ export function Nav() {
           className="border px-3 py-2 text-xs transition-colors hover:bg-black/[0.04] sm:px-4 sm:text-sm"
           style={{ borderColor: "rgba(28,24,18,0.2)", color: INK, fontFamily: SANS }}
         >
-          Register
+          Start for free
         </Link>
-        <a
-          href="#cta"
-          className="hidden px-4 py-2 text-sm transition-colors hover:bg-black/[0.04] md:inline-flex"
-          style={{ border: "1px solid rgba(28,24,18,0.2)", color: INK, fontFamily: SANS }}
-        >
-          Join the waitlist
-        </a>
       </div>
     </motion.nav>
 

@@ -21,9 +21,17 @@ export type SurveyDelivery = {
 export type SurveyStatus = "active" | "closed" | "draft";
 
 export type SurveyResponse = {
+  answers: SurveyResponseAnswer[];
   id: string;
   readerName: string;
   submittedAt: string | null;
+};
+
+export type SurveyResponseAnswer = {
+  questionId: string;
+  questionPrompt: string;
+  type: SurveyQuestionType;
+  values: string[];
 };
 
 export type ManuscriptSurvey = {

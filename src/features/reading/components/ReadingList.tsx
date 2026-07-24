@@ -91,6 +91,11 @@ function ReadingCard({ item }: { item: ReaderManuscriptListItem }) {
     ? Math.round((item.completedChapters / item.totalChapters) * 100)
     : 0;
   const deadline = formatDeadline(item.deadline);
+  const readingHref = item.status === "reading" && item.latestChapterId
+    ? `/reader/${item.id}?chapter=${item.latestChapterId}`
+    : item.status === "finished"
+      ? `/reader/${item.id}?reread=1`
+    : `/reader/${item.id}`;
 
   return (
     <Card className="group relative overflow-hidden border-foreground/10 p-0 transition-colors hover:border-primary/35">
@@ -129,7 +134,7 @@ function ReadingCard({ item }: { item: ReaderManuscriptListItem }) {
             </blockquote>
           ) : null}
 
-          <Link href={`/reader/${item.id}`} className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-primary">
+          <Link href={readingHref} className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-primary">
             {item.status === "not-started" ? "Start reading" : item.status === "finished" ? "Read again" : "Continue reading"}
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
           </Link>

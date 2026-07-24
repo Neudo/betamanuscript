@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -270,18 +271,30 @@ function SurveyEditor({
             {deliverySummary} · {editor.survey.questions.length} questions · {editor.survey.responseCount} responses
           </p>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="-mr-2 shrink-0 text-muted-foreground"
-          aria-label={isExpanded ? "Collapse survey" : "Expand survey"}
-          aria-controls="survey-editor"
-          aria-expanded={isExpanded}
-          onClick={() => setIsExpanded((current) => !current)}
-        >
-          {isExpanded ? <ChevronUp className="h-4 w-4" strokeWidth={1.5} /> : <ChevronDown className="h-4 w-4" strokeWidth={1.5} />}
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          {editor.survey.status === "draft" ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={editor.isDirty || statusMutation.isPending}
+              onClick={changeStatus}
+            >
+              {statusMutation.isPending ? "Activating…" : "Activate survey"}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="-mr-2 text-muted-foreground"
+            aria-label={isExpanded ? "Collapse survey" : "Expand survey"}
+            aria-controls="survey-editor"
+            aria-expanded={isExpanded}
+            onClick={() => setIsExpanded((current) => !current)}
+          >
+            {isExpanded ? <ChevronUp className="h-4 w-4" strokeWidth={1.5} /> : <ChevronDown className="h-4 w-4" strokeWidth={1.5} />}
+          </Button>
+        </div>
       </div>
 
       {isExpanded ? (
@@ -369,12 +382,28 @@ function SurveyEditor({
 
           <TabsContent value="responses" className="m-0 p-5">
             {editor.survey.responses.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-4">
                 {editor.survey.responses.map((response) => (
-                  <div key={response.id} className="border border-foreground/10 p-4">
-                    <p className="text-xs font-medium">{response.readerName}</p>
-                    <p className="mt-2 font-mono text-[9px] text-muted-foreground">{formatResponseDate(response.submittedAt)}</p>
-                  </div>
+                  <article key={response.id} className="border border-foreground/10 bg-background/40">
+                    <header className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground/10 px-4 py-3">
+                      <p className="text-sm font-medium">{response.readerName}</p>
+                      <p className="font-mono text-[9px] text-muted-foreground">{formatResponseDate(response.submittedAt)}</p>
+                    </header>
+                    {response.answers.length > 0 ? (
+                      <dl className="divide-y divide-foreground/[0.08]">
+                        {response.answers.map((answer) => (
+                          <div key={answer.questionId} className="grid gap-2 px-4 py-4 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] sm:gap-8">
+                            <dt className="text-xs leading-5 text-muted-foreground">{answer.questionPrompt}</dt>
+                            <dd className="min-w-0 text-sm leading-6 text-foreground">
+                              <ResponseAnswerValue answer={answer} />
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <p className="px-4 py-5 text-sm text-muted-foreground">No answers were provided.</p>
+                    )}
+                  </article>
                 ))}
               </div>
             ) : <p className="py-10 text-center text-sm text-muted-foreground">No responses yet.</p>}
@@ -468,6 +497,30 @@ function NewSurveyDialog({
 
 function EmptyState({ message }: { message: string }) {
   return <div className="grid min-h-64 place-items-center border border-dashed border-foreground/15 bg-card px-6 text-center text-sm text-muted-foreground">{message}</div>;
+}
+
+function ResponseAnswerValue({
+  answer,
+}: {
+  answer: ManuscriptSurvey["responses"][number]["answers"][number];
+}) {
+  if (answer.type === "open-text") {
+    return <p className="whitespace-pre-wrap border-l-2 border-primary/40 pl-3 text-foreground/90">{answer.values.join("\n")}</p>;
+  }
+
+  if (answer.type === "multiple-choice") {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {answer.values.map((value) => (
+          <Badge key={value} variant="outline" className="rounded-none border-foreground/20 px-2 py-0.5 font-mono text-[10px] font-normal">
+            {value}
+          </Badge>
+        ))}
+      </div>
+    );
+  }
+
+  return <span className="font-medium">{answer.values.join(", ")}</span>;
 }
 
 function createDefaultQuestion(): SurveyQuestion {

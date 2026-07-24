@@ -32,6 +32,7 @@ export type ImportedManuscriptChapter = {
 export type ManuscriptDraft = {
   title: string;
   logline: string;
+  readerClosingNote: string;
   genreSlugs: string[];
   draftNumber: number;
   chapters: number;
@@ -96,6 +97,7 @@ export type ManuscriptWorkspaceChapter = {
 export type ManuscriptWorkspaceData = {
   chapters: ManuscriptWorkspaceChapter[];
   id: string;
+  readerClosingNote: string | null;
   title: string;
   totalWordCount: number;
   version: {

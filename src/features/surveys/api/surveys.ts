@@ -5,6 +5,7 @@ import type {
   SurveyChapter,
   SurveyQuestion,
   SurveyQuestionType,
+  SurveyResponseAnswer,
   SurveyStatus,
 } from "@/features/surveys/types";
 
@@ -52,6 +53,15 @@ type ReaderAssignmentRow = {
   id: string;
   reader_display_name: string | null;
   reader_email: string;
+};
+
+type SurveyAnswerRow = {
+  boolean_value: boolean | null;
+  number_value: number | null;
+  selected_option_id: string | null;
+  survey_question_id: string;
+  survey_submission_id: string;
+  text_value: string | null;
 };
 
 type SurveyWriteInput = Pick<
@@ -263,16 +273,26 @@ async function hydrateSurveys(
   const readerAssignmentIds = [...new Set(
     submissions.map((submission) => submission.reader_assignment_id),
   )];
-  const readerAssignmentsResult = readerAssignmentIds.length > 0
-    ? await supabase
-      .from("reader_assignments")
-      .select("id, reader_display_name, reader_email")
-      .in("id", readerAssignmentIds)
-    : { data: [], error: null };
+  const submissionIds = submissions.map((submission) => submission.id);
+  const [readerAssignmentsResult, answersResult] = await Promise.all([
+    readerAssignmentIds.length > 0
+      ? supabase
+        .from("reader_assignments")
+        .select("id, reader_display_name, reader_email")
+        .in("id", readerAssignmentIds)
+      : Promise.resolve({ data: [], error: null }),
+    submissionIds.length > 0
+      ? supabase
+        .from("survey_answers")
+        .select("survey_submission_id, survey_question_id, text_value, number_value, boolean_value, selected_option_id")
+        .in("survey_submission_id", submissionIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
 
   if (readerAssignmentsResult.error) {
     throw new Error(readerAssignmentsResult.error.message);
   }
+  if (answersResult.error) throw new Error(answersResult.error.message);
 
   const optionsByQuestionId = new Map<string, OptionRow[]>();
   for (const option of (optionsResult.data ?? []) as OptionRow[]) {
@@ -294,6 +314,14 @@ async function hydrateSurveys(
       type: questionTypeFromDatabase[question.question_type],
     });
     questionsBySurveyId.set(question.survey_id, surveyQuestions);
+  }
+  const answersBySubmissionId = new Map<string, Map<string, SurveyAnswerRow[]>>();
+  for (const answer of (answersResult.data ?? []) as SurveyAnswerRow[]) {
+    const answersByQuestionId = answersBySubmissionId.get(answer.survey_submission_id) ?? new Map();
+    const questionAnswers = answersByQuestionId.get(answer.survey_question_id) ?? [];
+    questionAnswers.push(answer);
+    answersByQuestionId.set(answer.survey_question_id, questionAnswers);
+    answersBySubmissionId.set(answer.survey_submission_id, answersByQuestionId);
   }
   const readersById = new Map(
     ((readerAssignmentsResult.data ?? []) as ReaderAssignmentRow[]).map((reader) => [
@@ -323,7 +351,12 @@ async function hydrateSurveys(
       responseCount: surveySubmissions.length,
       responses: surveySubmissions.map((submission) => {
         const reader = readersById.get(submission.reader_assignment_id);
+        const responseAnswers = formatSurveyResponseAnswers(
+          questionsBySurveyId.get(survey.id) ?? [],
+          answersBySubmissionId.get(submission.id) ?? new Map(),
+        );
         return {
+          answers: responseAnswers,
           id: submission.id,
           readerName: reader?.reader_display_name ?? reader?.reader_email ?? "Reader",
           submittedAt: submission.submitted_at,
@@ -331,6 +364,33 @@ async function hydrateSurveys(
       }),
       status: survey.status,
     } satisfies ManuscriptSurvey;
+  });
+}
+
+function formatSurveyResponseAnswers(
+  questions: SurveyQuestion[],
+  answersByQuestionId: Map<string, SurveyAnswerRow[]>,
+): SurveyResponseAnswer[] {
+  return questions.flatMap((question) => {
+    const answerRows = answersByQuestionId.get(question.id) ?? [];
+    if (answerRows.length === 0) return [];
+
+    const values = answerRows.flatMap((answer) => {
+      if (question.type === "open-text") return answer.text_value ? [answer.text_value] : [];
+      if (question.type === "rating") return answer.number_value === null ? [] : [`${answer.number_value} / 5`];
+      if (question.type === "yes-no") return answer.boolean_value === null ? [] : [answer.boolean_value ? "Yes" : "No"];
+
+      const option = question.options.find((item) => item.id === answer.selected_option_id);
+      return option ? [option.label] : [];
+    });
+
+    if (values.length === 0) return [];
+    return [{
+      questionId: question.id,
+      questionPrompt: question.prompt,
+      type: question.type,
+      values,
+    }];
   });
 }
 

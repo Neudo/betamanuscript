@@ -1,0 +1,9 @@
+# BetaManuscript
+
+> BetaManuscript is a workspace for authors to collect and organize feedback from human beta readers before publication.
+
+Authors import DOCX, TXT, or Markdown manuscripts and organize them into chapters. They invite readers by email, and readers can read assigned chapters, track their progress, and leave tagged comments on selected passages.
+
+Authors can review passage-level feedback in one place and filter annotations by tag, chapter, reader, or text search. This helps them identify repeated reactions and make more informed revision decisions.
+
+BetaManuscript supports author-led beta-reading workflows. It does not generate manuscript critiques or replace editorial judgment.

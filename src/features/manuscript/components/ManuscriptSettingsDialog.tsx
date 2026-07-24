@@ -33,6 +33,7 @@ import {
 type ManuscriptSettingsDialogProps = {
   manuscript: {
     id: string;
+    readerClosingNote: string | null;
     title: string;
     version: {
       id: string;
@@ -52,6 +53,7 @@ export function ManuscriptSettingsDialog({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [title, setTitle] = useState(manuscript.title);
   const [logline, setLogline] = useState(manuscript.version?.logline ?? "");
+  const [readerClosingNote, setReaderClosingNote] = useState(manuscript.readerClosingNote ?? "");
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const updateSettings = useUpdateManuscriptSettingsMutation();
@@ -65,6 +67,7 @@ export function ManuscriptSettingsDialog({
     if (nextIsOpen) {
       setTitle(manuscript.title);
       setLogline(manuscript.version?.logline ?? "");
+      setReaderClosingNote(manuscript.readerClosingNote ?? "");
       setFormError(null);
       setDeleteError(null);
     }
@@ -87,6 +90,7 @@ export function ManuscriptSettingsDialog({
       await updateSettings.mutateAsync({
         logline,
         manuscriptId: manuscript.id,
+        readerClosingNote,
         title: normalizedTitle,
       });
       setIsOpen(false);
@@ -148,6 +152,25 @@ export function ManuscriptSettingsDialog({
               maxLength={300}
               required
               className="mt-2 h-10 rounded-none border-foreground/20 bg-background px-3 text-sm font-normal shadow-none"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="manuscript-settings-closing-note"
+              className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground"
+            >
+              Closing note for readers
+            </label>
+            <Textarea
+              id="manuscript-settings-closing-note"
+              value={readerClosingNote}
+              onChange={(event) => setReaderClosingNote(event.target.value)}
+              disabled={isPending}
+              maxLength={4000}
+              rows={4}
+              placeholder="Shown after the final chapter."
+              className="mt-2 min-h-[100px] resize-none rounded-none border-foreground/20 bg-background text-sm leading-6 shadow-none"
             />
           </div>
 

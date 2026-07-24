@@ -23,6 +23,7 @@ export const manuscriptWordCountOptions: Array<{
 export const initialManuscriptDraft: ManuscriptDraft = {
   title: "",
   logline: "",
+  readerClosingNote: "",
   genreSlugs: [],
   draftNumber: 1,
   chapters: 12,

@@ -1,12 +1,19 @@
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { tagColors } from "../data/mock-dashboard";
-import type { AnnotationTag } from "../types";
 
-export function TagBadge({ tag, className }: { tag: AnnotationTag; className?: string }) {
+export function TagBadge({
+  tag,
+  className,
+}: {
+  tag: { color: string; label: string };
+  className?: string;
+}) {
   return (
-    <Badge variant="outline" className={cn("rounded-none font-mono text-[9px] uppercase", tagColors[tag], className)}>
-      {tag}
+    <Badge
+      variant="outline"
+      className={`rounded-none font-mono text-[9px] uppercase ${className ?? ""}`}
+      style={{ borderColor: tag.color, color: tag.color }}
+    >
+      {tag.label}
     </Badge>
   );
 }

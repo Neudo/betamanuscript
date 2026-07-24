@@ -1,12 +1,17 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { Json } from "@/lib/supabase/database.types";
 
 export type ReaderManuscriptListItem = {
   assignmentId: string;
+  closingNote: string | null;
+  completedChapterIds: string[];
   completedChapters: number;
   deadline: string | null;
   id: string;
+  latestChapterId: string | null;
   logline: string | null;
   note: string | null;
+  readingRoundId: string;
   status: "finished" | "not-started" | "reading";
   title: string;
   totalChapters: number;
@@ -43,11 +48,41 @@ export type ReaderAnnotationDraft = {
   selectionStart: number;
 };
 
+export type ReaderSurveyOption = {
+  id: string;
+  label: string;
+};
+
+export type ReaderSurveyQuestion = {
+  id: string;
+  options: ReaderSurveyOption[];
+  prompt: string;
+  required: boolean;
+  type: "rating" | "yes-no" | "multiple-choice" | "open-text";
+};
+
+export type ReaderDueSurvey = {
+  id: string;
+  isNew: boolean;
+  name: string;
+  questions: ReaderSurveyQuestion[];
+};
+
+export type ReaderSurveyAnswer = {
+  booleanValue?: boolean;
+  numberValue?: number;
+  questionId: string;
+  selectedOptionIds?: string[];
+  textValue?: string;
+};
+
 type ReaderAssignmentRow = {
   id: string;
   status: "completed" | "started";
   reading_rounds: {
+    id: string;
     reading_deadline: string | null;
+    reader_closing_note: string | null;
     reader_note: string | null;
     manuscript_versions: {
       id: string;
@@ -59,6 +94,13 @@ type ReaderAssignmentRow = {
   } | null;
 };
 
+type ChapterProgressRow = {
+  chapter_id: string;
+  last_read_at: string;
+  reader_assignment_id: string;
+  status: "completed" | "in_progress";
+};
+
 export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]> {
   const supabase = createSupabaseBrowserClient();
   const { data: assignments, error: assignmentsError } = await supabase
@@ -67,7 +109,9 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       id,
       status,
       reading_rounds!inner (
+        id,
         reading_deadline,
+        reader_closing_note,
         reader_note,
         manuscript_versions!inner (id, manuscript_id, title, logline, version_number)
       )
@@ -91,7 +135,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     assignmentIds.length > 0
       ? supabase
         .from("chapter_reading_progress")
-        .select("reader_assignment_id, status")
+        .select("reader_assignment_id, chapter_id, status, last_read_at")
         .in("reader_assignment_id", assignmentIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
@@ -108,18 +152,29 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
   }
 
   const completedByAssignment = new Map<string, number>();
-  for (const progress of progressResult.data ?? []) {
+  const completedChapterIdsByAssignment = new Map<string, string[]>();
+  const latestProgressByAssignment = new Map<string, ChapterProgressRow>();
+  for (const progress of (progressResult.data ?? []) as ChapterProgressRow[]) {
     if (progress.status === "completed") {
       completedByAssignment.set(
         progress.reader_assignment_id,
         (completedByAssignment.get(progress.reader_assignment_id) ?? 0) + 1,
       );
+      const completedChapterIds = completedChapterIdsByAssignment.get(progress.reader_assignment_id) ?? [];
+      completedChapterIds.push(progress.chapter_id);
+      completedChapterIdsByAssignment.set(progress.reader_assignment_id, completedChapterIds);
+    }
+
+    const latestProgress = latestProgressByAssignment.get(progress.reader_assignment_id);
+    if (!latestProgress || progress.last_read_at > latestProgress.last_read_at) {
+      latestProgressByAssignment.set(progress.reader_assignment_id, progress);
     }
   }
 
   return rows.flatMap((assignment) => {
-    const version = assignment.reading_rounds?.manuscript_versions;
-    if (!version) return [];
+    const readingRound = assignment.reading_rounds;
+    const version = readingRound?.manuscript_versions;
+    if (!readingRound || !version) return [];
 
     const totalChapters = totalByVersion.get(version.id) ?? 0;
     const completedChapters = completedByAssignment.get(assignment.id) ?? 0;
@@ -131,11 +186,15 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
 
     return [{
       assignmentId: assignment.id,
+      closingNote: readingRound.reader_closing_note,
+      completedChapterIds: completedChapterIdsByAssignment.get(assignment.id) ?? [],
       completedChapters,
-      deadline: assignment.reading_rounds?.reading_deadline ?? null,
+      deadline: readingRound.reading_deadline,
       id: version.manuscript_id,
+      latestChapterId: latestProgressByAssignment.get(assignment.id)?.chapter_id ?? null,
       logline: version.logline,
-      note: assignment.reading_rounds?.reader_note ?? null,
+      note: readingRound.reader_note,
+      readingRoundId: readingRound.id,
       status,
       title: version.title,
       totalChapters,
@@ -281,6 +340,222 @@ export async function completeReaderChapter({
     });
 
   if (error) throw new Error(error.message);
+}
+
+type DueSurveyRow = {
+  id: string;
+  name: string;
+};
+
+type DueSurveyQuestionRow = {
+  id: string;
+  is_required: boolean;
+  position: number;
+  prompt: string;
+  question_type: "rating" | "yes_no" | "multiple_choice" | "open_text";
+  survey_id: string;
+};
+
+type DueSurveyOptionRow = {
+  id: string;
+  label: string;
+  position: number;
+  survey_question_id: string;
+};
+
+type OpenedReaderSurveyRow = {
+  survey_id: string;
+};
+
+type ReaderSurveySubmissionRow = {
+  status: "in_progress" | "submitted";
+  survey_id: string;
+};
+
+const readerSurveyQuestionType: Record<
+  DueSurveyQuestionRow["question_type"],
+  ReaderSurveyQuestion["type"]
+> = {
+  multiple_choice: "multiple-choice",
+  open_text: "open-text",
+  rating: "rating",
+  yes_no: "yes-no",
+};
+
+/**
+ * Returns active surveys whose trigger is already reached. Newly due surveys
+ * are opened atomically; previously deferred `in_progress` surveys are also
+ * returned, so the reader can resume them on another device without being
+ * interrupted by a full form again.
+ */
+export async function getReaderDueSurveys({
+  completedChapterIds,
+  isManuscriptComplete,
+  readerAssignmentId,
+  readingRoundId,
+}: {
+  completedChapterIds: string[];
+  isManuscriptComplete: boolean;
+  readerAssignmentId: string;
+  readingRoundId: string;
+}): Promise<ReaderDueSurvey[]> {
+  const supabase = createSupabaseBrowserClient();
+  const [chapterSurveysResult, manuscriptSurveysResult] = await Promise.all([
+    completedChapterIds.length > 0
+      ? supabase
+        .from("surveys")
+        .select("id, name")
+        .eq("reading_round_id", readingRoundId)
+        .eq("status", "active")
+        .eq("trigger_type", "after_chapter")
+        .in("chapter_id", completedChapterIds)
+        .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    isManuscriptComplete
+      ? supabase
+        .from("surveys")
+        .select("id, name")
+        .eq("reading_round_id", readingRoundId)
+        .eq("status", "active")
+        .eq("trigger_type", "after_manuscript")
+        .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (chapterSurveysResult.error) throw new Error(chapterSurveysResult.error.message);
+  if (manuscriptSurveysResult.error) throw new Error(manuscriptSurveysResult.error.message);
+
+  const triggeredSurveys = [
+    ...((chapterSurveysResult.data ?? []) as DueSurveyRow[]),
+    ...((manuscriptSurveysResult.data ?? []) as DueSurveyRow[]),
+  ];
+  if (triggeredSurveys.length === 0) return [];
+
+  const surveyIds = triggeredSurveys.map((survey) => survey.id);
+  const { data: submissionRows, error: submissionsError } = await supabase
+    .from("survey_submissions")
+    .select("survey_id, status")
+    .eq("reader_assignment_id", readerAssignmentId)
+    .in("survey_id", surveyIds);
+
+  if (submissionsError) throw new Error(submissionsError.message);
+
+  const submissionStatusBySurveyId = new Map(
+    ((submissionRows ?? []) as ReaderSurveySubmissionRow[]).map((submission) => [
+      submission.survey_id,
+      submission.status,
+    ]),
+  );
+  const unseenSurveyIds = triggeredSurveys
+    .filter((survey) => !submissionStatusBySurveyId.has(survey.id))
+    .map((survey) => survey.id);
+
+  const { data: openedSurveyRows, error: openSurveysError } = unseenSurveyIds.length > 0
+    ? await supabase
+      .rpc("open_reader_surveys", {
+        p_reader_assignment_id: readerAssignmentId,
+        p_survey_ids: unseenSurveyIds,
+      })
+    : { data: [], error: null };
+
+  if (openSurveysError) throw new Error(openSurveysError.message);
+
+  const openedSurveyIds = new Set(
+    ((openedSurveyRows ?? []) as OpenedReaderSurveyRow[]).map((survey) => survey.survey_id),
+  );
+  const resumableSurveyIds = new Set(
+    [...submissionStatusBySurveyId.entries()]
+      .filter(([, status]) => status === "in_progress")
+      .map(([surveyId]) => surveyId),
+  );
+  const availableSurveys = triggeredSurveys.filter((survey) => (
+    openedSurveyIds.has(survey.id) || resumableSurveyIds.has(survey.id)
+  ));
+  if (availableSurveys.length === 0) return [];
+
+  const availableSurveyIds = availableSurveys.map((survey) => survey.id);
+  const { data: questionRows, error: questionsError } = await supabase
+    .from("survey_questions")
+    .select("id, survey_id, position, question_type, prompt, is_required")
+    .in("survey_id", availableSurveyIds)
+    .order("position", { ascending: true });
+
+  if (questionsError) throw new Error(questionsError.message);
+
+  const questions = (questionRows ?? []) as DueSurveyQuestionRow[];
+  const questionIds = questions.map((question) => question.id);
+  const { data: optionRows, error: optionsError } = questionIds.length > 0
+    ? await supabase
+      .from("survey_question_options")
+      .select("id, survey_question_id, position, label")
+      .in("survey_question_id", questionIds)
+      .order("position", { ascending: true })
+    : { data: [], error: null };
+
+  if (optionsError) throw new Error(optionsError.message);
+
+  const optionsByQuestionId = new Map<string, ReaderSurveyOption[]>();
+  for (const option of (optionRows ?? []) as DueSurveyOptionRow[]) {
+    const options = optionsByQuestionId.get(option.survey_question_id) ?? [];
+    options.push({ id: option.id, label: option.label });
+    optionsByQuestionId.set(option.survey_question_id, options);
+  }
+
+  const questionsBySurveyId = new Map<string, ReaderSurveyQuestion[]>();
+  for (const question of questions) {
+    const surveyQuestions = questionsBySurveyId.get(question.survey_id) ?? [];
+    surveyQuestions.push({
+      id: question.id,
+      options: optionsByQuestionId.get(question.id) ?? [],
+      prompt: question.prompt,
+      required: question.is_required,
+      type: readerSurveyQuestionType[question.question_type],
+    });
+    questionsBySurveyId.set(question.survey_id, surveyQuestions);
+  }
+
+  return availableSurveys
+    .map((survey) => ({
+    id: survey.id,
+    isNew: openedSurveyIds.has(survey.id),
+    name: survey.name,
+    questions: questionsBySurveyId.get(survey.id) ?? [],
+    }));
+}
+
+export async function submitReaderSurvey({
+  answers,
+  readerAssignmentId,
+  surveyId,
+}: {
+  answers: ReaderSurveyAnswer[];
+  readerAssignmentId: string;
+  surveyId: string;
+}) {
+  const serializedAnswers: Json[] = answers.map((answer) => {
+    const serialized: { [key: string]: Json | undefined } = {
+      question_id: answer.questionId,
+    };
+
+    if (answer.numberValue !== undefined) serialized.number_value = answer.numberValue;
+    if (answer.booleanValue !== undefined) serialized.boolean_value = answer.booleanValue;
+    if (answer.selectedOptionIds !== undefined) serialized.selected_option_ids = answer.selectedOptionIds;
+    if (answer.textValue !== undefined) serialized.text_value = answer.textValue;
+
+    return serialized;
+  });
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("submit_reader_survey", {
+    p_answers: serializedAnswers,
+    p_reader_assignment_id: readerAssignmentId,
+    p_survey_id: surveyId,
+  });
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Your survey response could not be saved.");
+
+  return data;
 }
 
 export async function getReaderAnnotationTags(): Promise<ReaderAnnotationTag[]> {

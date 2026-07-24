@@ -37,6 +37,10 @@ type ManuscriptVersionRow = {
   version_number: number;
 };
 
+type ReadingRoundSettingsRow = {
+  reader_closing_note: string | null;
+};
+
 type ManuscriptAssetStorageRow = {
   storage_bucket: string;
   storage_path: string;
@@ -136,6 +140,7 @@ function toCreateManuscriptPayload({
     chapter_count: draft.chapters,
     word_count_band: draft.wordCountBand || null,
     reading_deadline: draft.deadline || null,
+    reader_closing_note: draft.readerClosingNote.trim(),
     max_readers: draft.maxReaders,
     access_mode: draft.accessMode === "open" ? "open_signup" : "invite_only",
     reader_note: draft.readerNote.trim(),
@@ -195,11 +200,25 @@ export async function getManuscript(
     return {
       chapters: [],
       id: manuscript.id,
+      readerClosingNote: null,
       title: manuscript.internal_title,
       totalWordCount: 0,
       version: null,
     };
   }
+
+  const { data: readingRoundRows, error: readingRoundsError } = await supabase
+    .from("reading_rounds")
+    .select("reader_closing_note")
+    .eq("manuscript_version_id", version.id)
+    .neq("status", "archived")
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (readingRoundsError) throw new Error(readingRoundsError.message);
+
+  const readerClosingNote = (readingRoundRows?.[0] as ReadingRoundSettingsRow | undefined)
+    ?.reader_closing_note ?? null;
 
   const { data: chapterRows, error: chaptersError } = await supabase
     .from("manuscript_chapters")
@@ -215,6 +234,7 @@ export async function getManuscript(
     return {
       chapters: [],
       id: manuscript.id,
+      readerClosingNote,
       title: manuscript.internal_title,
       totalWordCount: 0,
       version: {
@@ -336,6 +356,7 @@ export async function getManuscript(
   return {
     chapters: workspaceChapters,
     id: manuscript.id,
+    readerClosingNote,
     title: manuscript.internal_title,
     totalWordCount: workspaceChapters.reduce(
       (total, chapter) => total + chapter.wordCount,
@@ -426,18 +447,21 @@ export async function updateAnnotationSeenStatus({
 export type UpdateManuscriptSettingsInput = {
   logline: string;
   manuscriptId: string;
+  readerClosingNote: string;
   title: string;
 };
 
 export async function updateManuscriptSettings({
   logline,
   manuscriptId,
+  readerClosingNote,
   title,
 }: UpdateManuscriptSettingsInput) {
   const supabase = createSupabaseBrowserClient();
   const { error } = await supabase.rpc("update_manuscript_settings", {
     p_logline: logline,
     p_manuscript_id: manuscriptId,
+    p_reader_closing_note: readerClosingNote,
     p_title: title,
   });
 

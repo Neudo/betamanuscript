@@ -686,6 +686,22 @@ function ReaderSettingsStep({
           Included in the invitation email and visible on the reader portal.
         </p>
       </div>
+
+      <div>
+        <FieldLabel htmlFor="reader-closing-note">Closing note for readers</FieldLabel>
+        <Textarea
+          id="reader-closing-note"
+          value={draft.readerClosingNote}
+          onChange={(event) => onChange({ readerClosingNote: event.target.value })}
+          placeholder="e.g. Thank you for reading. I would love to know which moments stayed with you."
+          rows={4}
+          maxLength={4000}
+          className="min-h-[100px] resize-none rounded-none border-foreground/20 bg-background text-sm leading-6 shadow-none"
+        />
+        <p className="mt-1 font-mono text-[9px] text-muted-foreground">
+          Optional. Shown on the final page after a reader finishes the manuscript.
+        </p>
+      </div>
     </div>
   );
 }

@@ -687,6 +687,7 @@ export type Database = {
           name: string
           opened_at: string | null
           reader_note: string | null
+          reader_closing_note: string | null
           reading_deadline: string | null
           show_author_profile: boolean
           status: Database["public"]["Enums"]["reading_round_status"]
@@ -703,6 +704,7 @@ export type Database = {
           name?: string
           opened_at?: string | null
           reader_note?: string | null
+          reader_closing_note?: string | null
           reading_deadline?: string | null
           show_author_profile?: boolean
           status?: Database["public"]["Enums"]["reading_round_status"]
@@ -719,6 +721,7 @@ export type Database = {
           name?: string
           opened_at?: string | null
           reader_note?: string | null
+          reader_closing_note?: string | null
           reading_deadline?: string | null
           show_author_profile?: boolean
           status?: Database["public"]["Enums"]["reading_round_status"]
@@ -1004,9 +1007,26 @@ export type Database = {
           invitation_id: string
         }[]
       }
+      open_reader_surveys: {
+        Args: {
+          p_reader_assignment_id: string
+          p_survey_ids: string[]
+        }
+        Returns: {
+          survey_id: string
+        }[]
+      }
       revoke_reading_invitation: {
         Args: { p_invitation_id: string }
         Returns: undefined
+      }
+      submit_reader_survey: {
+        Args: {
+          p_answers: Json
+          p_reader_assignment_id: string
+          p_survey_id: string
+        }
+        Returns: string
       }
       renew_reading_invitation: {
         Args: { p_invitation_id: string; p_token_digest: string }
@@ -1017,7 +1037,12 @@ export type Database = {
         }[]
       }
       update_manuscript_settings: {
-        Args: { p_logline: string; p_manuscript_id: string; p_title: string }
+        Args: {
+          p_logline: string
+          p_manuscript_id: string
+          p_reader_closing_note: string
+          p_title: string
+        }
         Returns: undefined
       }
     }

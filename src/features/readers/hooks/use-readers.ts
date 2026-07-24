@@ -9,6 +9,7 @@ import {
   revokeReaderInvitation,
 } from "@/features/readers/api/readers";
 import { readerKeys } from "@/features/readers/query-keys";
+import { dashboardKeys } from "@/features/dashboard/query-keys";
 import { manuscriptKeys } from "@/features/manuscript/query-keys";
 
 function useInvalidateReaderData() {
@@ -16,6 +17,7 @@ function useInvalidateReaderData() {
 
   return async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
       queryClient.invalidateQueries({ queryKey: readerKeys.all }),
       queryClient.invalidateQueries({ queryKey: manuscriptKeys.all }),
     ]);

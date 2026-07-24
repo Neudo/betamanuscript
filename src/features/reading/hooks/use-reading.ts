@@ -7,10 +7,13 @@ import {
   createReaderAnnotation,
   deleteReaderAnnotation,
   getReaderAnnotationTags,
+  getReaderDueSurveys,
   getReaderManuscript,
   getReaderManuscripts,
+  submitReaderSurvey,
   updateReaderAnnotation,
 } from "@/features/reading/api/reading";
+import { dashboardKeys } from "@/features/dashboard/query-keys";
 
 export const readingKeys = {
   all: ["reader-manuscripts"] as const,
@@ -50,7 +53,30 @@ export function useCompleteReaderChapter() {
   return useMutation({
     mutationFn: completeReaderChapter,
     async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: readingKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
+    },
+  });
+}
+
+export function useReaderDueSurveys() {
+  return useMutation({
+    mutationFn: getReaderDueSurveys,
+  });
+}
+
+export function useSubmitReaderSurvey() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: submitReaderSurvey,
+    async onSuccess() {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
     },
   });
 }
@@ -61,7 +87,10 @@ export function useCreateReaderAnnotation() {
   return useMutation({
     mutationFn: createReaderAnnotation,
     async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: readingKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
     },
   });
 }
@@ -72,7 +101,10 @@ export function useUpdateReaderAnnotation() {
   return useMutation({
     mutationFn: updateReaderAnnotation,
     async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: readingKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
     },
   });
 }
@@ -83,7 +115,10 @@ export function useDeleteReaderAnnotation() {
   return useMutation({
     mutationFn: deleteReaderAnnotation,
     async onSuccess() {
-      await queryClient.invalidateQueries({ queryKey: readingKeys.all });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
     },
   });
 }
