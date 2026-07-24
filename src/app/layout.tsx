@@ -26,6 +26,14 @@ export const metadata: Metadata = {
   title: "Beta Reader Feedback for Better Revisions | BetaManuscript",
   description:
     "Organize beta reader feedback in one place. Invite readers, collect tagged annotations, spot recurring issues, and revise your manuscript with clarity.",
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/logo-small.png", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({

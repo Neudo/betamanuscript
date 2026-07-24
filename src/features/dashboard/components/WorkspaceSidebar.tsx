@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BookOpen,
   ClipboardList,
   FileText,
   LayoutGrid,
@@ -9,6 +8,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -48,9 +48,15 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-foreground/10 bg-sidebar text-foreground">
       <div className="flex h-16 items-center gap-2.5 border-b border-foreground/10 px-5">
-        <BookOpen className="h-[15px] w-[15px] text-primary" strokeWidth={1.5} aria-hidden="true" />
-        <Link href={withSelectedManuscript("/dashboard")} className="text-base font-semibold tracking-normal">
-          BetaManuscript
+        <Link href={withSelectedManuscript("/dashboard")} className="flex items-center" aria-label="BetaManuscript dashboard">
+          <Image
+            src="/logo-full.svg"
+            alt="BetaManuscript"
+            width={303}
+            height={90}
+            priority
+            className="h-7 w-auto"
+          />
         </Link>
       </div>
 

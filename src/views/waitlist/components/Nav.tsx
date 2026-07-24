@@ -1,9 +1,9 @@
 "use client";
 
-import { BookOpen } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
-import { INK, OXBLOOD, SANS, SERIF, premiumEase } from "../../../shared/config/design-tokens";
+import { INK, SANS, premiumEase } from "../../../shared/config/design-tokens";
 
 export function Nav() {
   const reduceMotion = useReducedMotion();
@@ -18,12 +18,16 @@ export function Nav() {
       animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: premiumEase }}
     >
-      <div className="flex items-center gap-2.5">
-        <BookOpen size={16} strokeWidth={1.5} style={{ color: OXBLOOD }} />
-        <span className="text-base font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-          BetaManuscript
-        </span>
-      </div>
+      <Link href="/" className="flex items-center" aria-label="BetaManuscript home">
+        <Image
+          src="/logo-full.svg"
+          alt="BetaManuscript"
+          width={303}
+          height={90}
+          priority
+          className="h-8 w-auto"
+        />
+      </Link>
       <Link
         href="/pricing"
         className="absolute left-1/2 hidden -translate-x-1/2 text-xs transition-colors hover:opacity-65 md:block"
