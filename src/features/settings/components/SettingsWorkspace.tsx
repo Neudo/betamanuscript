@@ -15,6 +15,7 @@ import { RolePicker } from "@/features/account/components/RolePicker";
 import { updateRole } from "@/features/account/api/update-role";
 import type { UserRole } from "@/features/account/domain/user-role";
 import type { AuthenticatedAccount } from "@/features/account/types";
+import { authorPricing } from "@/shared/config/pricing";
 
 const notificationOptions = [
   ["New annotation", "When a reader leaves feedback in the manuscript."],
@@ -58,10 +59,18 @@ const proPlanBenefits = [
   "Data export",
 ];
 
-const paidPlanOptions = [
+const paidPlanOptions: Array<{
+  interval: string;
+  price: string;
+  cadence: string;
+  description: string;
+  checkoutUrl: string | undefined;
+  cta: string;
+  badge?: string;
+}> = [
   {
     interval: "Monthly",
-    price: "$9.99",
+    price: authorPricing.monthly.price,
     cadence: "/ month",
     description: "Flexible monthly billing. Cancel anytime.",
     checkoutUrl: process.env.NEXT_PUBLIC_STRIPE_BETAMANUSCRIPT_PRO_MONTHLY_PAYMENT_LINK,
@@ -69,14 +78,14 @@ const paidPlanOptions = [
   },
   {
     interval: "Yearly",
-    price: "$99.99",
+    price: authorPricing.yearly.price,
     cadence: "/ year",
-    description: "Save $19.89 compared to paying monthly.",
+    description: `Equivalent to ${authorPricing.yearly.monthlyEquivalent}/month, billed annually. Save ${authorPricing.yearly.savings} compared to paying monthly.`,
     checkoutUrl: process.env.NEXT_PUBLIC_STRIPE_BETAMANUSCRIPT_PRO_YEARLY_PAYMENT_LINK,
     cta: "Choose yearly",
     badge: "Best value",
   },
-] as const;
+];
 
 type SettingsTab = (typeof settingsTabs)[number][0];
 
@@ -153,7 +162,7 @@ export function SettingsWorkspace({
                         {option.price} <span className="font-sans text-sm text-muted-foreground">{option.cadence}</span>
                       </p>
                       <p className="mt-3 text-xs leading-5 text-muted-foreground">{option.description}</p>
-                      <ul className="mt-5 space-y-2 text-xs text-muted-foreground">
+                      <ul className="my-5 space-y-2 text-xs text-muted-foreground">
                         {proPlanBenefits.slice(0, 3).map((item) => (
                           <li key={item} className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" />{item}</li>
                         ))}

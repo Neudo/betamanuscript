@@ -5,6 +5,7 @@ import Link from "next/link";
 import { type ReactNode, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { authorPricing } from "@/shared/config/pricing";
 import { Footer } from "@/views/waitlist/components/Footer";
 import {
   BODY,
@@ -13,8 +14,10 @@ import {
   INK,
   MONO,
   MUTED,
+  OXBLOOD,
   PAPER,
   SANS,
+  SERIF,
 } from "@/shared/config/design-tokens";
 
 type BillingCycle = "monthly" | "yearly";
@@ -98,8 +101,12 @@ export function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const isYearly = billingCycle === "yearly";
-  const authorPrice = "$9.99";
-  const authorCta = isYearly ? "Get started — $99.99/year" : "Get started — $9.99/month";
+  const authorPrice = isYearly
+    ? authorPricing.yearly.monthlyEquivalent
+    : authorPricing.monthly.price;
+  const authorCta = isYearly
+    ? `Get started — ${authorPricing.yearly.price}/year`
+    : `Get started — ${authorPricing.monthly.price}/month`;
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
@@ -173,7 +180,7 @@ export function PricingPage() {
                 })}
               </div>
               <span className="border px-2.5 py-1.5 text-[9px] uppercase tracking-[0.08em]" style={{ borderColor: "rgba(44,62,45,0.16)", background: "rgba(44,62,45,0.08)", color: FOREST, fontFamily: MONO }}>
-                Save 17%
+                Save {authorPricing.yearly.savingsPercentage}% yearly
               </span>
             </div>
           </div>
@@ -183,7 +190,9 @@ export function PricingPage() {
           <div className="mx-auto max-w-6xl">
             <p className="mb-6 flex items-center gap-3 border px-5 py-3 text-left text-[11px] leading-5 sm:text-xs" style={{ borderColor: "rgba(44,62,45,0.2)", color: FOREST, fontFamily: MONO }}>
               <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: FOREST }} />
-              {isYearly ? "Yearly plan active — you save $19.89 compared to billing monthly" : "Monthly plan active — switch to yearly and save $19.89 each year"}
+              {isYearly
+                ? `Yearly plan active — ${authorPricing.yearly.monthlyEquivalent}/month equivalent, billed ${authorPricing.yearly.price}/year`
+                : `Monthly plan active — switch to yearly and save ${authorPricing.yearly.savings} each year`}
             </p>
 
             <div className="grid border sm:grid-cols-2" style={{ borderColor: "rgba(28,24,18,0.18)" }}>
@@ -218,7 +227,9 @@ export function PricingPage() {
                   <span className="mb-1.5 text-sm" style={{ color: PAPER }}>/ month</span>
                 </div>
                 <p className="mt-2 text-[10px] uppercase tracking-[0.11em]" style={{ color: PAPER, fontFamily: MONO }}>
-                  {isYearly ? "Billed $99.99/year · save $19.89 vs monthly" : "Billed monthly · switch anytime"}
+                  {isYearly
+                    ? `Billed ${authorPricing.yearly.price}/year · save ${authorPricing.yearly.savings} vs monthly`
+                    : "Billed monthly · switch anytime"}
                 </p>
                 <Link
                   href={authorSignupHref}
