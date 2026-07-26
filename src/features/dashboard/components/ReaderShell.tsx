@@ -54,7 +54,6 @@ function ReaderSidebar({
       <div className="border-t border-foreground/10 p-3 pb-4">
         <WorkspaceAccountMenu
           account={account}
-          currentWorkspace="reader"
           onNavigate={onNavigate}
         />
       </div>

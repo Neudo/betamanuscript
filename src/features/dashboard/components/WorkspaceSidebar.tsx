@@ -97,7 +97,6 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
         <div className="mt-1 border-t border-foreground/10 pt-3">
           <WorkspaceAccountMenu
             account={account}
-            currentWorkspace="writer"
             onNavigate={onNavigate}
           />
         </div>
