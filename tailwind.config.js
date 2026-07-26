@@ -43,6 +43,14 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        sidebar: "hsl(var(--sidebar))",
+        surface: "hsl(var(--surface))",
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -50,9 +58,9 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["EB Garamond", "Georgia", "serif"],
-        mono: ["DM Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+        sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-eb-garamond)", "Georgia", "serif"],
+        mono: ["var(--font-dm-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       boxShadow: {
         glow: "0 24px 80px -34px rgba(123, 29, 29, 0.45)",

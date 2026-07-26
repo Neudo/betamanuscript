@@ -31,7 +31,7 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
     try {
       await submitWaitlist({
         email: normalizedEmail,
-        source: "betaquill-waitlist",
+        source: "betamanuscript-waitlist",
         submittedAt: new Date().toISOString(),
         formStartedAt,
         website,

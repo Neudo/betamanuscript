@@ -1,9 +1,9 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { WaitlistForm } from "../../../features/waitlist";
+import Link from "next/link";
 import { TagBadge, type TagKey } from "../../../features/product-preview";
-import { BODY, CARD, INK, MONO, MUTED, SERIF, premiumEase } from "../../../shared/config/design-tokens";
+import { BODY, CARD, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF, premiumEase } from "../../../shared/config/design-tokens";
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion();
@@ -44,10 +44,16 @@ export function HeroSection() {
             what works before you publish.
           </p>
           
-          <div className="max-w-md">
-            <WaitlistForm label="Join the waitlist" />
-            <p className="text-[11px] mt-3" style={{ color: MUTED, fontFamily: MONO }}>
-              Early access, launch discount code, and no spam.
+          <div className="mt-7">
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b1a1a]"
+              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER, fontFamily: SANS }}
+            >
+              Start for free
+            </Link>
+            <p className="mt-3 text-[11px]" style={{ color: MUTED, fontFamily: MONO }}>
+              Free to start • No credit card required • Cancel anytime
             </p>
           </div>
         </motion.div>
