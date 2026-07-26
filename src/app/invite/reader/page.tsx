@@ -1,5 +1,4 @@
-import { BookOpen } from "lucide-react";
-
+import { BrandLogo } from "@/components/BrandLogo";
 import { Card } from "@/components/ui/card";
 import { InviteReaderAccess } from "@/features/readers/components/InviteReaderAccess";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
@@ -30,7 +29,7 @@ export default async function InviteReaderPage({ searchParams }: InviteReaderPag
   return (
     <main className="grid min-h-screen place-items-center bg-muted/30 p-5">
       <Card className="w-full max-w-lg border-foreground/10 p-7 sm:p-9">
-        <BookOpen className="h-6 w-6 text-primary" strokeWidth={1.5} />
+        <BrandLogo imageClassName="h-8" />
         <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           BetaManuscript reader invitation
         </p>

@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "packageManager": "npm@10.9.8",
+  "packageManager": "pnpm@10.28.1",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3434",
     "build": "next build",
     "lint": "eslint .",
     "start": "next start"

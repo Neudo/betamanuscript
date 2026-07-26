@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, BookOpen, Check, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Check, Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import { Footer } from "@/views/waitlist/components/Footer";
 import {
   BODY,
@@ -12,10 +13,8 @@ import {
   INK,
   MONO,
   MUTED,
-  OXBLOOD,
   PAPER,
   SANS,
-  SERIF,
 } from "@/shared/config/design-tokens";
 
 type BillingCycle = "monthly" | "yearly";
@@ -109,12 +108,11 @@ export function PricingPage() {
         style={{ borderColor: "rgba(28,24,18,0.1)", background: "rgba(245,240,232,0.94)" }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <Link href="/" className="flex min-w-0 items-center gap-2.5 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]">
-            <BookOpen size={17} strokeWidth={1.5} style={{ color: OXBLOOD }} aria-hidden="true" />
-            <span className="truncate text-base font-semibold" style={{ fontFamily: SERIF, color: INK }}>
-              BetaManuscript
-            </span>
-          </Link>
+          <BrandLogo
+            href="/"
+            className="min-w-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
+            imageClassName="h-8"
+          />
 
           <div className="flex items-center gap-3 sm:gap-7">
             <Link

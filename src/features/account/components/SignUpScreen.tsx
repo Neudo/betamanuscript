@@ -1,14 +1,11 @@
 import Link from "next/link";
 
-import type { UserRole } from "../domain/user-role";
 import { AuthScreen } from "./AuthScreen";
 import { SignUpForm } from "./SignUpForm";
 
 export function SignUpScreen({
-  initialRole,
   next,
 }: {
-  initialRole: UserRole;
   next: string | null;
 }) {
   const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
@@ -16,8 +13,8 @@ export function SignUpScreen({
   return (
     <AuthScreen
       eyebrow="Create account"
-      title="Choose your workspace"
-      description="You can change this later in account settings."
+      title="Create your account"
+      description="Continue with Google or create an account with your email."
       footer={
         <p>
           Already have an account?{" "}
@@ -27,7 +24,7 @@ export function SignUpScreen({
         </p>
       }
     >
-      <SignUpForm initialRole={initialRole} next={next} />
+      <SignUpForm next={next} />
     </AuthScreen>
   );
 }

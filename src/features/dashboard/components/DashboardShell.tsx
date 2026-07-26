@@ -3,6 +3,7 @@
 import { Menu } from "lucide-react";
 import { PropsWithChildren, useState } from "react";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { AuthenticatedAccount } from "@/features/account/types";
@@ -21,7 +22,7 @@ export function DashboardShell({
       </div>
 
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
-        <span className="text-base font-semibold">BetaManuscript</span>
+        <BrandLogo href="/dashboard" ariaLabel="BetaManuscript dashboard" imageClassName="h-7" />
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon-sm" aria-label="Open navigation">

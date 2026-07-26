@@ -5,8 +5,8 @@ Waiting page for collecting BetaManuscript emails.
 ## Development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 The app runs on Next.js. The waitlist form posts to `/api/waitlist` in local
@@ -27,4 +27,3 @@ RESEND_WAITLIST_SEGMENT_ID=seg_xxxxxxxxx
 The API route creates the Resend contact and adds it to the BetaManuscript waitlist
 segment, then sends a confirmation email.
 # betaManuscript
-

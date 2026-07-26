@@ -53,7 +53,7 @@ export function InviteReaderAccess({
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Button asChild>
-            <Link href={`/signup?role=reader&next=${encodeURIComponent(next)}`}>
+            <Link href={`/signup?next=${encodeURIComponent(next)}`}>
               Create reader account
               <ArrowRight className="h-4 w-4" />
             </Link>

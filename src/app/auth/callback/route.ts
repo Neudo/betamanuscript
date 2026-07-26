@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
-import { getWorkspaceHome, type UserRole } from "@/features/account/domain/user-role";
+import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +10,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const safeNext = getSafeInternalPath(url.searchParams.get("next"));
-  const isGoogleSignUp = url.searchParams.get("intent") === "signup";
-  const requestedRole = getUserRole(url.searchParams.get("role"));
+  const isAccountSignUp = url.searchParams.get("intent") === "signup";
 
   if (code) {
     const supabase = await createSupabaseServerClient();
@@ -23,19 +22,20 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
-        if (isGoogleSignUp && requestedRole) {
+        if (isAccountSignUp) {
           const displayName = getGoogleDisplayName(user.user_metadata);
-          const { error: profileUpdateError } = await supabase
-            .from("profiles")
-            .update({
-              role: requestedRole,
-              ...(displayName ? { display_name: displayName } : {}),
-            })
-            .eq("id", user.id);
+          if (displayName) {
+            const { error: profileUpdateError } = await supabase
+              .from("profiles")
+              .update({ display_name: displayName })
+              .eq("id", user.id);
 
-          if (profileUpdateError) {
-            return redirectToOAuthError(url);
+            if (profileUpdateError) {
+              return redirectToOAuthError(url);
+            }
           }
+
+          return redirectToAccountPersonalization(url, safeNext);
         }
 
         const { data: profile } = await supabase
@@ -58,12 +58,16 @@ export async function GET(request: Request) {
   return redirectToOAuthError(url);
 }
 
-function getUserRole(value: string | null): UserRole | null {
-  if (value === "reader" || value === "writer" || value === "both") {
-    return value;
+function redirectToAccountPersonalization(url: URL, next: string | null) {
+  const destination = new URL("/onboarding", url.origin);
+
+  if (next) {
+    destination.searchParams.set("next", next);
   }
 
-  return null;
+  const response = NextResponse.redirect(destination);
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
 }
 
 function getGoogleDisplayName(metadata: Record<string, unknown>) {

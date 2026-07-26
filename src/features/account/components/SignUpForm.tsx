@@ -12,22 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "../api/sign-up";
 import { signInWithGoogle } from "../api/sign-in-with-google";
-import type { UserRole } from "../domain/user-role";
 import { signUpSchema } from "../schemas/sign-up.schema";
 import { GoogleMark } from "./GoogleMark";
-import { RolePicker } from "./RolePicker";
 
-type FieldErrors = Partial<Record<"displayName" | "email" | "password", string>>;
+type FieldErrors = Partial<Record<"email" | "password", string>>;
 
-export function SignUpForm({
-  initialRole,
-  next,
-}: {
-  initialRole: UserRole;
-  next: string | null;
-}) {
+export function SignUpForm({ next }: { next: string | null }) {
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>(initialRole);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const mutation = useMutation({
     mutationFn: signUp,
@@ -39,23 +30,20 @@ export function SignUpForm({
     },
   });
   const googleMutation = useMutation({
-    mutationFn: () => signInWithGoogle({ intent: "signup", next, role }),
+    mutationFn: () => signInWithGoogle({ intent: "signup", next }),
   });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const result = signUpSchema.safeParse({
-      displayName: formData.get("displayName"),
       email: formData.get("email"),
       password: formData.get("password"),
-      role,
     });
 
     if (!result.success) {
       const flattened = result.error.flatten().fieldErrors;
       setFieldErrors({
-        displayName: flattened.displayName?.[0],
         email: flattened.email?.[0],
         password: flattened.password?.[0],
       });
@@ -72,7 +60,7 @@ export function SignUpForm({
         <CheckCircle2 className="h-4 w-4 text-success" />
         <AlertTitle>Account created</AlertTitle>
         <AlertDescription className="space-y-3">
-          <p>Check your inbox and confirm your email to activate your workspace.</p>
+          <p>Check your inbox and confirm your email to personalize your account.</p>
           <Button asChild size="sm" variant="outline">
             <Link href="/login">Back to login</Link>
           </Button>
@@ -82,15 +70,37 @@ export function SignUpForm({
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="displayName">Name</Label>
-          <Input id="displayName" name="displayName" autoComplete="name" />
-          {fieldErrors.displayName ? (
-            <p className="text-xs text-destructive">{fieldErrors.displayName}</p>
-          ) : null}
-        </div>
+    <div className="space-y-6">
+      {googleMutation.isError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Could not continue with Google</AlertTitle>
+          <AlertDescription>{googleMutation.error.message}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={googleMutation.isPending}
+          onClick={() => googleMutation.mutate()}
+        >
+          <GoogleMark />
+          {googleMutation.isPending ? "Connecting to Google..." : "Continue with Google"}
+        </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          You’ll choose your role and confirm your name next.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">or create with email</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <form className="space-y-6" onSubmit={handleSubmit} noValidate>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" name="email" type="email" autoComplete="email" />
@@ -98,60 +108,36 @@ export function SignUpForm({
             <p className="text-xs text-destructive">{fieldErrors.email}</p>
           ) : null}
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-        />
-        {fieldErrors.password ? (
-          <p className="text-xs text-destructive">{fieldErrors.password}</p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            At least 8 characters, one uppercase letter, and one number.
-          </p>
-        )}
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+          />
+          {fieldErrors.password ? (
+            <p className="text-xs text-destructive">{fieldErrors.password}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters, one uppercase letter, and one number.
+            </p>
+          )}
+        </div>
 
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">How will you use BetaManuscript?</legend>
-        <RolePicker value={role} onChange={setRole} />
-      </fieldset>
+        {mutation.isError ? (
+          <Alert variant="destructive">
+            <AlertTitle>Could not create your account</AlertTitle>
+            <AlertDescription>{mutation.error.message}</AlertDescription>
+          </Alert>
+        ) : null}
 
-      {mutation.isError || googleMutation.isError ? (
-        <Alert variant="destructive">
-          <AlertTitle>Could not create your account</AlertTitle>
-          <AlertDescription>
-            {mutation.error?.message ?? googleMutation.error?.message}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
-        {mutation.isPending ? "Creating account..." : "Create account"}
-        <ArrowRight className="h-4 w-4" />
-      </Button>
-
-      <div className="flex items-center gap-3" aria-hidden="true">
-        <span className="h-px flex-1 bg-border" />
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">or</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        disabled={googleMutation.isPending}
-        onClick={() => googleMutation.mutate()}
-      >
-        <GoogleMark />
-        {googleMutation.isPending ? "Connecting to Google..." : "Continue with Google"}
-      </Button>
-    </form>
+        <Button type="submit" className="w-full" disabled={mutation.isPending}>
+          {mutation.isPending ? "Creating account..." : "Create account"}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </form>
+    </div>
   );
 }

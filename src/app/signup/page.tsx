@@ -8,20 +8,17 @@ import { getAuthenticatedAccount } from "@/features/account/server/get-authentic
 type SignUpPageProps = {
   searchParams: Promise<{
     next?: string | string[];
-    role?: string | string[];
   }>;
 };
 
 export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const account = await getAuthenticatedAccount();
-  const { next, role } = await searchParams;
+  const { next } = await searchParams;
   const safeNext = getSafeInternalPath(Array.isArray(next) ? next[0] : next);
-  const requestedRole = Array.isArray(role) ? role[0] : role;
-  const initialRole = requestedRole === "reader" ? "reader" : "writer";
 
   if (account) {
     redirect(safeNext ?? getWorkspaceHome(account.role));
   }
 
-  return <SignUpScreen initialRole={initialRole} next={safeNext} />;
+  return <SignUpScreen next={safeNext} />;
 }

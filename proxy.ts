@@ -12,6 +12,7 @@ export const config = {
     "/reader/:path*",
     "/login",
     "/signup",
+    "/onboarding",
     "/auth/:path*",
   ],
 };
