@@ -1,7 +1,8 @@
 import { ProductMockup, TAGS, TagBadge, type TagKey } from "../../../features/product-preview";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
-import { BODY, CARD, INK, MONO, MUTED, SERIF } from "../../../shared/config/design-tokens";
+import { BODY, CARD, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF } from "../../../shared/config/design-tokens";
+import Link from "next/link";
 
 export function ProductPreviewSection() {
   return (
@@ -116,6 +117,17 @@ export function ProductPreviewSection() {
           </div>
         </Reveal>
         <ProductMockup />
+        <Reveal delay={0.16} className="mt-10">
+          <div className="flex flex-col items-center border-t pt-8 text-center" style={{ borderColor: "rgba(28,24,18,0.12)" }}>
+            <Link
+              href="/signup"
+              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b1a1a]"
+              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER, fontFamily: SANS }}
+            >
+              Get started for free
+            </Link>
+          </div>
+        </Reveal>
       </div>
     </section>
 
