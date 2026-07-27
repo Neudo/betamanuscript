@@ -150,6 +150,10 @@ export async function createBillingCheckout({
   const session = await stripe.checkout.sessions.create(
     {
       mode: "subscription",
+      // Managed Payments is enabled at the account level, but this product has
+      // no verified tax classification yet. We must not guess one: opt out of
+      // Managed Payments until the product tax code and tax setup are ready.
+      managed_payments: { enabled: false },
       customer: stripeCustomerId,
       client_reference_id: account.id,
       integration_identifier: createIntegrationIdentifier(),
