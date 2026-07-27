@@ -26,6 +26,7 @@ dist-ssr
 *.agents
 
 .env
+.env.production
 /.next/
 /out/
 /data/*
