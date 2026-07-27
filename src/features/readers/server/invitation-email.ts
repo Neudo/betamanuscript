@@ -29,14 +29,12 @@ function invitationHtml({ inviteUrl, personalNote }: ReaderInvitationEmail) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>You have been invited to read a manuscript</title>
   </head>
-  <body style="margin:0;padding:0;background:#f5f0e8;color:#1c1812;font-family:Inter,Arial,sans-serif;">
-    <main style="max-width:560px;margin:0 auto;padding:48px 24px;">
+  <body style="margin:0;padding:48px;background:#f5f0e8;max-width:600px;margin-left:auto;margin-right:auto;color:#1c1812;font-family:Inter,Arial,sans-serif;">
       <h1 style="margin:0 0 20px;font-family:Georgia,serif;font-size:30px;font-weight:500;line-height:1.15;">You have been invited to read a manuscript.</h1>
       <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#4a4035;">Create an account or sign in with this email address to start reading and leave feedback.</p>
       ${safeNote ? `<section aria-label="A note from the author" style="margin:0 0 24px;border-left:2px solid #8b7355;padding:12px 16px;color:#4a4035;font-size:15px;line-height:1.6;">${safeNote}</section>` : ""}
-      <p style="margin:0 0 28px;"><a href="${escapeHtml(inviteUrl)}" style="display:inline-block;background:#1c1812;color:#ffffff;padding:13px 18px;text-decoration:none;font-size:14px;font-weight:600;">Open invitation</a></p>
+      <p style="margin:0 0 28px;"><a href="${escapeHtml(inviteUrl)}" style="display:inline-block;background:#7c1d1d;color:#fdf8f2;padding:13px 18px;text-decoration:none;font-size:14px;font-weight:600;">Open invitation</a></p>
       <p style="margin:0;color:#6b6456;font-size:13px;line-height:1.6;">This private link expires in 14 days. If you were not expecting this invitation, you can ignore this email.</p>
-    </main>
   </body>
 </html>`;
 }

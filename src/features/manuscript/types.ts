@@ -1,7 +1,5 @@
 export type ManuscriptWizardStep = "info" | "structure" | "readers";
 
-export type ManuscriptAccessMode = "invite" | "open";
-
 export type ManuscriptWordCountBand =
   | "under_40k"
   | "40k_80k"
@@ -39,7 +37,6 @@ export type ManuscriptDraft = {
   wordCountBand: ManuscriptWordCountBand | "";
   deadline: string;
   maxReaders: number;
-  accessMode: ManuscriptAccessMode;
   readerNote: string;
 };
 

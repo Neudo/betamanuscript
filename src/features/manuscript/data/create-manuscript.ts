@@ -30,6 +30,5 @@ export const initialManuscriptDraft: ManuscriptDraft = {
   wordCountBand: "",
   deadline: "",
   maxReaders: 5,
-  accessMode: "invite",
   readerNote: "",
 };

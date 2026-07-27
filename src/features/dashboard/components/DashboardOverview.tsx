@@ -2,7 +2,7 @@
 
 import { MessageSquare } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import {
   type DashboardAnnotation,
@@ -10,6 +10,7 @@ import {
   type DashboardReader,
 } from "@/features/dashboard/api/dashboard";
 import { useDashboardOverview } from "@/features/dashboard/hooks/use-dashboard-overview";
+import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
 import { cn } from "@/lib/utils";
@@ -29,9 +30,7 @@ export function DashboardOverview() {
 
   if (isLoading) return <DashboardLoading />;
   if (error) return <DashboardMessage message="Unable to load your dashboard. Please refresh the page." />;
-  if (!manuscriptId) {
-    return <DashboardMessage message="Create a manuscript to start tracking reader activity." />;
-  }
+  if (!manuscriptId) return <NoManuscriptState />;
   if (!overviewQuery.data) return <DashboardMessage message="This manuscript is no longer available." />;
 
   return (
@@ -265,8 +264,21 @@ function DashboardLoading() {
   );
 }
 
-function DashboardMessage({ message }: { message: string }) {
-  return <div className="grid min-h-[420px] max-w-[1100px] place-items-center px-5 py-7 text-center text-sm text-muted-foreground sm:px-8">{message}</div>;
+function DashboardMessage({
+  message,
+  children,
+}: {
+  message: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="grid min-h-[420px] max-w-[1100px] place-items-center px-5 py-7 text-center text-sm text-muted-foreground sm:px-8">
+      <div>
+        <p>{message}</p>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function EmptyPanel({ message }: { message: string }) {

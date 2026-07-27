@@ -149,7 +149,7 @@ export function ManuscriptSwitcher({
           <DropdownMenuItem
             disabled={manuscriptsQuery.isLoading || manuscriptsQuery.isError}
             onSelect={handleAddNew}
-            className="rounded-none px-2 py-2.5 text-xs font-medium focus:bg-foreground/[0.05]"
+            className="rounded-none cursor-pointer px-2 py-2.5 text-xs font-medium focus:bg-foreground/[0.05]"
           >
             <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
             Add new

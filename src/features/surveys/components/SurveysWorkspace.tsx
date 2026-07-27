@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown, ChevronUp, Copy, LoaderCircle, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/features/dashboard/components/PageHeader";
+import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { SurveyQuestionEditor } from "@/features/surveys/components/SurveyQuestionEditor";
 import {
   useCreateSurvey,
@@ -55,7 +56,9 @@ export function SurveysWorkspace() {
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const manuscriptsQuery = useManuscripts();
-  const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
+  const manuscripts = manuscriptsQuery.data ?? [];
+  const selectedManuscript = manuscripts.find((manuscript) => manuscript.id === selectedManuscriptId);
+  const manuscriptId = selectedManuscript?.id ?? manuscripts[0]?.id ?? null;
   const surveysQuery = useManuscriptSurveys(manuscriptId);
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
   const createSurveyMutation = useCreateSurvey(manuscriptId);
@@ -106,9 +109,10 @@ export function SurveysWorkspace() {
     });
   }
 
-  const isLoading = surveysQuery.isPending
-    || (!manuscriptId && manuscriptsQuery.isPending);
-  const error = surveysQuery.error ?? manuscriptsQuery.error;
+  const isLoading = manuscriptsQuery.isPending || (Boolean(manuscriptId) && surveysQuery.isPending);
+  const error = manuscriptsQuery.error ?? (manuscriptId ? surveysQuery.error : null);
+
+  if (!isLoading && !error && manuscripts.length === 0) return <NoManuscriptState />;
 
   return (
     <div className="min-h-full">
@@ -136,8 +140,6 @@ export function SurveysWorkspace() {
           </div>
         ) : error ? (
           <p className="py-16 text-center text-sm text-muted-foreground">Unable to load surveys. Please refresh the page.</p>
-        ) : !manuscriptId ? (
-          <EmptyState message="Create a manuscript before setting up reader surveys." />
         ) : !data?.readingRoundId ? (
           <EmptyState message="This manuscript does not have a reading round yet." />
         ) : surveys.length === 0 ? (
@@ -475,8 +477,21 @@ function NewSurveyDialog({
   );
 }
 
-function EmptyState({ message }: { message: string }) {
-  return <div className="grid min-h-64 place-items-center border border-dashed border-foreground/15 bg-card px-6 text-center text-sm text-muted-foreground">{message}</div>;
+function EmptyState({
+  children,
+  message,
+}: {
+  children?: ReactNode;
+  message: string;
+}) {
+  return (
+    <div className="grid min-h-64 place-items-center border border-dashed border-foreground/15 bg-card px-6 text-center text-sm text-muted-foreground">
+      <div>
+        <p>{message}</p>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function ResponseAnswerValue({

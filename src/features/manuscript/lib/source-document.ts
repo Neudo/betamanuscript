@@ -75,6 +75,10 @@ export async function importSourceDocument(file: File): Promise<ImportedManuscri
   }
 
   const chapters = detectChapters(paragraphs);
+  if (chapters.length === 0) {
+    throw new Error("No readable chapter content could be detected in this document.");
+  }
+
   if (chapters.length > MAX_CHAPTER_COUNT) {
     throw new Error("The document contains more than 200 detected chapters.");
   }
@@ -148,48 +152,72 @@ async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
 }
 
 function detectChapters(paragraphs: DocumentParagraph[]): ImportedManuscriptChapter[] {
-  const firstHeadingIndex = paragraphs.findIndex((paragraph) => getChapterTitle(paragraph));
-  if (firstHeadingIndex === -1) {
-    return [toChapter("Chapter 1", paragraphs.map((paragraph) => paragraph.text))];
+  const explicitChapterHeadings = paragraphs
+    .map((paragraph, index) => ({ index, title: getExplicitChapterTitle(paragraph.text) }))
+    .filter((heading): heading is { index: number; title: string } => heading.title !== null);
+
+  // A DOCX title is often styled as Heading 1, just like the actual chapter
+  // headings. When the document contains explicit "Chapter 1"-style labels,
+  // those are more reliable boundaries than the paragraph style alone.
+  if (explicitChapterHeadings.length > 0) {
+    return splitIntoChapters(paragraphs, explicitChapterHeadings);
   }
 
-  const firstTitle = getChapterTitle(paragraphs[firstHeadingIndex]);
-  if (!firstTitle) return [toChapter("Chapter 1", paragraphs.map((paragraph) => paragraph.text))];
+  const headings = paragraphs
+    .map((paragraph, index) => ({ index, title: getChapterTitle(paragraph) }))
+    .filter((heading): heading is { index: number; title: string } => heading.title !== null);
+
+  const firstHeadingIndex = headings[0]?.index ?? -1;
+  if (firstHeadingIndex === -1) {
+    return removeEmptyChapters([toChapter("Chapter 1", paragraphs.map((paragraph) => paragraph.text))]);
+  }
+
+  return splitIntoChapters(paragraphs, headings);
+}
+
+function splitIntoChapters(
+  paragraphs: DocumentParagraph[],
+  headings: Array<{ index: number; title: string }>,
+): ImportedManuscriptChapter[] {
+  const firstHeading = headings[0];
+  if (!firstHeading) return [];
 
   const chapters: ImportedManuscriptChapter[] = [];
-  let currentTitle = firstTitle;
-  let currentParagraphs = paragraphs
-    .slice(0, firstHeadingIndex)
-    .map((paragraph) => paragraph.text);
+  let currentTitle = firstHeading.title;
+  let currentParagraphs: string[] = [];
+  let nextHeadingIndex = 1;
 
-  for (const paragraph of paragraphs.slice(firstHeadingIndex + 1)) {
-    const chapterTitle = getChapterTitle(paragraph);
-    if (!chapterTitle) {
-      currentParagraphs.push(paragraph.text);
-      continue;
+  for (let index = firstHeading.index + 1; index < paragraphs.length; index += 1) {
+    const nextHeading = headings[nextHeadingIndex];
+    if (nextHeading?.index === index) {
+      chapters.push(toChapter(currentTitle, currentParagraphs));
+      currentTitle = nextHeading.title;
+      currentParagraphs = [];
+      nextHeadingIndex += 1;
+    } else {
+      currentParagraphs.push(paragraphs[index].text);
     }
-
-    chapters.push(toChapter(currentTitle, currentParagraphs));
-    currentTitle = chapterTitle;
-    currentParagraphs = [];
   }
 
   chapters.push(toChapter(currentTitle, currentParagraphs));
-  return chapters;
+  return removeEmptyChapters(chapters);
 }
 
 function getChapterTitle(paragraph: DocumentParagraph) {
   const text = paragraph.text.trim();
   if (!text || text.length > 500) return null;
 
-  if (paragraph.style && /^(heading|titre)[ _-]?[12]$/i.test(paragraph.style.replace(/\s+/g, ""))) {
-    return text;
-  }
+  return getExplicitChapterTitle(text)
+    ?? (paragraph.style && /^(heading|titre)[ _-]?[12]$/i.test(paragraph.style.replace(/\s+/g, "")) ? text : null)
+    ?? (paragraph.style?.startsWith("markdown-heading-") ? text : null);
+}
 
-  if (paragraph.style?.startsWith("markdown-heading-")) return text;
+function getExplicitChapterTitle(text: string) {
+  const normalizedText = text.trim();
+  if (!normalizedText || normalizedText.length > 500) return null;
 
-  if (/^(chapter|chapitre|part|partie)\s+(?:\d+|[ivxlcdm]+)(?:\s*[-–—:.]\s*.+)?$/i.test(text)) {
-    return text;
+  if (/^(chapter|chapitre|part|partie)\s+(?:\d+|[ivxlcdm]+)(?:\s*[-–—:.]\s*.+)?$/i.test(normalizedText)) {
+    return normalizedText;
   }
 
   return null;
@@ -203,6 +231,14 @@ function toChapter(title: string, paragraphs: string[]): ImportedManuscriptChapt
     }))),
     title,
   };
+}
+
+function removeEmptyChapters(chapters: ImportedManuscriptChapter[]) {
+  return chapters.filter((chapter) => chapter.blocks.some((block) => countWords(block.content) > 0));
+}
+
+function countWords(text: string) {
+  return text.match(/[\p{L}\p{N}]+(?:[’'][\p{L}\p{N}]+)*/gu)?.length ?? 0;
 }
 
 function splitLongParagraph(paragraph: string): string[] {

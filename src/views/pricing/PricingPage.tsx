@@ -152,10 +152,16 @@ export function PricingPage() {
               <span className="h-px w-10" style={{ background: "rgba(28,24,18,0.16)" }} />
             </div>
             <h1
-              className="text-balance leading-[0.94] tracking-[-0.035em]"
-              style={{ color: INK, fontFamily: SERIF, fontSize: "clamp(3.1rem, 7vw, 5.7rem)", fontWeight: 400 }}
+              className="text-balance leading-[1.08]"
+              style={{
+                color: INK,
+                fontFamily: SERIF,
+                fontSize: "clamp(2.6rem, 5.5vw, 4.2rem)",
+                fontWeight: 400,
+                letterSpacing: "-0.02em",
+              }}
             >
-              One plan. <em>Everything included.</em>
+              Make every reader note <em>count.</em>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 sm:text-lg" style={{ color: BODY }}>
               Start free and upgrade when you&apos;re ready to run serious beta rounds. No per-reader fees, no feature gating, no surprises.

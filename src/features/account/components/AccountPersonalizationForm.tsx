@@ -54,7 +54,7 @@ export function AccountPersonalizationForm({
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-8" onSubmit={handleSubmit} noValidate>
       <div className="space-y-2">
         <Label htmlFor="displayName">Name</Label>
         <Input
@@ -77,7 +77,7 @@ export function AccountPersonalizationForm({
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">How will you use BetaManuscript?</legend>
-        <RolePicker value={role} onChange={setRole} />
+        <RolePicker value={role} onChange={setRole} compact />
       </fieldset>
 
       {mutation.isError ? (
@@ -87,7 +87,7 @@ export function AccountPersonalizationForm({
         </Alert>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <Button type="submit" className="w-full sm:w-auto sm:min-w-52" disabled={mutation.isPending}>
         {mutation.isPending ? "Saving your account..." : "Continue to workspace"}
         <ArrowRight className="h-4 w-4" />
       </Button>

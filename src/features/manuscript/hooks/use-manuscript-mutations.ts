@@ -9,11 +9,16 @@ import {
   type UploadManuscriptSourceInput,
 } from "@/features/manuscript/api/manuscript-assets";
 import {
+  createManuscriptChapter,
   createManuscript,
+  deleteManuscriptChapter,
   deleteManuscript,
+  updateManuscriptChapter,
   updateManuscriptSettings,
   updateAnnotationSeenStatus,
   updateChapterEditorialStatus,
+  type CreateManuscriptChapterInput,
+  type UpdateManuscriptChapterInput,
   type UpdateManuscriptSettingsInput,
 } from "@/features/manuscript/api/manuscripts";
 import { manuscriptKeys } from "@/features/manuscript/query-keys";
@@ -85,6 +90,61 @@ export function useDeleteManuscriptMutation() {
       });
     },
   });
+}
+
+type CreateChapterVariables = CreateManuscriptChapterInput & {
+  manuscriptId: string;
+};
+
+type UpdateChapterVariables = UpdateManuscriptChapterInput & {
+  manuscriptId: string;
+};
+
+type DeleteChapterVariables = {
+  chapterId: string;
+  manuscriptId: string;
+};
+
+function useInvalidateManuscriptAfterChapterChange<TVariables extends { manuscriptId: string }>(
+  mutationFn: (variables: TVariables) => Promise<void | string>,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void | string, Error, TVariables>({
+    mutationFn,
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: manuscriptKeys.detail(variables.manuscriptId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: manuscriptKeys.list(),
+        }),
+      ]);
+    },
+  });
+}
+
+export function useCreateManuscriptChapterMutation() {
+  return useInvalidateManuscriptAfterChapterChange<CreateChapterVariables>(
+    ({ content, manuscriptVersionId, title }) => createManuscriptChapter({
+      content,
+      manuscriptVersionId,
+      title,
+    }),
+  );
+}
+
+export function useUpdateManuscriptChapterMutation() {
+  return useInvalidateManuscriptAfterChapterChange<UpdateChapterVariables>(
+    ({ chapterId, content, title }) => updateManuscriptChapter({ chapterId, content, title }),
+  );
+}
+
+export function useDeleteManuscriptChapterMutation() {
+  return useInvalidateManuscriptAfterChapterChange<DeleteChapterVariables>(
+    ({ chapterId }) => deleteManuscriptChapter(chapterId),
+  );
 }
 
 type MutationContext = {

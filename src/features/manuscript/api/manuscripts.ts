@@ -132,6 +132,10 @@ function toCreateManuscriptPayload({
   draft,
   importedChapters,
 }: CreateManuscriptInput): Json {
+  const chapters = importedChapters?.filter((chapter) =>
+    chapter.blocks.some((block) => countWords(block.content) > 0),
+  );
+
   return {
     title: draft.title.trim(),
     logline: draft.logline.trim(),
@@ -142,10 +146,10 @@ function toCreateManuscriptPayload({
     reading_deadline: draft.deadline || null,
     reader_closing_note: draft.readerClosingNote.trim(),
     max_readers: draft.maxReaders,
-    access_mode: draft.accessMode === "open" ? "open_signup" : "invite_only",
+    access_mode: "invite_only",
     reader_note: draft.readerNote.trim(),
-    ...(importedChapters ? {
-      chapters: importedChapters.map((chapter) => ({
+    ...(chapters ? {
+      chapters: chapters.map((chapter) => ({
         blocks: chapter.blocks.map((block) => ({
           content: block.content,
           kind: block.kind,
@@ -424,6 +428,60 @@ export async function updateChapterEditorialStatus({
     .from("manuscript_chapters")
     .update({ editorial_status: status })
     .eq("id", chapterId);
+
+  if (error) throw new Error(error.message);
+}
+
+export type CreateManuscriptChapterInput = {
+  content: string;
+  manuscriptVersionId: string;
+  title: string;
+};
+
+export async function createManuscriptChapter({
+  content,
+  manuscriptVersionId,
+  title,
+}: CreateManuscriptChapterInput) {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("create_manuscript_chapter", {
+    p_content: content,
+    p_manuscript_version_id: manuscriptVersionId,
+    p_title: title,
+  });
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("The chapter was created but no identifier was returned.");
+
+  return data;
+}
+
+export type UpdateManuscriptChapterInput = {
+  chapterId: string;
+  content: string;
+  title: string;
+};
+
+export async function updateManuscriptChapter({
+  chapterId,
+  content,
+  title,
+}: UpdateManuscriptChapterInput) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("update_manuscript_chapter", {
+    p_chapter_id: chapterId,
+    p_content: content,
+    p_title: title,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteManuscriptChapter(chapterId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("delete_manuscript_chapter", {
+    p_chapter_id: chapterId,
+  });
 
   if (error) throw new Error(error.message);
 }

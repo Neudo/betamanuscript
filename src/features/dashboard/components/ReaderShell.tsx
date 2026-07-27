@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardCheck, List, Menu } from "lucide-react";
+import { ClipboardCheck, List, Menu, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
@@ -51,7 +51,20 @@ function ReaderSidebar({
           Sent surveys
         </Link>
       </nav>
-      <div className="border-t border-foreground/10 p-3 pb-4">
+      <div className="space-y-0.5 border-t border-foreground/10 px-3 pb-4 pt-3">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className={`h-auto w-full justify-start border-l-2 border-transparent px-3 py-2 text-[11px] text-muted-foreground ${
+            pathname.startsWith("/reader/settings") && "border-l-primary bg-foreground/[0.07] text-foreground"
+          }`}
+        >
+          <Link href="/reader/settings" onClick={onNavigate}>
+            <Settings className="h-3 w-3" strokeWidth={1.5} />
+            Settings
+          </Link>
+        </Button>
         <WorkspaceAccountMenu
           account={account}
           onNavigate={onNavigate}

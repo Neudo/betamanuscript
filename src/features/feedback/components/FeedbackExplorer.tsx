@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeedbackTagManagerDialog } from "@/features/feedback/components/FeedbackTagManagerDialog";
 import { useManuscriptFeedback } from "@/features/feedback/hooks/use-feedback";
 import type { FeedbackAnnotation, FeedbackTag } from "@/features/feedback/types";
+import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +25,12 @@ export function FeedbackExplorer() {
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const manuscriptsQuery = useManuscripts();
-  const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
+  const manuscripts = manuscriptsQuery.data ?? [];
+  const manuscriptId = selectedManuscriptId ?? manuscripts[0]?.id ?? null;
+
+  if (!manuscriptsQuery.isPending && !manuscriptsQuery.error && manuscripts.length === 0) {
+    return <FeedbackNoManuscript />;
+  }
 
   return (
     <FeedbackExplorerContent
@@ -34,6 +40,10 @@ export function FeedbackExplorer() {
       manuscriptError={manuscriptsQuery.error}
     />
   );
+}
+
+function FeedbackNoManuscript() {
+  return <NoManuscriptState />;
 }
 
 function FeedbackExplorerContent({

@@ -1039,6 +1039,14 @@ export type Database = {
           reading_round_id: string
         }[]
       }
+      create_manuscript_chapter: {
+        Args: {
+          p_content?: string
+          p_manuscript_version_id: string
+          p_title: string
+        }
+        Returns: string
+      }
       create_reading_invitation: {
         Args: {
           p_personal_note: string
@@ -1050,6 +1058,10 @@ export type Database = {
           expires_at: string
           invitation_id: string
         }[]
+      }
+      delete_manuscript_chapter: {
+        Args: { p_chapter_id: string }
+        Returns: undefined
       }
       open_reader_surveys: {
         Args: {
@@ -1093,6 +1105,14 @@ export type Database = {
           p_logline: string
           p_manuscript_id: string
           p_reader_closing_note: string
+          p_title: string
+        }
+        Returns: undefined
+      }
+      update_manuscript_chapter: {
+        Args: {
+          p_chapter_id: string
+          p_content: string
           p_title: string
         }
         Returns: undefined

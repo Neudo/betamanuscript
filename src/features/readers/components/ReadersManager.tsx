@@ -23,6 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/features/dashboard/components/PageHeader";
+import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
+import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
 import type { ReaderStatus } from "@/features/readers/api/readers";
 import {
@@ -60,9 +62,13 @@ function formatDate(value: string | null) {
 export function ReadersManager() {
   const [selectedRoundId, setSelectedRoundId] = useState<string | null>(null);
   const readerRoundsQuery = useReaderRounds();
+  const manuscriptsQuery = useManuscripts();
   const resendMutation = useResendReaderInvitation();
   const revokeMutation = useRevokeReaderInvitation();
   const readerRounds = readerRoundsQuery.data ?? [];
+  const hasManuscripts = (manuscriptsQuery.data?.length ?? 0) > 0;
+  const isLoading = readerRoundsQuery.isLoading || manuscriptsQuery.isLoading;
+  const error = readerRoundsQuery.error ?? manuscriptsQuery.error;
   const activeRound = readerRounds.find((round) => round.id === selectedRoundId)
     ?? readerRounds[0]
     ?? null;
@@ -77,6 +83,10 @@ export function ReadersManager() {
     ? activeRound.readers.filter((reader) => reader.status === "completed").length
     : 0;
 
+  if (!isLoading && !error && !hasManuscripts) {
+    return <NoManuscriptState onCreated={() => { void readerRoundsQuery.refetch(); }} />;
+  }
+
   return (
     <div className="min-h-full">
       <PageHeader
@@ -87,22 +97,22 @@ export function ReadersManager() {
       />
 
       <div className="max-w-[1100px] space-y-6 p-5 sm:p-8">
-        {readerRoundsQuery.isLoading ? (
+        {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading reader invitations…</p>
         ) : null}
 
-        {readerRoundsQuery.isError ? (
+        {error ? (
           <Alert variant="destructive">
-            <AlertDescription>{readerRoundsQuery.error.message}</AlertDescription>
+            <AlertDescription>{error.message}</AlertDescription>
           </Alert>
         ) : null}
 
-        {!readerRoundsQuery.isLoading && !readerRoundsQuery.isError && !activeRound ? (
+        {!isLoading && !error && !activeRound ? (
           <Card className="border-dashed p-8 text-center">
             <Mail className="mx-auto h-5 w-5 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-medium">No manuscript to share yet</h2>
+            <h2 className="mt-4 text-lg font-medium">No reading round yet</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Create a manuscript first, then send an email invitation from this page.
+              Set up a reading round from your manuscript to invite beta readers here.
             </p>
           </Card>
         ) : null}

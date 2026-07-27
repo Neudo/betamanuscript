@@ -1,8 +1,8 @@
 "use client";
 
-import { Check, MessageSquareText, Plus } from "lucide-react";
+import { Check, MessageSquareText } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,11 @@ import {
   useManuscript,
   useManuscripts,
 } from "@/features/manuscript/hooks/use-manuscripts";
-import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
+import { ChapterManagerDialog } from "@/features/manuscript/components/ChapterManagerDialog";
+import {
+  ManuscriptFullPageState,
+  NoManuscriptState,
+} from "@/features/manuscript/components/ManuscriptFullPageState";
 import { ManuscriptSettingsDialog } from "@/features/manuscript/components/ManuscriptSettingsDialog";
 import type {
   ChapterEditorialStatus,
@@ -86,21 +90,12 @@ export function ManuscriptWorkspace() {
   }
 
   if (!manuscriptId && !manuscriptsQuery.isLoading) {
-    return (
-      <WorkspaceMessage title="No manuscript yet">
-        <CreateManuscriptDialog>
-          <Button className="mt-5" size="sm">
-            <Plus className="h-3.5 w-3.5" />
-            Create manuscript
-          </Button>
-        </CreateManuscriptDialog>
-      </WorkspaceMessage>
-    );
+    return <NoManuscriptState />;
   }
 
   if (manuscriptQuery.isLoading || manuscriptsQuery.isLoading) {
     return (
-      <WorkspaceMessage
+      <ManuscriptFullPageState
         title="Loading manuscript"
         description="Fetching your chapters and their current editorial state."
       />
@@ -109,7 +104,7 @@ export function ManuscriptWorkspace() {
 
   if (manuscriptQuery.isError) {
     return (
-      <WorkspaceMessage
+      <ManuscriptFullPageState
         title="The manuscript could not be loaded"
         description={manuscriptQuery.error.message}
       />
@@ -119,7 +114,7 @@ export function ManuscriptWorkspace() {
   const manuscript = manuscriptQuery.data;
   if (!manuscript) {
     return (
-      <WorkspaceMessage
+      <ManuscriptFullPageState
         title="This manuscript is no longer available"
         description="Choose another manuscript from the switcher."
       />
@@ -140,10 +135,14 @@ export function ManuscriptWorkspace() {
 
   if (!selectedChapter) {
     return (
-      <WorkspaceMessage
+      <ManuscriptFullPageState
         title={manuscript.title}
-        description="This version has no chapters yet. Importing a source document will be the next manuscript slice."
-      />
+        description="This version has no chapters yet. Add one now, or import a source document when you create the next version."
+      >
+        <div className="mt-5">
+          <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
+        </div>
+      </ManuscriptFullPageState>
     );
   }
 
@@ -263,6 +262,7 @@ export function ManuscriptWorkspace() {
             <span className="mr-2 font-mono text-[9px] text-muted-foreground">
               {wordCountFormat.format(selectedChapter.wordCount)} words
             </span>
+            <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
             <AnnotationSheet
               annotations={selectedChapter.annotations}
               chapterPosition={selectedChapter.position}
@@ -516,31 +516,6 @@ function AnnotationSheet({
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function WorkspaceMessage({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center bg-background px-6 text-center">
-      <div className="max-w-sm">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-          Manuscript workspace
-        </p>
-        <h1 className="mt-3 text-xl font-medium">{title}</h1>
-        {description ? (
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
-        ) : null}
-        {children}
-      </div>
-    </div>
   );
 }
 

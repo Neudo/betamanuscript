@@ -51,7 +51,6 @@ import {
   sourceDocumentAccept,
 } from "@/features/manuscript/lib/source-document";
 import type {
-  ManuscriptAccessMode,
   ManuscriptDraft,
   ManuscriptGenre,
   CreatedManuscript,
@@ -506,6 +505,7 @@ function StructureStep({
   importedChapters: ImportedManuscriptChapter[] | null;
 }) {
   const coverPreviewUrl = useCoverPreviewUrl(coverFile);
+  const [hasReadingDeadline, setHasReadingDeadline] = useState(Boolean(draft.deadline));
 
   return (
     <div className="space-y-5">
@@ -554,18 +554,40 @@ function StructureStep({
         </RadioGroup>
       </div>
 
-      <div>
-        <FieldLabel htmlFor="reading-deadline">Reading deadline</FieldLabel>
-        <Input
-          id="reading-deadline"
-          type="date"
-          value={draft.deadline}
-          onChange={(event) => onChange({ deadline: event.target.value })}
-          className="h-10 w-auto rounded-none border-foreground/20 bg-background px-3 text-sm font-normal shadow-none"
-        />
-        <p className="mt-1.5 font-mono text-[9px] text-muted-foreground">
-          Optional. Shown to readers in their invitation.
-        </p>
+      <div className="border border-foreground/10 bg-sidebar/30 p-4">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="enable-reading-deadline"
+            checked={hasReadingDeadline}
+            onCheckedChange={(checked) => {
+              const enabled = checked === true;
+              setHasReadingDeadline(enabled);
+              if (!enabled) onChange({ deadline: "" });
+            }}
+            className="mt-0.5"
+          />
+          <div>
+            <Label htmlFor="enable-reading-deadline" className="cursor-pointer text-[11px] font-medium">
+              Set a reading deadline
+            </Label>
+            <p className="mt-1 font-mono text-[9px] leading-4 text-muted-foreground">
+              Give readers a target date to finish this draft. It appears in their invitation and workspace, but does not block access after the date.
+            </p>
+          </div>
+        </div>
+        {hasReadingDeadline ? (
+          <div className="mt-4 border-t border-foreground/10 pt-4">
+            <FieldLabel htmlFor="reading-deadline" required>Target date</FieldLabel>
+            <Input
+              id="reading-deadline"
+              type="date"
+              required
+              value={draft.deadline}
+              onChange={(event) => onChange({ deadline: event.target.value })}
+              className="h-10 w-auto rounded-none border-foreground/20 bg-background px-3 text-sm font-normal shadow-none"
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-4 border border-foreground/10 bg-sidebar/40 p-4">
@@ -611,10 +633,6 @@ function ReaderSettingsStep({
   onChangePlan,
 }: StepProps & { accountPlan: AccountPlan; onChangePlan: () => void }) {
   const hasProPlan = accountPlan === "pro";
-  const accessOptions: Array<{ id: ManuscriptAccessMode; label: string; description: string }> = [
-    { id: "invite", label: "Invite only", description: "You send invitations manually" },
-    { id: "open", label: "Open sign-up", description: "Anyone with the link can join" },
-  ];
 
   return (
     <div className="space-y-5">
@@ -648,28 +666,6 @@ function ReaderSettingsStep({
             </Link>
           </Button> : null}
         </div>
-      </div>
-
-      <div>
-        <FieldLabel>Access</FieldLabel>
-        <RadioGroup value={draft.accessMode} onValueChange={(value) => onChange({ accessMode: value as ManuscriptAccessMode })} className="grid gap-2 sm:grid-cols-2">
-          {accessOptions.map((option) => (
-            <Label
-              key={option.id}
-              htmlFor={`access-${option.id}`}
-              className={cn(
-                "cursor-pointer border border-foreground/20 px-3 py-3 font-normal",
-                draft.accessMode === option.id && "border-foreground bg-foreground/[0.05]",
-              )}
-            >
-              <span className="mb-1 flex items-center gap-1.5 text-[11px] font-medium">
-                <RadioGroupItem id={`access-${option.id}`} value={option.id} className="h-3.5 w-3.5 shadow-none" />
-                {option.label}
-              </span>
-              <span className="block pl-5 font-mono text-[9px] text-muted-foreground">{option.description}</span>
-            </Label>
-          ))}
-        </RadioGroup>
       </div>
 
       <div>
