@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, CircleHelp, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -26,6 +26,7 @@ import type {
   ReaderSurveyAnswer,
 } from "@/features/reading/api/reading";
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
+import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnotationGuide";
 import { ReaderEndScreen } from "@/features/reading/components/ReaderEndScreen";
 import { ReaderSurveyDialog } from "@/features/reading/components/ReaderSurveyDialog";
 import {
@@ -40,6 +41,25 @@ type AnnotationPanel =
   | { annotation: ReaderAnnotation; kind: "edit" }
   | { draft: ReaderAnnotationDraft; kind: "create" };
 
+const readerAnnotationGuideStorageKey = "betaquill.reader.annotation-guide.v1";
+
+function subscribeToAnnotationGuidePreference(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function hasSeenReaderAnnotationGuide() {
+  try {
+    return window.localStorage.getItem(readerAnnotationGuideStorageKey) === "seen";
+  } catch {
+    return false;
+  }
+}
+
+function hasSeenReaderAnnotationGuideOnServer() {
+  return true;
+}
+
 export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,6 +69,13 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const submitSurveyMutation = useSubmitReaderSurvey();
   const [chapterIndex, setChapterIndex] = useState<number | null>(null);
   const [annotationPanel, setAnnotationPanel] = useState<AnnotationPanel | null>(null);
+  const [isAnnotationGuideDismissed, setIsAnnotationGuideDismissed] = useState(false);
+  const [isAnnotationGuideManuallyOpen, setIsAnnotationGuideManuallyOpen] = useState(false);
+  const hasSeenAnnotationGuide = useSyncExternalStore(
+    subscribeToAnnotationGuidePreference,
+    hasSeenReaderAnnotationGuide,
+    hasSeenReaderAnnotationGuideOnServer,
+  );
   const [surveyQueue, setSurveyQueue] = useState<ReaderDueSurvey[]>([]);
   const [isSurveyPromptOpen, setIsSurveyPromptOpen] = useState(false);
   const manuscript = manuscriptQuery.data;
@@ -73,6 +100,8 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     Math.max(0, chapters.length - 1),
   );
   const chapter = chapters[currentChapterIndex];
+  const isAnnotationGuideVisible = isAnnotationGuideManuallyOpen
+    || (!hasSeenAnnotationGuide && !isAnnotationGuideDismissed);
 
   useEffect(() => {
     if (
@@ -195,6 +224,22 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     setChapterIndex(nextChapterIndex);
   }
 
+  function dismissAnnotationGuide() {
+    setIsAnnotationGuideDismissed(true);
+    setIsAnnotationGuideManuallyOpen(false);
+
+    try {
+      window.localStorage.setItem(readerAnnotationGuideStorageKey, "seen");
+    } catch {
+      // Private browsing or disabled storage should not prevent reading.
+    }
+  }
+
+  function showAnnotationGuide() {
+    setIsAnnotationGuideDismissed(false);
+    setIsAnnotationGuideManuallyOpen(true);
+  }
+
   function submitSurvey(answers: ReaderSurveyAnswer[]) {
     if (!activeSurvey) return;
 
@@ -301,6 +346,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
       },
       kind: "create",
     });
+    dismissAnnotationGuide();
   }
 
   return (
@@ -315,6 +361,17 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
             <p className="text-sm font-medium">{manuscript.title}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2 text-xs text-muted-foreground"
+              onClick={showAnnotationGuide}
+              aria-label="Show feedback instructions"
+            >
+              <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="hidden lg:inline">How to leave feedback</span>
+            </Button>
             {surveyQueue.length > 0 ? (
               <Button
                 type="button"
@@ -353,7 +410,11 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
       ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 sm:px-10 sm:py-16" onMouseUp={handleTextSelection}>
         <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground">Chapter {chapter.position}</p>
         <h1 className="mt-4 font-display text-[42px] font-semibold leading-none">{chapter.title}</h1>
-        <div className="mt-12 space-y-7 font-display text-[21px] leading-9 text-foreground/90 sm:text-[23px] sm:leading-10">
+        {isAnnotationGuideVisible ? <ReaderAnnotationGuide onDismiss={dismissAnnotationGuide} /> : null}
+        <div className={cn(
+          "space-y-7 font-display text-[21px] leading-9 text-foreground/90 sm:text-[23px] sm:leading-10",
+          isAnnotationGuideVisible ? "mt-8" : "mt-12",
+        )}>
           {chapter.blocks.length > 0 ? chapter.blocks.map((block) => (
             <ReaderAnnotatedBlock
               key={block.id}
