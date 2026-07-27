@@ -157,7 +157,7 @@ export function ReaderAnnotationSheet({
                   <Quote className="h-3 w-3" />
                   Selected passage
                 </div>
-                <blockquote className="mt-2 text-sm leading-6 text-foreground/85">“{quote}”</blockquote>
+                <blockquote className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/85">“{quote}”</blockquote>
               </div>
 
               <div className="space-y-2">

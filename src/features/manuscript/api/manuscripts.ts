@@ -71,6 +71,8 @@ type AnnotationRow = {
   quote: string;
   reader_assignment_id: string;
   selection_end: number;
+  selection_end_chapter_block_id: string | null;
+  selection_end_offset: number | null;
   selection_start: number;
   tag_id: string;
 };
@@ -258,7 +260,7 @@ export async function getManuscript(
       .order("position", { ascending: true }),
     supabase
       .from("annotations")
-      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, selection_start, selection_end, comment, created_at, author_seen_at")
+      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, selection_start, selection_end, selection_end_chapter_block_id, selection_end_offset, comment, created_at, author_seen_at")
       .in("chapter_id", chapterIds)
       .order("created_at", { ascending: false }),
   ]);
@@ -330,6 +332,8 @@ export async function getManuscript(
       quote: annotation.quote,
       readerName: assignment?.reader_display_name ?? assignment?.reader_email ?? "Reader",
       selectionEnd: annotation.selection_end,
+      selectionEndChapterBlockId: annotation.selection_end_chapter_block_id,
+      selectionEndOffset: annotation.selection_end_offset,
       selectionStart: annotation.selection_start,
       tag: {
         color: tag?.color ?? "#6B7280",

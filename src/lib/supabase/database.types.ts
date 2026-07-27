@@ -52,6 +52,8 @@ export type Database = {
           quote: string
           reader_assignment_id: string
           selection_end: number
+          selection_end_chapter_block_id: string | null
+          selection_end_offset: number | null
           selection_start: number
           tag_id: string
           updated_at: string
@@ -69,6 +71,8 @@ export type Database = {
           quote: string
           reader_assignment_id: string
           selection_end: number
+          selection_end_chapter_block_id?: string | null
+          selection_end_offset?: number | null
           selection_start?: number
           tag_id: string
           updated_at?: string
@@ -86,6 +90,8 @@ export type Database = {
           quote?: string
           reader_assignment_id?: string
           selection_end?: number
+          selection_end_chapter_block_id?: string | null
+          selection_end_offset?: number | null
           selection_start?: number
           tag_id?: string
           updated_at?: string
@@ -94,6 +100,13 @@ export type Database = {
           {
             foreignKeyName: "annotations_chapter_block_id_fkey"
             columns: ["chapter_block_id"]
+            isOneToOne: false
+            referencedRelation: "chapter_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "annotations_selection_end_chapter_block_id_fkey"
+            columns: ["selection_end_chapter_block_id"]
             isOneToOne: false
             referencedRelation: "chapter_blocks"
             referencedColumns: ["id"]

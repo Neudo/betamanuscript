@@ -206,7 +206,7 @@ function DashboardContent({
                 {data.strongestMoments.map((annotation) => (
                   <div key={annotation.id} className="py-3 first:pt-0 last:pb-0">
                     <div className="mb-1 flex items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Ch {annotation.chapter.position}</span><TagBadge tag={annotation.tag} /></div>
-                    <p className="text-xs leading-5 text-foreground/85">“{annotation.quote}”</p>
+                    <p className="whitespace-pre-line text-xs leading-5 text-foreground/85">“{annotation.quote}”</p>
                     <p className="mt-1 font-mono text-[9px] text-muted-foreground">{annotation.reader.name}</p>
                   </div>
                 ))}

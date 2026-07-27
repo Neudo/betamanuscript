@@ -370,7 +370,7 @@ function AnnotationRow({
             </Button>
           ) : null}
         </div>
-        <blockquote className="border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
+        <blockquote className="whitespace-pre-wrap border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
         {annotation.comment ? <p className="mt-2.5 text-sm leading-6 text-foreground/85">{annotation.comment}</p> : null}
       </div>
     </article>

@@ -14,6 +14,10 @@ import {
   annotationBackgroundColor,
   getTextAnnotationSegments,
 } from "@/features/annotations/lib/text-annotations";
+import {
+  createMultiBlockTextSelection,
+  getAnnotationEndAnchor,
+} from "@/features/annotations/lib/multi-block-annotations";
 import type {
   ReaderAnnotation,
   ReaderAnnotationDraft,
@@ -221,37 +225,70 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     const startBlockElement = getReaderBlockElement(range.startContainer);
     const endBlockElement = getReaderBlockElement(range.endContainer);
 
-    if (!startBlockElement || startBlockElement !== endBlockElement) {
-      toast.error("Select text from a single paragraph to add one annotation.");
-      return;
-    }
+    if (!startBlockElement || !endBlockElement) return;
 
-    const block = chapter.blocks.find((item) => item.id === startBlockElement.dataset.readerBlockId);
-    if (!block) return;
+    const startBlockId = startBlockElement.dataset.readerBlockId;
+    const endBlockId = endBlockElement.dataset.readerBlockId;
+    if (!startBlockId || !endBlockId) return;
 
-    const blockText = block.content;
     const rawSelectionStart = getTextOffset(startBlockElement, range.startContainer, range.startOffset);
-    const rawSelectionEnd = getTextOffset(startBlockElement, range.endContainer, range.endOffset);
-    const rawQuote = blockText.slice(rawSelectionStart, rawSelectionEnd);
-    const selectionStart = rawSelectionStart + (rawQuote.length - rawQuote.trimStart().length);
-    const selectionEnd = rawSelectionEnd - (rawQuote.length - rawQuote.trimEnd().length);
-    const quote = blockText.slice(selectionStart, selectionEnd);
+    const rawSelectionEnd = getTextOffset(endBlockElement, range.endContainer, range.endOffset);
+    const selectionDraft = createMultiBlockTextSelection({
+      blocks: chapter.blocks,
+      endBlockId,
+      rawSelectionEnd,
+      rawSelectionStart,
+      startBlockId,
+    });
 
     selection.removeAllRanges();
 
-    if (!quote) return;
+    if (!selectionDraft) return;
 
-    const matchingAnnotation = block.annotations.find(
-      (annotation) => annotation.selectionStart === selectionStart && annotation.selectionEnd === selectionEnd,
+    if (selectionDraft.quote.length > 10_000) {
+      toast.error("Select a passage shorter than 10,000 characters.");
+      return;
+    }
+
+    const startBlockIndex = chapter.blocks.findIndex(
+      (block) => block.id === selectionDraft.chapterBlockId,
     );
+    const selectionEndBlockId = selectionDraft.selectionEndChapterBlockId
+      ?? selectionDraft.chapterBlockId;
+    const endBlockIndex = chapter.blocks.findIndex((block) => block.id === selectionEndBlockId);
+    if (startBlockIndex === -1 || endBlockIndex < startBlockIndex) return;
+
+    const startBlock = chapter.blocks[startBlockIndex];
+
+    const matchingAnnotation = startBlock.annotations.find((annotation) => {
+      const annotationEnd = getAnnotationEndAnchor(annotation);
+      return annotation.chapterBlockId === selectionDraft.chapterBlockId
+        && annotation.selectionStart === selectionDraft.selectionStart
+        && annotationEnd.chapterBlockId === selectionEndBlockId
+        && annotationEnd.selectionEnd === (
+          selectionDraft.selectionEndOffset ?? selectionDraft.selectionEnd
+        );
+    });
+
     if (matchingAnnotation) {
       setAnnotationPanel({ annotation: matchingAnnotation, kind: "edit" });
       return;
     }
 
-    const hasOverlappingAnnotation = block.annotations.some(
-      (annotation) => selectionStart < annotation.selectionEnd && selectionEnd > annotation.selectionStart,
-    );
+    const hasOverlappingAnnotation = chapter.blocks
+      .slice(startBlockIndex, endBlockIndex + 1)
+      .some((block, index, selectedBlocks) => {
+        const isFirstBlock = index === 0;
+        const isLastBlock = index === selectedBlocks.length - 1;
+        const selectionStart = isFirstBlock ? selectionDraft.selectionStart : 0;
+        const selectionEnd = isLastBlock
+          ? selectionDraft.selectionEndOffset ?? selectionDraft.selectionEnd
+          : block.content.length;
+
+        return block.annotations.some(
+          (annotation) => selectionStart < annotation.selectionEnd && selectionEnd > annotation.selectionStart,
+        );
+      });
     if (hasOverlappingAnnotation) {
       toast.error("This passage already overlaps one of your annotations. Click its highlight to edit it.");
       return;
@@ -259,13 +296,8 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
 
     setAnnotationPanel({
       draft: {
-        chapterBlockId: block.id,
         chapterId: chapter.id,
-        contextAfter: blockText.slice(selectionEnd, selectionEnd + 180) || null,
-        contextBefore: blockText.slice(Math.max(0, selectionStart - 180), selectionStart) || null,
-        quote,
-        selectionEnd,
-        selectionStart,
+        ...selectionDraft,
       },
       kind: "create",
     });
@@ -352,7 +384,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
 
       {annotationPanel ? (
         <ReaderAnnotationSheet
-          key={annotationPanel.kind === "edit" ? annotationPanel.annotation.id : `${annotationPanel.draft.chapterBlockId}:${annotationPanel.draft.selectionStart}:${annotationPanel.draft.selectionEnd}`}
+          key={annotationPanel.kind === "edit" ? annotationPanel.annotation.id : `${annotationPanel.draft.chapterBlockId}:${annotationPanel.draft.selectionStart}:${annotationPanel.draft.selectionEndChapterBlockId ?? ""}:${annotationPanel.draft.selectionEndOffset ?? annotationPanel.draft.selectionEnd}`}
           annotation={annotationPanel.kind === "edit" ? annotationPanel.annotation : undefined}
           draft={annotationPanel.kind === "create" ? annotationPanel.draft : undefined}
           readerAssignmentId={readerAssignmentId}

@@ -73,6 +73,8 @@ export type ManuscriptWorkspaceAnnotation = {
   quote: string;
   readerName: string;
   selectionEnd: number;
+  selectionEndChapterBlockId: string | null;
+  selectionEndOffset: number | null;
   selectionStart: number;
   tag: {
     color: string;

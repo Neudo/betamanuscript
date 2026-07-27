@@ -1,5 +1,6 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Json } from "@/lib/supabase/database.types";
+import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
 
 export type ReaderManuscriptListItem = {
   assignmentId: string;
@@ -36,6 +37,8 @@ export type ReaderAnnotation = {
   id: string;
   quote: string;
   selectionEnd: number;
+  selectionEndChapterBlockId: string | null;
+  selectionEndOffset: number | null;
   selectionStart: number;
   tag: ReaderAnnotationTag;
 };
@@ -47,6 +50,8 @@ export type ReaderAnnotationDraft = {
   contextBefore: string | null;
   quote: string;
   selectionEnd: number;
+  selectionEndChapterBlockId: string | null;
+  selectionEndOffset: number | null;
   selectionStart: number;
 };
 
@@ -226,9 +231,9 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     const completedChapters = completedByAssignment.get(assignment.id) ?? 0;
     const status = assignment.status === "completed" || (totalChapters > 0 && completedChapters >= totalChapters)
       ? "finished"
-      : completedChapters === 0
-        ? "not-started"
-        : "reading";
+      : assignment.status === "started"
+        ? "reading"
+        : "not-started";
 
     return [{
       assignmentId: assignment.id,
@@ -302,6 +307,8 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
         quote,
         selection_start,
         selection_end,
+        selection_end_chapter_block_id,
+        selection_end_offset,
         context_before,
         context_after,
         comment
@@ -325,11 +332,11 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
   const annotationTagsById = new Map(
     (annotationTagRows ?? []).map((tag) => [tag.id, tag]),
   );
-  const annotationsByBlock = new Map<string, ReaderAnnotation[]>();
+  const annotationsByChapter = new Map<string, ReaderAnnotation[]>();
 
   for (const annotation of annotationRows ?? []) {
     const tag = annotationTagsById.get(annotation.tag_id);
-    const annotations = annotationsByBlock.get(annotation.chapter_block_id) ?? [];
+    const annotations = annotationsByChapter.get(annotation.chapter_id) ?? [];
     annotations.push({
       chapterBlockId: annotation.chapter_block_id,
       chapterId: annotation.chapter_id,
@@ -339,6 +346,8 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
       id: annotation.id,
       quote: annotation.quote,
       selectionEnd: annotation.selection_end,
+      selectionEndChapterBlockId: annotation.selection_end_chapter_block_id,
+      selectionEndOffset: annotation.selection_end_offset,
       selectionStart: annotation.selection_start,
       tag: {
         color: tag?.color ?? "#6B7280",
@@ -347,14 +356,14 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
         slug: tag?.slug ?? "unknown",
       },
     });
-    annotationsByBlock.set(annotation.chapter_block_id, annotations);
+    annotationsByChapter.set(annotation.chapter_id, annotations);
   }
 
   const blocksByChapter = new Map<string, ReaderManuscript["chapters"][number]["blocks"]>();
   for (const block of blockRows ?? []) {
     const blocks = blocksByChapter.get(block.chapter_id) ?? [];
     blocks.push({
-      annotations: annotationsByBlock.get(block.id) ?? [],
+      annotations: [],
       content: block.content,
       id: block.id,
       position: block.position,
@@ -364,12 +373,20 @@ export async function getReaderManuscript(manuscriptId: string): Promise<ReaderM
 
   return {
     ...manuscript,
-    chapters: chapters.map((chapter) => ({
-      blocks: blocksByChapter.get(chapter.id) ?? [],
-      id: chapter.id,
-      position: chapter.position,
-      title: chapter.title,
-    })),
+    chapters: chapters.map((chapter) => {
+      const chapterBlocks = blocksByChapter.get(chapter.id) ?? [];
+      const chapterAnnotations = annotationsByChapter.get(chapter.id) ?? [];
+
+      return {
+        blocks: chapterBlocks.map((block) => ({
+          ...block,
+          annotations: getBlockAnnotationRanges(chapterBlocks, block, chapterAnnotations),
+        })),
+        id: chapter.id,
+        position: chapter.position,
+        title: chapter.title,
+      };
+    }),
   };
 }
 
@@ -840,6 +857,8 @@ export async function createReaderAnnotation({
   quote,
   readerAssignmentId,
   selectionEnd,
+  selectionEndChapterBlockId,
+  selectionEndOffset,
   selectionStart,
   tagId,
 }: CreateReaderAnnotationInput) {
@@ -855,6 +874,8 @@ export async function createReaderAnnotation({
       quote,
       reader_assignment_id: readerAssignmentId,
       selection_end: selectionEnd,
+      selection_end_chapter_block_id: selectionEndChapterBlockId,
+      selection_end_offset: selectionEndOffset,
       selection_start: selectionStart,
       tag_id: tagId,
     });

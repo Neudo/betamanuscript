@@ -27,6 +27,7 @@ import {
   annotationBackgroundColor,
   getTextAnnotationSegments,
 } from "@/features/annotations/lib/text-annotations";
+import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
 import {
   useUpdateAnnotationSeenMutation,
   useUpdateChapterStatusMutation,
@@ -311,8 +312,10 @@ export function ManuscriptWorkspace() {
                     key={block.id}
                     block={block}
                     focusedAnnotationId={focusedAnnotationId}
-                    annotations={selectedChapter.annotations.filter(
-                      (annotation) => annotation.chapterBlockId === block.id,
+                    annotations={getBlockAnnotationRanges(
+                      selectedChapter.blocks,
+                      block,
+                      selectedChapter.annotations,
                     )}
                   />
                 ))}
@@ -489,7 +492,7 @@ function AnnotationSheet({
                 </div>
                 <blockquote
                   className={cn(
-                    "mt-4 border-l-2 pl-3 text-sm leading-6",
+                    "mt-4 whitespace-pre-wrap border-l-2 pl-3 text-sm leading-6",
                     isSeen && "line-through",
                   )}
                   style={{ borderLeftColor: annotation.tag.color }}
