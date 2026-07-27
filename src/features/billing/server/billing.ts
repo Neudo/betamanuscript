@@ -79,8 +79,55 @@ function isRecoverableSubscription(status: string) {
   return !["canceled", "incomplete_expired"].includes(status);
 }
 
+function isMissingStripeCustomer(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as { code?: unknown; param?: unknown };
+  return candidate.code === "resource_missing" && candidate.param === "customer";
+}
+
+async function removeDeletedStripeCustomer({
+  account,
+  stripeCustomerId,
+  supabase,
+}: {
+  account: BillingAccount;
+  stripeCustomerId: string;
+  supabase: ReturnType<typeof createSupabaseAdminClient>;
+}) {
+  const { data: removedCustomer, error: removeCustomerError } = await supabase
+    .from("stripe_customers")
+    .delete()
+    .eq("profile_id", account.id)
+    .eq("stripe_customer_id", stripeCustomerId)
+    .select("profile_id")
+    .maybeSingle();
+
+  if (removeCustomerError) {
+    throw new Error("Unable to replace the deleted billing customer.");
+  }
+
+  if (!removedCustomer) {
+    return;
+  }
+
+  // Deleting a Stripe customer cancels its subscriptions. Keep the local plan
+  // in sync while the replacement customer is created for the next checkout.
+  const { error: resetPlanError } = await supabase
+    .from("profiles")
+    .update({ plan: "free" })
+    .eq("id", account.id);
+
+  if (resetPlanError) {
+    throw new Error("Unable to reset the billing plan for the deleted customer.");
+  }
+}
+
 async function getOrCreateStripeCustomer(account: BillingAccount) {
   const supabase = createSupabaseAdminClient();
+  const stripe = getStripeClient();
   const { data: existingCustomer, error: existingCustomerError } = await supabase
     .from("stripe_customers")
     .select("stripe_customer_id")
@@ -91,17 +138,42 @@ async function getOrCreateStripeCustomer(account: BillingAccount) {
     throw new Error("Unable to load the billing customer.");
   }
 
+  let deletedStripeCustomerId: string | null = null;
+
   if (existingCustomer) {
-    return existingCustomer.stripe_customer_id;
+    try {
+      const customer = await stripe.customers.retrieve(existingCustomer.stripe_customer_id);
+
+      if (!customer.deleted) {
+        return existingCustomer.stripe_customer_id;
+      }
+    } catch (error) {
+      if (!isMissingStripeCustomer(error)) {
+        throw error;
+      }
+    }
+
+    deletedStripeCustomerId = existingCustomer.stripe_customer_id;
+    await removeDeletedStripeCustomer({
+      account,
+      stripeCustomerId: deletedStripeCustomerId,
+      supabase,
+    });
   }
 
-  const stripe = getStripeClient();
   const customer = await stripe.customers.create(
     {
       email: account.email || undefined,
       metadata: { supabase_profile_id: account.id },
     },
-    { idempotencyKey: `betamanuscript/customer/${account.id}` },
+    {
+      // A previous customer can have been manually deleted in Stripe. Use a
+      // distinct key for its replacement so Stripe does not replay the old,
+      // now-deleted customer from its idempotency cache.
+      idempotencyKey: deletedStripeCustomerId
+        ? `betamanuscript/customer/${account.id}/replacement/${deletedStripeCustomerId}`
+        : `betamanuscript/customer/${account.id}`,
+    },
   );
 
   const { data: savedCustomer, error: saveCustomerError } = await supabase
