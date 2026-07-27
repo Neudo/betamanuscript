@@ -562,6 +562,122 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          profile_id: string
+          stripe_customer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          stripe_customer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          stripe_customer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_subscriptions: {
+        Row: {
+          cancel_at: string | null
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          ended_at: string | null
+          profile_id: string
+          status: string
+          stripe_customer_id: string
+          stripe_event_created_at: string
+          stripe_event_id: string
+          stripe_price_id: string
+          stripe_subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          cancel_at?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          ended_at?: string | null
+          profile_id: string
+          status: string
+          stripe_customer_id: string
+          stripe_event_created_at: string
+          stripe_event_id: string
+          stripe_price_id: string
+          stripe_subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          cancel_at?: string | null
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          ended_at?: string | null
+          profile_id?: string
+          status?: string
+          stripe_customer_id?: string
+          stripe_event_created_at?: string
+          stripe_event_id?: string
+          stripe_price_id?: string
+          stripe_subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_subscriptions_stripe_customer_id_fkey"
+            columns: ["stripe_customer_id"]
+            isOneToOne: false
+            referencedRelation: "stripe_customers"
+            referencedColumns: ["stripe_customer_id"]
+          },
+        ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          event_type: string
+          received_at: string
+          stripe_event_created_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          event_type: string
+          received_at?: string
+          stripe_event_created_at: string
+          stripe_event_id: string
+        }
+        Update: {
+          event_type?: string
+          received_at?: string
+          stripe_event_created_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       reader_assignments: {
         Row: {
           completed_at: string | null
@@ -1112,6 +1228,28 @@ export type Database = {
           personal_note: string
           recipient_email: string
         }[]
+      }
+      expire_stripe_billing_entitlements: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      sync_stripe_billing_subscription: {
+        Args: {
+          p_canceled_at: string | null
+          p_cancel_at: string | null
+          p_cancel_at_period_end: boolean
+          p_current_period_end: string | null
+          p_ended_at: string | null
+          p_event_created_at: string
+          p_event_type: string
+          p_profile_id: string
+          p_status: string
+          p_stripe_customer_id: string
+          p_stripe_event_id: string
+          p_stripe_price_id: string
+          p_stripe_subscription_id: string
+        }
+        Returns: boolean
       }
       update_manuscript_settings: {
         Args: {

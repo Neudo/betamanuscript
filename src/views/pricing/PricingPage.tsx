@@ -316,8 +316,8 @@ export function PricingPage() {
               })}
               <p className="mt-7 text-sm" style={{ color: BODY }}>
                 Still have questions?{" "}
-                <a className="underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65" href="mailto:hello@betamanuscript.co" style={{ color: OXBLOOD }}>
-                  hello@betamanuscript.co
+                <a className="underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65" href="mailto:support@betamanuscript.com" style={{ color: OXBLOOD }}>
+                  support@betamanuscript.com
                 </a>
               </p>
             </div>

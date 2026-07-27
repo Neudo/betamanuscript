@@ -1,9 +1,10 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Bell, BookOpen, Check, CreditCard, Download, ExternalLink, Shield, Trash2, Upload, UserRound } from "lucide-react";
+import { Bell, BookOpen, Check, CreditCard, Download, Shield, Trash2, Upload, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -42,46 +43,51 @@ const settingsTabs = [
 ] as const;
 
 const freePlanBenefits = [
-  "Limited to 1 manuscript",
-  "Up to 5 active readers",
-  "Unlimited annotations",
-  "Reader surveys",
-  "Revision priorities",
-  "Data export",
+  "1 active manuscript",
+  "Up to 5 beta readers",
+  "Default annotation tags",
+  "Revision dashboard",
+  "Reader reading list",
+  "1 survey",
+  "Shareable invite link",
 ];
 
 const proPlanBenefits = [
   "Unlimited manuscripts",
-  "Unlimited active beta readers",
-  "Unlimited annotations",
-  "Reader surveys",
-  "Revision priorities",
-  "Data export",
+  "Unlimited beta readers",
+  "Custom annotation tags",
+  "Advanced revision priorities",
+  "Unlimited surveys",
+  "CSV & PDF export",
+  "Custom reader portal",
+  "Priority support",
 ];
 
+type BillingInterval = "monthly" | "yearly";
+
 const paidPlanOptions: Array<{
-  interval: string;
+  interval: BillingInterval;
+  label: string;
   price: string;
   cadence: string;
   description: string;
-  checkoutUrl: string | undefined;
   cta: string;
   badge?: string;
 }> = [
   {
-    interval: "Monthly",
+    interval: "monthly",
+    label: "Monthly",
     price: authorPricing.monthly.price,
     cadence: "/ month",
     description: "Flexible monthly billing. Cancel anytime.",
-    checkoutUrl: process.env.NEXT_PUBLIC_STRIPE_BETAMANUSCRIPT_PRO_MONTHLY_PAYMENT_LINK,
     cta: "Choose monthly",
   },
   {
-    interval: "Yearly",
+    interval: "yearly",
+    label: "Yearly",
     price: authorPricing.yearly.price,
     cadence: "/ year",
     description: `Equivalent to ${authorPricing.yearly.monthlyEquivalent}/month, billed annually. Save ${authorPricing.yearly.savings} compared to paying monthly.`,
-    checkoutUrl: process.env.NEXT_PUBLIC_STRIPE_BETAMANUSCRIPT_PRO_YEARLY_PAYMENT_LINK,
     cta: "Choose yearly",
     badge: "Best value",
   },
@@ -157,7 +163,7 @@ export function SettingsWorkspace({
                   {paidPlanOptions.map((option) => (
                     <section key={option.interval} className="relative flex min-h-64 flex-col border-t border-foreground/10 p-5 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
                       {option.badge ? <span className="absolute right-0 top-0 bg-primary px-2.5 py-1 font-mono text-[8px] uppercase tracking-widest text-primary-foreground">{option.badge}</span> : null}
-                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary">{option.interval}</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary">{option.label}</p>
                       <p className="mt-5 font-display text-4xl leading-none tracking-tight">
                         {option.price} <span className="font-sans text-sm text-muted-foreground">{option.cadence}</span>
                       </p>
@@ -167,12 +173,12 @@ export function SettingsWorkspace({
                           <li key={item} className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-success" />{item}</li>
                         ))}
                       </ul>
-                      <PaymentLinkButton href={option.checkoutUrl} label={option.cta} />
+                      <BillingCheckoutButton interval={option.interval} label={option.cta} />
                     </section>
                   ))}
                 </div>
               </div>
-            </SettingsRow> : null}
+            </SettingsRow> : <SettingsRow label="Subscription" hint="Update payment details, switch billing interval, or cancel from Stripe’s secure portal."><BillingPortalButton /></SettingsRow>}
           </SettingsPage>
         </TabsContent>
       </div>
@@ -206,18 +212,58 @@ function SettingsFooter({ children }: { children: React.ReactNode }) {
   return <div className="flex justify-end py-5">{children}</div>;
 }
 
-function PaymentLinkButton({ href, label }: { href?: string; label: string }) {
-  if (!href) {
-    return <Button size="sm" className="mt-auto w-full" disabled>Checkout unavailable</Button>;
+function BillingCheckoutButton({ interval, label }: { interval: BillingInterval; label: string }) {
+  const [isPending, setIsPending] = useState(false);
+
+  async function startCheckout() {
+    setIsPending(true);
+
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interval }),
+      });
+      const payload = await response.json().catch(() => null) as { error?: string; url?: string } | null;
+
+      if (!response.ok || !payload?.url) {
+        throw new Error(payload?.error ?? "Unable to start secure checkout.");
+      }
+
+      window.location.assign(payload.url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to start secure checkout.");
+      setIsPending(false);
+    }
   }
 
-  return (
-    <Button asChild size="sm" className="mt-auto w-full">
-      <a href={href} target="_blank" rel="noreferrer">
-        {label}<ExternalLink className="h-3.5 w-3.5" />
-      </a>
-    </Button>
-  );
+  return <Button size="sm" className="mt-auto w-full" disabled={isPending} onClick={startCheckout}>{isPending ? "Opening secure checkout..." : label}</Button>;
+}
+
+
+
+function BillingPortalButton() {
+  const [isPending, setIsPending] = useState(false);
+
+  async function openPortal() {
+    setIsPending(true);
+
+    try {
+      const response = await fetch("/api/billing/portal", { method: "POST" });
+      const payload = await response.json().catch(() => null) as { error?: string; url?: string } | null;
+
+      if (!response.ok || !payload?.url) {
+        throw new Error(payload?.error ?? "Unable to open subscription management.");
+      }
+
+      window.location.assign(payload.url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to open subscription management.");
+      setIsPending(false);
+    }
+  }
+
+  return <Button size="sm" onClick={openPortal} disabled={isPending}>{isPending ? "Opening subscription management..." : "Manage subscription"}</Button>;
 }
 
 function DeleteAccount() {
