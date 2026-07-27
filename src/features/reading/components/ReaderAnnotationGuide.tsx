@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MessageSquarePlus, MousePointer2, X } from "lucide-react";
+import { Check, MousePointer2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
