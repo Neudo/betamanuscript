@@ -7,6 +7,7 @@ import {
   inviteReader,
   resendReaderInvitation,
   revokeReaderInvitation,
+  updateReaderLimit,
 } from "@/features/readers/api/readers";
 import { readerKeys } from "@/features/readers/query-keys";
 import { dashboardKeys } from "@/features/dashboard/query-keys";
@@ -55,6 +56,15 @@ export function useRevokeReaderInvitation() {
 
   return useMutation({
     mutationFn: revokeReaderInvitation,
+    onSettled: invalidate,
+  });
+}
+
+export function useUpdateReaderLimit() {
+  const invalidate = useInvalidateReaderData();
+
+  return useMutation({
+    mutationFn: updateReaderLimit,
     onSettled: invalidate,
   });
 }

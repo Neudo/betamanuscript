@@ -144,3 +144,33 @@ export async function revokeReaderInvitation(invitationId: string) {
     throw new Error(error.message);
   }
 }
+
+export async function updateReaderLimit({
+  maxReaders,
+  readingRoundId,
+}: {
+  maxReaders: number;
+  readingRoundId: string;
+}) {
+  if (!Number.isInteger(maxReaders) || maxReaders < 1) {
+    throw new Error("Choose a whole number greater than zero.");
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("reading_rounds")
+    .update({ max_readers: maxReaders })
+    .eq("id", readingRoundId)
+    .select("id, max_readers")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data) {
+    throw new Error("The reader limit could not be updated.");
+  }
+
+  return data;
+}

@@ -26,6 +26,8 @@ import { PageHeader } from "@/features/dashboard/components/PageHeader";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
+import { ReaderLimitDialog } from "@/features/readers/components/ReaderLimitDialog";
+import type { AccountPlan } from "@/features/account/types";
 import type { ReaderStatus } from "@/features/readers/api/readers";
 import {
   useReaderRounds,
@@ -59,7 +61,7 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-export function ReadersManager() {
+export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
   const [selectedRoundId, setSelectedRoundId] = useState<string | null>(null);
   const readerRoundsQuery = useReaderRounds();
   const manuscriptsQuery = useManuscripts();
@@ -142,9 +144,19 @@ export function ReadersManager() {
                 ["Readers started", `${startedCount} / ${activeRound.maxReaders}`],
                 ["Pending invitations", String(pendingCount)],
                 ["Completed", String(completedCount)],
-              ].map(([label, value]) => (
+              ].map(([label, value], index) => (
                 <div key={label} className="border border-foreground/10 bg-card p-5">
-                  <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+                    {index === 0 ? (
+                      <ReaderLimitDialog
+                        accountPlan={accountPlan}
+                        currentLimit={activeRound.maxReaders}
+                        minimumLimit={Math.max(1, startedCount)}
+                        readingRoundId={activeRound.id}
+                      />
+                    ) : null}
+                  </div>
                   <p className="mt-3 text-3xl font-normal">{value}</p>
                 </div>
               ))}
