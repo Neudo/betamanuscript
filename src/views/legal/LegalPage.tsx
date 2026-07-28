@@ -2,7 +2,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
-import { BODY, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF } from "@/shared/config/design-tokens";
+import { BODY, INK, MONO, MUTED, OXBLOOD, PAPER, SANS } from "@/shared/config/design-tokens";
+import { Heading } from "@/shared/ui/Heading";
 import { Footer } from "@/views/waitlist/components/Footer";
 
 type LegalPageProps = {
@@ -32,7 +33,7 @@ export function LegalPage({ children, eyebrow, lastUpdated, summary, title }: Le
       <main className="px-6 py-14 sm:py-20 md:px-12">
         <div className="mx-auto max-w-3xl">
           <p className="text-[9px] uppercase tracking-[0.22em]" style={{ color: OXBLOOD, fontFamily: MONO }}>{eyebrow}</p>
-          <h1 className="mt-4 text-balance text-5xl leading-none sm:text-6xl" style={{ fontFamily: SERIF }}>{title}</h1>
+          <Heading level={1} className="mt-4 text-balance">{title}</Heading>
           <p className="mt-6 max-w-2xl text-lg leading-8" style={{ color: BODY }}>{summary}</p>
           <p className="mt-6 text-[10px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Last updated {lastUpdated}</p>
 
@@ -50,7 +51,7 @@ export function LegalPage({ children, eyebrow, lastUpdated, summary, title }: Le
 export function LegalSection({ children, title }: { children: ReactNode; title: string }) {
   return (
     <section>
-      <h2 className="text-3xl leading-none sm:text-4xl" style={{ fontFamily: SERIF }}>{title}</h2>
+      <Heading level={2} size="page">{title}</Heading>
       <div className="mt-4 space-y-4 text-[15px] leading-7" style={{ color: BODY }}>{children}</div>
     </section>
   );

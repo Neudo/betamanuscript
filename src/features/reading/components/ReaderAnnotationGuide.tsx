@@ -3,6 +3,7 @@
 import { Check, MousePointer2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Heading } from "@/shared/ui/Heading";
 
 type ReaderAnnotationGuideProps = {
   onDismiss: () => void;
@@ -22,9 +23,9 @@ export function ReaderAnnotationGuide({ onDismiss }: ReaderAnnotationGuideProps)
           </div>
           <div>
             <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">A quick note before you begin</p>
-            <h2 id="reader-annotation-guide-title" className="mt-1 font-display text-xl font-semibold leading-tight">
+            <Heading level={2} size="subsection" id="reader-annotation-guide-title" className="mt-1">
               Leave feedback as you read
-            </h2>
+            </Heading>
           </div>
         </div>
         <Button

@@ -2,6 +2,7 @@ import { BookCheck, RotateCcw } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Heading } from "@/shared/ui/Heading";
 
 type ReaderEndScreenProps = {
   closingNote: string | null;
@@ -21,7 +22,7 @@ export function ReaderEndScreen({
         <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Reading complete
         </p>
-        <h1 className="mt-3 font-display text-5xl font-semibold leading-none">The end</h1>
+        <Heading level={1} size="section" className="mt-3">The end</Heading>
         <p className="mx-auto mt-6 max-w-md text-sm leading-7 text-muted-foreground">
           You&apos;ve reached the end of <span className="font-medium text-foreground">{manuscriptTitle}</span>.
           Thank you for taking the time to read it and share your perspective.

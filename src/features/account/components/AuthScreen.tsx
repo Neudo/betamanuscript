@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { Heading } from "@/shared/ui/Heading";
 
 type AuthScreenProps = {
   eyebrow: string;
@@ -25,9 +26,9 @@ export function AuthScreen({
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
             One account, two workspaces
           </p>
-          <h1 className="font-display text-6xl leading-[0.98]">
+          <Heading level={1}>
             Write with clarity. Read with purpose.
-          </h1>
+          </Heading>
           <p className="max-w-lg text-base leading-7 text-muted-foreground">
             Move between manuscript revisions and focused beta reading without
             losing the context behind the feedback.
@@ -45,7 +46,7 @@ export function AuthScreen({
             <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">
               {eyebrow}
             </p>
-            <h2 className="font-display text-4xl">{title}</h2>
+            <Heading level={2} size="page">{title}</Heading>
             <p className="text-sm leading-6 text-muted-foreground">{description}</p>
           </div>
           {children}

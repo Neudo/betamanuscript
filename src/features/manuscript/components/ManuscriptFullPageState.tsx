@@ -6,6 +6,7 @@ import { type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
 import type { CreatedManuscript } from "@/features/manuscript/types";
+import { Heading } from "@/shared/ui/Heading";
 
 type ManuscriptFullPageStateProps = {
   children?: ReactNode;
@@ -24,7 +25,7 @@ export function ManuscriptFullPageState({
         <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
           Manuscript workspace
         </p>
-        <h1 className="mt-3 text-xl font-medium">{title}</h1>
+        <Heading level={1} size="subsection" className="mt-3">{title}</Heading>
         {description ? (
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
         ) : null}

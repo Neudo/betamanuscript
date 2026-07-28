@@ -2,6 +2,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { Card } from "@/components/ui/card";
 import { InviteReaderAccess } from "@/features/readers/components/InviteReaderAccess";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
+import { Heading } from "@/shared/ui/Heading";
 
 type InviteReaderPageProps = {
   searchParams: Promise<{ token?: string | string[] }>;
@@ -15,7 +16,7 @@ export default async function InviteReaderPage({ searchParams }: InviteReaderPag
     return (
       <main className="grid min-h-screen place-items-center bg-muted/30 p-5">
         <Card className="w-full max-w-lg border-foreground/10 p-7">
-          <h1 className="text-2xl font-medium">Invitation link unavailable</h1>
+          <Heading level={1} size="card">Invitation link unavailable</Heading>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Ask the author to send you a fresh invitation link.
           </p>
@@ -33,9 +34,9 @@ export default async function InviteReaderPage({ searchParams }: InviteReaderPag
         <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           BetaManuscript reader invitation
         </p>
-        <h1 className="mt-2 font-display text-3xl font-semibold leading-tight">
+        <Heading level={1} size="card" className="mt-2">
           A manuscript is waiting for your feedback.
-        </h1>
+        </Heading>
         <div className="mt-7">
           <InviteReaderAccess
             isAuthenticated={Boolean(account)}

@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ReaderManuscriptListItem } from "@/features/reading/api/reading";
 import { useReaderManuscripts } from "@/features/reading/hooks/use-reading";
+import { Heading } from "@/shared/ui/Heading";
 
 const sections: Array<{
   status: ReaderManuscriptListItem["status"];
@@ -34,7 +35,7 @@ export function ReadingList() {
     <div className="min-h-full">
       <header className="border-b border-foreground/10 px-5 py-5 sm:px-8">
         <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Reader</p>
-        <h1 className="text-[28px] font-medium leading-tight tracking-normal">Reading list</h1>
+        <Heading level={1} size="workspace">Reading list</Heading>
       </header>
 
       <div className="max-w-[1100px] space-y-10 p-5 sm:p-8">
@@ -46,7 +47,7 @@ export function ReadingList() {
         {!manuscriptsQuery.isLoading && !manuscriptsQuery.isError && manuscripts.length === 0 ? (
           <Card className="border-dashed p-8 text-center">
             <BookOpen className="mx-auto h-5 w-5 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-medium">No manuscript yet</h2>
+            <Heading level={2} size="subsection" className="mt-4">No manuscript yet</Heading>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               When an author invites you and you accept, the manuscript will appear here.
             </p>
@@ -71,7 +72,7 @@ export function ReadingList() {
               return (
                 <section key={section.status}>
                   <div className="mb-4 flex items-center gap-3">
-                    <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{section.title}</h2>
+                    <Heading level={2} size="label" tone="muted">{section.title}</Heading>
                     <span className="h-px flex-1 bg-border" />
                   </div>
                   <div className="space-y-4">
@@ -117,7 +118,7 @@ function ReadingCard({ item }: { item: ReaderManuscriptListItem }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="font-display text-[26px] font-semibold leading-tight">{item.title}</h3>
+              <Heading level={3}>{item.title}</Heading>
               <p className="mt-1 text-xs text-muted-foreground">Draft {item.versionNumber}</p>
             </div>
             <Badge variant="outline" className="rounded-none font-mono text-[8px] uppercase">

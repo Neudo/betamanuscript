@@ -17,6 +17,7 @@ import { updateRole } from "@/features/account/api/update-role";
 import type { UserRole } from "@/features/account/domain/user-role";
 import type { AuthenticatedAccount } from "@/features/account/types";
 import { authorPricing } from "@/shared/config/pricing";
+import { Heading } from "@/shared/ui/Heading";
 
 const notificationOptions = [
   ["New annotation", "When a reader leaves feedback in the manuscript."],
@@ -201,11 +202,11 @@ function ProfileSettings({ account }: { account: AuthenticatedAccount }) {
 }
 
 function SettingsPage({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div><header className="border-b border-foreground/10 px-5 py-5 sm:px-8"><p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Settings</p><h1 className="text-[28px] font-medium leading-tight tracking-normal">{title}</h1></header><div className="max-w-[920px] px-5 py-3 sm:px-8">{children}</div></div>;
+  return <div><header className="border-b border-foreground/10 px-5 py-5 sm:px-8"><p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Settings</p><Heading level={1} size="workspace">{title}</Heading></header><div className="max-w-[920px] px-5 py-3 sm:px-8">{children}</div></div>;
 }
 
 function SettingsRow({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
-  return <div className="grid gap-4 border-b border-foreground/[0.08] py-5 sm:grid-cols-[230px_minmax(0,1fr)] sm:gap-8"><div><h2 className="text-sm font-medium">{label}</h2><p className="mt-1 font-mono text-[10px] leading-5 text-muted-foreground">{hint}</p></div><div className="min-w-0">{children}</div></div>;
+  return <div className="grid gap-4 border-b border-foreground/[0.08] py-5 sm:grid-cols-[230px_minmax(0,1fr)] sm:gap-8"><div><Heading level={2} size="small">{label}</Heading><p className="mt-1 font-mono text-[10px] leading-5 text-muted-foreground">{hint}</p></div><div className="min-w-0">{children}</div></div>;
 }
 
 function SettingsFooter({ children }: { children: React.ReactNode }) {

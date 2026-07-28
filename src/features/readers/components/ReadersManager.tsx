@@ -34,6 +34,7 @@ import {
   useResendReaderInvitation,
   useRevokeReaderInvitation,
 } from "@/features/readers/hooks/use-readers";
+import { Heading } from "@/shared/ui/Heading";
 
 const statusStyles: Record<ReaderStatus, string> = {
   active: "border-sky-800/25 bg-sky-800/10 text-sky-900",
@@ -112,7 +113,7 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
         {!isLoading && !error && !activeRound ? (
           <Card className="border-dashed p-8 text-center">
             <Mail className="mx-auto h-5 w-5 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-medium">No reading round yet</h2>
+            <Heading level={2} size="subsection" className="mt-4">No reading round yet</Heading>
             <p className="mt-2 text-sm text-muted-foreground">
               Set up a reading round from your manuscript to invite beta readers here.
             </p>

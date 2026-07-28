@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/BrandLogo";
+import { Heading } from "@/shared/ui/Heading";
 
 import { AccountPersonalizationForm } from "./AccountPersonalizationForm";
 import type { UserRole } from "../domain/user-role";
@@ -30,9 +31,9 @@ export function AccountPersonalizationScreen({
           <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">
             Welcome to BetaManuscript
           </p>
-          <h1 className="font-display text-5xl leading-[0.98] sm:text-6xl">
+          <Heading level={1}>
             Make this account yours.
-          </h1>
+          </Heading>
           <p className="max-w-xl text-base leading-7 text-muted-foreground">
             Choose how you&apos;ll use BetaManuscript and set the name readers and writers will see.
           </p>

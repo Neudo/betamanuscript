@@ -48,6 +48,7 @@ import type {
   ManuscriptWorkspaceBlock,
 } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
+import { Heading } from "@/shared/ui/Heading";
 
 const statusStyles: Record<ChapterEditorialStatus, string> = {
   complete: "border-success/25 bg-success/10 text-success",
@@ -257,7 +258,7 @@ export function ManuscriptWorkspace() {
             <span className="shrink-0 font-mono text-[9px] text-muted-foreground">
               Ch {selectedChapter.position}
             </span>
-            <h1 className="truncate text-base font-medium">{selectedChapter.title}</h1>
+            <Heading level={1} size="small" className="truncate">{selectedChapter.title}</Heading>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-2 font-mono text-[9px] text-muted-foreground">
@@ -304,7 +305,7 @@ export function ManuscriptWorkspace() {
 
         <ScrollArea className="md:flex-1">
           <article className="reader-copy mx-auto max-w-3xl px-5 py-10 sm:px-10 sm:py-14">
-            <h2 className="font-display text-[42px] leading-none">{selectedChapter.title}</h2>
+            <Heading level={2}>{selectedChapter.title}</Heading>
             {selectedChapter.blocks.length > 0 ? (
               <div className="mt-10 space-y-6 font-display text-[20px] leading-8 text-foreground/90 sm:text-[22px] sm:leading-9">
                 {selectedChapter.blocks.map((block) => (
@@ -346,7 +347,7 @@ function ChapterBlock({
   }
 
   if (block.kind === "heading") {
-    return <h3 className="pt-3 text-2xl font-medium"><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} /></h3>;
+    return <Heading level={3} className="pt-3"><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} /></Heading>;
   }
 
   if (block.kind === "blockquote") {

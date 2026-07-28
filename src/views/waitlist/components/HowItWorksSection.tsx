@@ -41,7 +41,7 @@ export function HowItWorksSection() {
               Icon: Users,
               title: "Invite your beta readers",
               detail:
-                "Send invites by email. Readers get a clean reading view with annotation tools built in. No account or download required.",
+                "Send invites by email. Readers open their personal invitation, then sign in to read and annotate in their browser.",
             },
             {
               num: "03",

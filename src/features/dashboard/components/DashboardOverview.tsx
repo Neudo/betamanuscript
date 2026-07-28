@@ -14,6 +14,7 @@ import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFu
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
 import { cn } from "@/lib/utils";
+import { Heading } from "@/shared/ui/Heading";
 
 import { TagBadge } from "./TagBadge";
 
@@ -73,7 +74,7 @@ function DashboardContent({
       <div className="mb-8 flex items-start justify-between gap-5">
         <div>
           <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Overview</p>
-          <h1 className="text-[28px] font-normal leading-tight tracking-normal">{data.title}</h1>
+          <Heading level={1} size="workspace">{data.title}</Heading>
           <p className="mt-1 text-sm text-muted-foreground">{data.draftLabel} · {formatActivityDate(data.lastActivityAt)}</p>
         </div>
         {data.readingRoundId ? (
@@ -93,7 +94,7 @@ function DashboardContent({
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Annotation frequency</p>
-                <h2 className="mt-1 text-sm font-medium">Tags across all chapters</h2>
+                <Heading level={2} size="small" className="mt-1">Tags across all chapters</Heading>
               </div>
               <span className="font-mono text-[9px] text-muted-foreground">{data.annotationCount} total</span>
             </div>

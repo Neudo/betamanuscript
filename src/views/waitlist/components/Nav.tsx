@@ -19,13 +19,17 @@ export function Nav() {
       transition={{ duration: 0.55, ease: premiumEase }}
     >
       <BrandLogo href="/" priority imageClassName="h-8" />
-      <Link
-        href="/pricing"
-        className="absolute left-1/2 hidden -translate-x-1/2 text-xs transition-colors hover:opacity-65 md:block"
+      <div
+        className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 text-xs md:flex"
         style={{ color: INK, fontFamily: SANS }}
       >
-        Pricing
-      </Link>
+        <Link href="/for-readers" className="transition-colors hover:opacity-65">
+          For readers
+        </Link>
+        <Link href="/pricing" className="transition-colors hover:opacity-65">
+          Pricing
+        </Link>
+      </div>
       <div className="flex items-center gap-2 sm:gap-4">
         <Link
           href="/login"

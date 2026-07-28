@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { Heading } from "@/shared/ui/Heading";
+
 type PageHeaderProps = {
   eyebrow: string;
   title: string;
@@ -14,7 +16,7 @@ export function PageHeader({ eyebrow, title, description, actions }: PageHeaderP
         <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="text-[28px] font-medium leading-tight tracking-normal">{title}</h1>
+        <Heading level={1} size="workspace">{title}</Heading>
         {description ? (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}

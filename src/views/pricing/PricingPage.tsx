@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowLeft, Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
 
-import { BrandLogo } from "@/components/BrandLogo";
 import { authorPricing } from "@/shared/config/pricing";
+import { Heading } from "@/shared/ui/Heading";
 import { Footer } from "@/views/waitlist/components/Footer";
+import { Nav } from "@/views/waitlist/components/Nav";
 import {
   BODY,
   CARD,
@@ -110,36 +111,7 @@ export function PricingPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
-      <header
-        className="border-b px-6 py-4 md:px-12"
-        style={{ borderColor: "rgba(28,24,18,0.1)", background: "rgba(245,240,232,0.94)" }}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <BrandLogo
-            href="/"
-            className="min-w-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
-            imageClassName="h-8"
-          />
-
-          <div className="flex items-center gap-3 sm:gap-7">
-            <Link
-              href="/"
-              className="hidden items-center gap-1.5 text-sm transition-opacity hover:opacity-60 sm:inline-flex"
-              style={{ color: MUTED }}
-            >
-              <ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" />
-              Back
-            </Link>
-            <a
-              href="#plans"
-              className="border px-3 py-2 text-xs font-medium transition-colors hover:bg-black/[0.04] sm:px-4 sm:text-sm"
-              style={{ borderColor: "rgba(28,24,18,0.2)", color: INK }}
-            >
-              Get started
-            </a>
-          </div>
-        </div>
-      </header>
+      <Nav />
 
       <main>
         <section className="px-6 pb-12 pt-20 text-center sm:pt-28 md:px-12">
@@ -151,18 +123,9 @@ export function PricingPage() {
               </span>
               <span className="h-px w-10" style={{ background: "rgba(28,24,18,0.16)" }} />
             </div>
-            <h1
-              className="text-balance leading-[1.08]"
-              style={{
-                color: INK,
-                fontFamily: SERIF,
-                fontSize: "clamp(2.6rem, 5.5vw, 4.2rem)",
-                fontWeight: 400,
-                letterSpacing: "-0.02em",
-              }}
-            >
+            <Heading level={1} className="text-balance">
               Make every reader note <em>count.</em>
-            </h1>
+            </Heading>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 sm:text-lg" style={{ color: BODY }}>
               Start free and upgrade when you&apos;re ready to run serious beta rounds. No per-reader fees, no feature gating, no surprises.
             </p>
@@ -287,9 +250,9 @@ export function PricingPage() {
                 <span className="h-px w-7" style={{ background: "rgba(28,24,18,0.2)" }} />
                 <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: MUTED, fontFamily: MONO }}>Frequently asked</p>
               </div>
-              <h2 className="max-w-md text-balance leading-[0.98] tracking-[-0.025em]" style={{ fontFamily: SERIF, fontSize: "clamp(2.6rem, 5vw, 4.2rem)", fontWeight: 400 }}>
+              <Heading level={2} size="display" className="max-w-md text-balance">
                 Questions authors ask <em>before subscribing.</em>
-              </h2>
+              </Heading>
             </div>
 
             <div className="border-t" style={{ borderColor: "rgba(28,24,18,0.16)" }}>
@@ -326,9 +289,9 @@ export function PricingPage() {
 
         <section className="px-6 py-20 text-center md:px-12 sm:py-24">
           <div className="mx-auto max-w-2xl">
-            <h2 className="text-balance leading-[0.98] tracking-[-0.025em]" style={{ fontFamily: SERIF, fontSize: "clamp(2.7rem, 5vw, 4.4rem)", fontWeight: 400 }}>
+            <Heading level={2} size="display" className="text-balance">
               Start free. <em>Upgrade when you&apos;re ready.</em>
-            </h2>
+            </Heading>
             <p className="mt-5 text-base" style={{ color: BODY }}>
               No credit card required to start. Cancel anytime.
             </p>

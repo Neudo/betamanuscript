@@ -29,6 +29,7 @@ import {
   useReaderSubmittedSurveys,
   useUpdateReaderSurveyResponse,
 } from "@/features/reading/hooks/use-reading";
+import { Heading } from "@/shared/ui/Heading";
 
 function formatSubmittedAt(value: string | null) {
   if (!value) return "Sent recently";
@@ -68,7 +69,7 @@ export function ReaderSubmittedSurveys() {
     <div className="min-h-full">
       <header className="border-b border-foreground/10 px-5 py-5 sm:px-8">
         <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Reader</p>
-        <h1 className="text-[28px] font-medium leading-tight tracking-normal">Sent surveys</h1>
+        <Heading level={1} size="workspace">Sent surveys</Heading>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
           Review the feedback you have shared with authors and update it while the survey is still open.
         </p>
@@ -87,7 +88,7 @@ export function ReaderSubmittedSurveys() {
         {!surveysQuery.isLoading && !surveysQuery.isError && surveys.length === 0 ? (
           <Card className="border-dashed p-8 text-center">
             <Send className="mx-auto h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-            <h2 className="mt-4 text-lg font-medium">No sent surveys yet</h2>
+            <Heading level={2} size="subsection" className="mt-4">No sent surveys yet</Heading>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               When you submit feedback after reading, it will be available here.
             </p>
@@ -99,7 +100,7 @@ export function ReaderSubmittedSurveys() {
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-foreground/10 p-5 sm:p-6">
               <div className="min-w-0">
                 <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">{survey.manuscriptTitle}</p>
-                <h2 className="mt-2 font-display text-[25px] font-semibold leading-tight">{survey.name}</h2>
+                <Heading level={2} size="card" className="mt-2">{survey.name}</Heading>
                 <p className="mt-2 text-xs text-muted-foreground">Sent {formatSubmittedAt(survey.submittedAt)}</p>
               </div>
               <div className="flex items-center gap-2">

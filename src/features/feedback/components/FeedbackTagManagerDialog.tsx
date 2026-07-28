@@ -33,6 +33,7 @@ import {
   useSetManuscriptAnnotationTagActive,
   useUpdateManuscriptAnnotationTagColor,
 } from "@/features/feedback/hooks/use-feedback-tags";
+import { Heading } from "@/shared/ui/Heading";
 
 type FeedbackTagManagerDialogProps = {
   manuscriptId: string | null;
@@ -96,7 +97,7 @@ export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDia
           <form onSubmit={addTag} className="border border-foreground/10 bg-muted/25 p-4">
             <div className="mb-3 flex items-center gap-2">
               <Plus className="h-3.5 w-3.5 text-primary" />
-              <h3 className="text-sm font-medium">Add a tag</h3>
+              <Heading level={3} size="small">Add a tag</Heading>
             </div>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_118px_auto] sm:items-end">
               <div className="space-y-1.5">
@@ -120,7 +121,7 @@ export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDia
 
           <section>
             <div className="mb-3 flex items-center justify-between gap-4">
-              <h3 className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">All tags</h3>
+              <Heading level={3} size="label" tone="muted">All tags</Heading>
               <span className="font-mono text-[9px] text-muted-foreground">{tags.length} total</span>
             </div>
             {tagsQuery.isLoading ? <p className="py-7 text-center text-xs text-muted-foreground">Loading tags…</p> : null}

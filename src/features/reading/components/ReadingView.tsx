@@ -36,6 +36,7 @@ import {
   useSubmitReaderSurvey,
 } from "@/features/reading/hooks/use-reading";
 import { cn } from "@/lib/utils";
+import { Heading } from "@/shared/ui/Heading";
 
 type AnnotationPanel =
   | { annotation: ReaderAnnotation; kind: "edit" }
@@ -409,7 +410,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
         />
       ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 sm:px-10 sm:py-16" onMouseUp={handleTextSelection}>
         <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground">Chapter {chapter.position}</p>
-        <h1 className="mt-4 font-display text-[42px] font-semibold leading-none">{chapter.title}</h1>
+        <Heading level={1} size="section" className="mt-4">{chapter.title}</Heading>
         {isAnnotationGuideVisible ? <ReaderAnnotationGuide onDismiss={dismissAnnotationGuide} /> : null}
         <div className={cn(
           "space-y-7 font-display text-[21px] leading-9 text-foreground/90 sm:text-[23px] sm:leading-10",
