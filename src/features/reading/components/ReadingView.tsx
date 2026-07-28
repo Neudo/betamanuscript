@@ -23,6 +23,7 @@ import type {
   ReaderAnnotationDraft,
   ReaderDueSurvey,
   ReaderManuscript,
+  ReaderManuscriptListItem,
   ReaderSurveyAnswer,
 } from "@/features/reading/api/reading";
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
@@ -32,6 +33,7 @@ import { ReaderSurveyDialog } from "@/features/reading/components/ReaderSurveyDi
 import {
   useCompleteReaderChapter,
   useReaderDueSurveys,
+  useReaderManuscripts,
   useReaderManuscript,
   useSubmitReaderSurvey,
 } from "@/features/reading/hooks/use-reading";
@@ -64,7 +66,9 @@ function hasSeenReaderAnnotationGuideOnServer() {
 export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const manuscriptQuery = useReaderManuscript(manuscriptId);
+  const manuscriptVersionId = searchParams.get("version");
+  const manuscriptQuery = useReaderManuscript(manuscriptId, manuscriptVersionId);
+  const readerManuscriptsQuery = useReaderManuscripts();
   const completeChapterMutation = useCompleteReaderChapter();
   const { mutate: loadDueSurveys } = useReaderDueSurveys();
   const submitSurveyMutation = useSubmitReaderSurvey();
@@ -80,6 +84,17 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const [surveyQueue, setSurveyQueue] = useState<ReaderDueSurvey[]>([]);
   const [isSurveyPromptOpen, setIsSurveyPromptOpen] = useState(false);
   const manuscript = manuscriptQuery.data;
+  const availableDrafts = useMemo(() => {
+    const draftsById = new Map<string, ReaderManuscriptListItem>();
+
+    for (const draft of readerManuscriptsQuery.data ?? []) {
+      if (draft.id === manuscriptId && !draftsById.has(draft.versionId)) {
+        draftsById.set(draft.versionId, draft);
+      }
+    }
+
+    return [...draftsById.values()].sort((left, right) => right.versionNumber - left.versionNumber);
+  }, [manuscriptId, readerManuscriptsQuery.data]);
   const chapters = manuscript?.chapters ?? [];
   const completedChapterIds = useMemo(
     () => manuscript?.completedChapterIds ?? [],
@@ -108,6 +123,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     if (
       !pendingReaderAssignmentId
       || !pendingReadingRoundId
+      || !manuscript?.feedbackEnabled
       || completedChapterIds.length === 0
     ) return;
 
@@ -138,6 +154,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     loadDueSurveys,
     pendingReaderAssignmentId,
     pendingReadingRoundId,
+    manuscript?.feedbackEnabled,
     surveyQueue.length,
   ]);
 
@@ -161,6 +178,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const readerAssignmentId = manuscript.assignmentId;
   const readerCompletedChapterIds = manuscript.completedChapterIds;
   const readingRoundId = manuscript.readingRoundId;
+  const readerUrl = `/reader/${manuscriptId}?version=${manuscript.versionId}`;
   const activeSurvey = surveyQueue[0] ?? null;
   const isLastChapter = currentChapterIndex === chapters.length - 1;
 
@@ -189,7 +207,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
             nextCompletedChapterIds.includes(item.id)
           ));
           if (isReadingAgain && isLastChapter) {
-            router.replace(`/reader/${manuscriptId}`, { scroll: false });
+            router.replace(readerUrl, { scroll: false });
           }
 
           loadDueSurveys(
@@ -223,6 +241,16 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   function changeChapter(nextChapterIndex: number) {
     setAnnotationPanel(null);
     setChapterIndex(nextChapterIndex);
+  }
+
+  function changeDraft(nextVersionId: string) {
+    if (nextVersionId === manuscriptVersionId) return;
+
+    setAnnotationPanel(null);
+    setChapterIndex(null);
+    setIsSurveyPromptOpen(false);
+    setSurveyQueue([]);
+    router.push(`/reader/${manuscriptId}?${new URLSearchParams({ version: nextVersionId })}`);
   }
 
   function dismissAnnotationGuide() {
@@ -264,6 +292,8 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   }
 
   function handleTextSelection() {
+    if (!manuscript?.feedbackEnabled) return;
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return;
 
@@ -362,17 +392,19 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
             <p className="text-sm font-medium">{manuscript.title}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-9 px-2 text-xs text-muted-foreground"
-              onClick={showAnnotationGuide}
-              aria-label="Show feedback instructions"
-            >
-              <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="hidden lg:inline">How to leave feedback</span>
-            </Button>
+            {manuscript.feedbackEnabled ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 px-2 text-xs text-muted-foreground"
+                onClick={showAnnotationGuide}
+                aria-label="Show feedback instructions"
+              >
+                <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="hidden lg:inline">How to leave feedback</span>
+              </Button>
+            ) : null}
             {surveyQueue.length > 0 ? (
               <Button
                 type="button"
@@ -384,6 +416,20 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
                 <MessageSquare className="h-3.5 w-3.5" />
                 {surveyQueue.length === 1 ? "Feedback waiting" : `${surveyQueue.length} feedback requests`}
               </Button>
+            ) : null}
+            {availableDrafts.length > 1 ? (
+              <Select value={manuscript.versionId} onValueChange={changeDraft}>
+                <SelectTrigger aria-label="Select draft" className="h-9 w-[150px] rounded-none border-foreground/15 bg-card text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDrafts.map((draft) => (
+                    <SelectItem key={draft.versionId} value={draft.versionId}>
+                      {draft.title} · Draft {draft.versionNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : null}
             {!showEndScreen ? (
               <Select value={String(currentChapterIndex)} onValueChange={(value) => changeChapter(Number(value))}>
@@ -405,13 +451,17 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
           manuscriptTitle={manuscript.title}
           onReadAgain={() => {
             setChapterIndex(0);
-            router.replace(`/reader/${manuscriptId}?reread=1`, { scroll: false });
+            router.replace(`${readerUrl}&reread=1`, { scroll: false });
           }}
         />
-      ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 sm:px-10 sm:py-16" onMouseUp={handleTextSelection}>
+      ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 sm:px-10 sm:py-16" onMouseUp={manuscript.feedbackEnabled ? handleTextSelection : undefined}>
         <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground">Chapter {chapter.position}</p>
         <Heading level={1} size="section" className="mt-4">{chapter.title}</Heading>
-        {isAnnotationGuideVisible ? <ReaderAnnotationGuide onDismiss={dismissAnnotationGuide} /> : null}
+        {!manuscript.feedbackEnabled ? (
+          <Alert className="mt-6 border-foreground/10 bg-muted/30">
+            <AlertDescription>This draft is available to read. Feedback will open when the author opens its reading round.</AlertDescription>
+          </Alert>
+        ) : isAnnotationGuideVisible ? <ReaderAnnotationGuide onDismiss={dismissAnnotationGuide} /> : null}
         <div className={cn(
           "space-y-7 font-display text-[21px] leading-9 text-foreground/90 sm:text-[23px] sm:leading-10",
           isAnnotationGuideVisible ? "mt-8" : "mt-12",
@@ -432,14 +482,16 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
             <ArrowLeft className="h-3.5 w-3.5" />Previous chapter
           </Button>
           <span className="font-mono text-[9px] text-muted-foreground">{currentChapterIndex + 1} / {chapters.length}</span>
-          <Button size="sm" onClick={completeAndContinue} disabled={completeChapterMutation.isPending}>
-            {completeChapterMutation.isPending
-              ? "Saving…"
-              : isLastChapter
-                ? "The end"
-                : "Complete & next"}
-            {isLastChapter ? <Check className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
-          </Button>
+          {manuscript.feedbackEnabled ? (
+            <Button size="sm" onClick={completeAndContinue} disabled={completeChapterMutation.isPending}>
+              {completeChapterMutation.isPending
+                ? "Saving…"
+                : isLastChapter
+                  ? "The end"
+                  : "Complete & next"}
+              {isLastChapter ? <Check className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
+            </Button>
+          ) : <Button size="sm" disabled>Feedback not open</Button>}
         </nav>
       </article>
       }

@@ -17,10 +17,13 @@ export function useManuscripts() {
   });
 }
 
-export function useManuscript(manuscriptId: string | null) {
+export function useManuscript(
+  manuscriptId: string | null,
+  manuscriptVersionId: string | null = null,
+) {
   return useQuery({
-    queryKey: manuscriptKeys.detail(manuscriptId ?? "none"),
-    queryFn: () => getManuscript(manuscriptId!),
+    queryKey: manuscriptKeys.detail(manuscriptId ?? "none", manuscriptVersionId),
+    queryFn: () => getManuscript(manuscriptId!, manuscriptVersionId),
     enabled: Boolean(manuscriptId),
     staleTime: 60_000,
   });

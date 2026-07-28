@@ -4,6 +4,7 @@ import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block
 
 export type ReaderManuscriptListItem = {
   assignmentId: string;
+  feedbackEnabled: boolean;
   closingNote: string | null;
   completedChapterIds: string[];
   completedChapters: number;
@@ -101,12 +102,13 @@ export type ReaderSubmittedSurvey = {
 
 type ReaderAssignmentRow = {
   id: string;
-  status: "completed" | "started";
+  status: "completed" | "pending" | "started";
   reading_rounds: {
     id: string;
     reading_deadline: string | null;
     reader_closing_note: string | null;
     reader_note: string | null;
+    status: "archived" | "closed" | "draft" | "open";
     manuscript_versions: {
       id: string;
       logline: string | null;
@@ -115,6 +117,10 @@ type ReaderAssignmentRow = {
       version_number: number;
     } | null;
   } | null;
+};
+
+type ReaderDraftAccessRow = {
+  reader_assignments: ReaderAssignmentRow | null;
 };
 
 type ChapterProgressRow = {
@@ -132,25 +138,28 @@ type ManuscriptCoverRow = {
 
 export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]> {
   const supabase = createSupabaseBrowserClient();
-  const { data: assignments, error: assignmentsError } = await supabase
-    .from("reader_assignments")
+  const { data: draftAccess, error: draftAccessError } = await supabase
+    .from("reader_draft_access")
     .select(`
-      id,
-      status,
-      reading_rounds!inner (
+      reader_assignments!inner (
         id,
-        reading_deadline,
-        reader_closing_note,
-        reader_note,
-        manuscript_versions!inner (id, manuscript_id, title, logline, version_number)
+        status,
+        reading_rounds!inner (
+          id,
+          status,
+          reading_deadline,
+          reader_closing_note,
+          reader_note,
+          manuscript_versions!inner (id, manuscript_id, title, logline, version_number)
+        )
       )
     `)
-    .in("status", ["started", "completed"])
-    .order("started_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
-  if (assignmentsError) throw new Error(assignmentsError.message);
+  if (draftAccessError) throw new Error(draftAccessError.message);
 
-  const rows = (assignments ?? []) as unknown as ReaderAssignmentRow[];
+  const rows = ((draftAccess ?? []) as unknown as ReaderDraftAccessRow[])
+    .flatMap((access) => access.reader_assignments ? [access.reader_assignments] : []);
   const versionIds = rows.flatMap((row) => row.reading_rounds?.manuscript_versions?.id ?? []);
   const assignmentIds = rows.map((row) => row.id);
 
@@ -229,7 +238,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
 
     const totalChapters = totalByVersion.get(version.id) ?? 0;
     const completedChapters = completedByAssignment.get(assignment.id) ?? 0;
-    const status = assignment.status === "completed" || (totalChapters > 0 && completedChapters >= totalChapters)
+    const status: ReaderManuscriptListItem["status"] = assignment.status === "completed" || (totalChapters > 0 && completedChapters >= totalChapters)
       ? "finished"
       : assignment.status === "started"
         ? "reading"
@@ -242,6 +251,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       completedChapters,
       coverUrl: coverUrlByVersionId.get(version.id) ?? null,
       deadline: readingRound.reading_deadline,
+      feedbackEnabled: readingRound.status !== "archived",
       id: version.manuscript_id,
       latestChapterId: latestProgressByAssignment.get(assignment.id)?.chapter_id ?? null,
       logline: version.logline,
@@ -253,7 +263,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       versionId: version.id,
       versionNumber: version.version_number,
     }];
-  });
+  }).sort((left, right) => right.versionNumber - left.versionNumber);
 }
 
 export type ReaderManuscript = ReaderManuscriptListItem & {
@@ -270,9 +280,14 @@ export type ReaderManuscript = ReaderManuscriptListItem & {
   }>;
 };
 
-export async function getReaderManuscript(manuscriptId: string): Promise<ReaderManuscript | null> {
+export async function getReaderManuscript(
+  manuscriptId: string,
+  manuscriptVersionId: string | null = null,
+): Promise<ReaderManuscript | null> {
   const manuscripts = await getReaderManuscripts();
-  const manuscript = manuscripts.find((item) => item.id === manuscriptId);
+  const manuscript = manuscriptVersionId
+    ? manuscripts.find((item) => item.id === manuscriptId && item.versionId === manuscriptVersionId)
+    : manuscripts.find((item) => item.id === manuscriptId);
   if (!manuscript) return null;
 
   const supabase = createSupabaseBrowserClient();

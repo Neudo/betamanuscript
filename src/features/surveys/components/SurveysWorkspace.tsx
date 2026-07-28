@@ -1,12 +1,24 @@
 "use client";
 
-import { Check, ChevronDown, ChevronUp, Copy, LoaderCircle, Plus } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Copy, LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -26,11 +38,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AccountPlan } from "@/features/account/types";
 import { PageHeader } from "@/features/dashboard/components/PageHeader";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
+import { PlanRequiredDialog } from "@/features/manuscript/components/PlanRequiredDialog";
 import { SurveyQuestionEditor } from "@/features/surveys/components/SurveyQuestionEditor";
 import {
   useCreateSurvey,
+  useCloneSurveys,
+  useDeleteSurvey,
   useManuscriptSurveys,
   useSaveSurvey,
   useUpdateSurveyStatus,
@@ -39,6 +55,7 @@ import { useSurveyEditor } from "@/features/surveys/hooks/use-survey-editor";
 import type {
   ManuscriptSurvey,
   SurveyChapter,
+  SurveyCloneSource,
   SurveyDelivery,
   SurveyQuestion,
   SurveyStatus,
@@ -52,20 +69,27 @@ const statusStyles = {
   draft: "bg-amber-900/10 text-amber-900",
 };
 
-export function SurveysWorkspace() {
+const FREE_SURVEY_LIMIT = 2;
+
+export function SurveysWorkspace({ accountPlan }: { accountPlan: AccountPlan }) {
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
   const manuscripts = manuscriptsQuery.data ?? [];
   const selectedManuscript = manuscripts.find((manuscript) => manuscript.id === selectedManuscriptId);
   const manuscriptId = selectedManuscript?.id ?? manuscripts[0]?.id ?? null;
-  const surveysQuery = useManuscriptSurveys(manuscriptId);
+  const surveysQuery = useManuscriptSurveys(manuscriptId, selectedVersionId);
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
-  const createSurveyMutation = useCreateSurvey(manuscriptId);
+  const [planDialogOpen, setPlanDialogOpen] = useState(false);
+  const createSurveyMutation = useCreateSurvey(manuscriptId, selectedVersionId);
+  const cloneSurveysMutation = useCloneSurveys(manuscriptId, selectedVersionId);
+  const deleteSurveyMutation = useDeleteSurvey(manuscriptId, selectedVersionId);
 
   const data = surveysQuery.data;
   const chapters = data?.chapters ?? [];
   const surveys = data?.surveys ?? [];
+  const hasReachedSurveyLimit = accountPlan === "free" && (data?.surveyCount ?? 0) >= FREE_SURVEY_LIMIT;
   function createNewSurvey({
     delivery,
     name,
@@ -76,6 +100,10 @@ export function SurveysWorkspace() {
     questions?: SurveyQuestion[];
   }) {
     if (!data?.readingRoundId) return;
+    if (hasReachedSurveyLimit) {
+      setPlanDialogOpen(true);
+      return;
+    }
 
     createSurveyMutation.mutate(
       {
@@ -120,12 +148,37 @@ export function SurveysWorkspace() {
         eyebrow="Surveys"
         title="Reader surveys"
         actions={(
-          <NewSurveyDialog
-            chapters={chapters}
-            disabled={!data?.readingRoundId}
-            isCreating={createSurveyMutation.isPending}
-            onCreate={createNewSurvey}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            {data?.otherDraftSurveys.length ? (
+              <CloneSurveysDialog
+                isCloning={cloneSurveysMutation.isPending}
+                limitReached={hasReachedSurveyLimit}
+                onClone={(sourceSurveyIds) => cloneSurveysMutation.mutate(
+                  {
+                    sourceSurveyIds,
+                    targetManuscriptVersionId: data.manuscriptVersionId,
+                  },
+                  {
+                    onError: (error) => toast.error(error.message),
+                    onSuccess: (surveyIds) => {
+                      setExpandedSurveyId(surveyIds[0] ?? null);
+                      toast.success(`${surveyIds.length} survey${surveyIds.length === 1 ? "" : "s"} cloned as drafts.`);
+                    },
+                  },
+                )}
+                onUpgrade={() => setPlanDialogOpen(true)}
+                sourceSurveys={data.otherDraftSurveys}
+              />
+            ) : null}
+            <NewSurveyDialog
+              chapters={chapters}
+              disabled={!data?.readingRoundId}
+              isCreating={createSurveyMutation.isPending}
+              limitReached={hasReachedSurveyLimit}
+              onCreate={createNewSurvey}
+              onUpgrade={() => setPlanDialogOpen(true)}
+            />
+          </div>
         )}
       />
 
@@ -151,39 +204,190 @@ export function SurveysWorkspace() {
                 key={survey.id}
                 chapters={chapters}
                 defaultExpanded={expandedSurveyId === survey.id}
+                isDeleting={deleteSurveyMutation.isPending}
+                hasReachedSurveyLimit={hasReachedSurveyLimit}
                 isDuplicating={createSurveyMutation.isPending}
                 manuscriptId={manuscriptId}
+                manuscriptVersionId={selectedVersionId}
+                onDelete={() => deleteSurveyMutation.mutate(survey.id, {
+                  onError: (error) => toast.error(error.message),
+                  onSuccess: () => toast.success("Survey deleted."),
+                })}
                 onDuplicate={() => duplicateSurvey(survey)}
+                onUpgrade={() => setPlanDialogOpen(true)}
                 survey={survey}
               />
             ))}
           </div>
         )}
       </div>
+      <PlanRequiredDialog
+        description="Your free plan includes two surveys per active manuscript. Upgrade to Pro to create as many as you need."
+        open={planDialogOpen}
+        onOpenChange={setPlanDialogOpen}
+        title="Add unlimited surveys"
+      />
     </div>
+  );
+}
+
+function CloneSurveysDialog({
+  isCloning,
+  limitReached,
+  onClone,
+  onUpgrade,
+  sourceSurveys,
+}: {
+  isCloning: boolean;
+  limitReached: boolean;
+  onClone: (sourceSurveyIds: string[]) => void;
+  onUpgrade: () => void;
+  sourceSurveys: SurveyCloneSource[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [selectedSurveyIds, setSelectedSurveyIds] = useState<Set<string>>(new Set());
+  const surveysByDraft = new Map<string, SurveyCloneSource[]>();
+  const sourceDraftNumbers = [...new Set(sourceSurveys.map((survey) => survey.sourceVersionNumber))];
+  const cloneButtonLabel = sourceDraftNumbers.length === 1
+    ? `Clone surveys from Draft ${sourceDraftNumbers[0]}`
+    : "Clone surveys";
+
+  for (const survey of sourceSurveys) {
+    const draftKey = `${survey.sourceVersionNumber}:${survey.sourceVersionId}`;
+    const surveys = surveysByDraft.get(draftKey) ?? [];
+    surveys.push(survey);
+    surveysByDraft.set(draftKey, surveys);
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) setSelectedSurveyIds(new Set());
+  }
+
+  function toggleSurvey(surveyId: string, checked: boolean) {
+    setSelectedSurveyIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(surveyId);
+      else next.delete(surveyId);
+      return next;
+    });
+  }
+
+  function handleClone(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (selectedSurveyIds.size === 0) return;
+
+    onClone([...selectedSurveyIds]);
+    setOpen(false);
+    setSelectedSurveyIds(new Set());
+  }
+
+  if (limitReached) {
+    return (
+      <Button type="button" size="sm" variant="outline" onClick={onUpgrade}>
+        <Copy className="h-3.5 w-3.5" />
+        {cloneButtonLabel}
+        <span className="ml-1 font-mono text-[8px] uppercase tracking-widest">Pro</span>
+      </Button>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button type="button" size="sm" variant="outline">
+          <Copy className="h-3.5 w-3.5" />
+          {cloneButtonLabel}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-medium">Clone surveys</DialogTitle>
+          <DialogDescription>
+            Choose surveys from another draft. Questions and answer options are copied as new drafts; reader responses are not.
+          </DialogDescription>
+        </DialogHeader>
+        <form className="space-y-5 pt-2" onSubmit={handleClone}>
+          <div className="max-h-[min(50vh,380px)] space-y-5 overflow-y-auto pr-1">
+            {[...surveysByDraft.values()].map((draftSurveys) => {
+              const draft = draftSurveys[0];
+              return (
+                <fieldset key={draft.sourceVersionId} className="space-y-2">
+                  <legend className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                    Draft {draft.sourceVersionNumber} · {draft.sourceVersionTitle}
+                  </legend>
+                  <div className="divide-y divide-foreground/[0.08] border border-foreground/10">
+                    {draftSurveys.map((survey) => {
+                      const checkboxId = `clone-survey-${survey.id}`;
+                      return (
+                        <Label
+                          key={survey.id}
+                          htmlFor={checkboxId}
+                          className="flex cursor-pointer items-start gap-3 px-4 py-3 text-sm font-normal"
+                        >
+                          <Checkbox
+                            id={checkboxId}
+                            checked={selectedSurveyIds.has(survey.id)}
+                            onCheckedChange={(checked) => toggleSurvey(survey.id, checked === true)}
+                          />
+                          <span className="min-w-0">
+                            <span className="block font-medium">{survey.name}</span>
+                            <span className="mt-0.5 block text-xs text-muted-foreground">
+                              {survey.delivery.scope === "chapter" ? "After a chapter" : "After the full manuscript"}
+                            </span>
+                          </span>
+                        </Label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              );
+            })}
+          </div>
+          <Button type="submit" className="w-full" disabled={isCloning || selectedSurveyIds.size === 0}>
+            <Copy className="h-4 w-4" />
+            {isCloning
+              ? "Cloning…"
+              : selectedSurveyIds.size === 0
+                ? "Choose surveys to clone"
+                : `Clone ${selectedSurveyIds.size} survey${selectedSurveyIds.size === 1 ? "" : "s"}`}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 function SurveyEditor({
   chapters,
   defaultExpanded,
+  hasReachedSurveyLimit,
+  isDeleting,
   isDuplicating,
   manuscriptId,
+  manuscriptVersionId,
+  onDelete,
   onDuplicate,
+  onUpgrade,
   survey,
 }: {
   chapters: SurveyChapter[];
   defaultExpanded: boolean;
+  hasReachedSurveyLimit: boolean;
+  isDeleting: boolean;
   isDuplicating: boolean;
   manuscriptId: string;
+  manuscriptVersionId: string | null;
+  onDelete: () => void;
   onDuplicate: () => void;
+  onUpgrade: () => void;
   survey: ManuscriptSurvey;
 }) {
   const editor = useSurveyEditor(survey);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [showValidation, setShowValidation] = useState(false);
-  const saveSurveyMutation = useSaveSurvey(manuscriptId);
-  const statusMutation = useUpdateSurveyStatus(manuscriptId);
+  const saveSurveyMutation = useSaveSurvey(manuscriptId, manuscriptVersionId);
+  const statusMutation = useUpdateSurveyStatus(manuscriptId, manuscriptVersionId);
   const isReadOnly = editor.survey.responseCount > 0;
   const selectedChapter = chapters.find((chapter) => chapter.id === editor.survey.delivery.chapterId);
   const deliverySummary = editor.survey.delivery.scope === "manuscript"
@@ -264,6 +468,38 @@ function SurveyEditor({
               {statusMutation.isPending ? "Activating…" : "Activate survey"}
             </Button>
           ) : null}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-destructive"
+                aria-label={`Delete ${editor.survey.name}`}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-none border-destructive/25 bg-card">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete “{editor.survey.name}”?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This permanently deletes the survey, its questions, and all reader responses.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
+                  onClick={onDelete}
+                >
+                  {isDeleting ? "Deleting…" : "Delete survey"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button
             type="button"
             variant="ghost"
@@ -286,7 +522,14 @@ function SurveyEditor({
               <TabsTrigger value="questions" className="h-11 rounded-none border-b-2 border-transparent px-0 pr-8 text-xs data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Questions</TabsTrigger>
               <TabsTrigger value="responses" className="h-11 rounded-none border-b-2 border-transparent px-0 text-xs text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Responses ({editor.survey.responseCount})</TabsTrigger>
             </TabsList>
-            <Button type="button" variant="ghost" size="icon-sm" aria-label="Duplicate survey" disabled={isDuplicating} onClick={onDuplicate}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={hasReachedSurveyLimit ? "Upgrade to duplicate a survey" : "Duplicate survey"}
+              disabled={isDuplicating}
+              onClick={hasReachedSurveyLimit ? onUpgrade : onDuplicate}
+            >
               <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
             </Button>
           </div>
@@ -294,33 +537,36 @@ function SurveyEditor({
           <TabsContent value="questions" className="m-0">
             <form onSubmit={handleSubmit} noValidate>
               <fieldset disabled={isReadOnly} className="border-b border-foreground/10 px-5 py-4">
-                <legend className="mb-3 pt-4 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Send after</legend>
-                <RadioGroup
-                  value={editor.survey.delivery.scope}
-                  onValueChange={(value) => updateDelivery(value as SurveyDelivery["scope"])}
-                  className="flex flex-wrap gap-2"
-                >
-                  <Label htmlFor="delivery-manuscript" className={cn("cursor-pointer border border-foreground/15 px-3 py-2 text-xs font-normal", editor.survey.delivery.scope === "manuscript" && "border-foreground bg-foreground text-background")}>
-                    <RadioGroupItem id="delivery-manuscript" value="manuscript" className="sr-only" />
-                    Full manuscript
-                  </Label>
-                  <Label htmlFor="delivery-chapter" className={cn("cursor-pointer border border-foreground/15 px-3 py-2 text-xs font-normal", editor.survey.delivery.scope === "chapter" && "border-foreground bg-foreground text-background")}>
-                    <RadioGroupItem id="delivery-chapter" value="chapter" className="sr-only" />
-                    Specific chapter
-                  </Label>
-                </RadioGroup>
+                <legend className="sr-only">Send after</legend>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Send after</p>
+                  <RadioGroup
+                    value={editor.survey.delivery.scope}
+                    onValueChange={(value) => updateDelivery(value as SurveyDelivery["scope"])}
+                    className="flex flex-wrap gap-2"
+                  >
+                    <Label htmlFor="delivery-manuscript" className={cn("cursor-pointer border border-foreground/15 px-3 py-2 text-xs font-normal", editor.survey.delivery.scope === "manuscript" && "border-foreground bg-foreground text-background")}>
+                      <RadioGroupItem id="delivery-manuscript" value="manuscript" className="sr-only" />
+                      Full manuscript
+                    </Label>
+                    <Label htmlFor="delivery-chapter" className={cn("cursor-pointer border border-foreground/15 px-3 py-2 text-xs font-normal", editor.survey.delivery.scope === "chapter" && "border-foreground bg-foreground text-background")}>
+                      <RadioGroupItem id="delivery-chapter" value="chapter" className="sr-only" />
+                      Specific chapter
+                    </Label>
+                  </RadioGroup>
 
-                {editor.survey.delivery.scope === "chapter" ? (
-                  <div className="mt-4 max-w-sm space-y-2">
-                    <Label htmlFor="survey-chapter" className="font-mono text-[8px] uppercase tracking-widest text-muted-foreground">Chapter</Label>
-                    <Select value={editor.survey.delivery.chapterId ?? undefined} onValueChange={(chapterId) => editor.updateSurvey({ delivery: { chapterId, scope: "chapter" } })}>
-                      <SelectTrigger id="survey-chapter" className="rounded-none border-foreground/15 bg-transparent shadow-none"><SelectValue placeholder="Choose a chapter" /></SelectTrigger>
-                      <SelectContent>
-                        {chapters.map((chapter) => <SelectItem key={chapter.id} value={chapter.id}>Ch {chapter.position}: {chapter.title}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : null}
+                  {editor.survey.delivery.scope === "chapter" ? (
+                    <div className="min-w-52 flex-1 sm:max-w-sm">
+                      <Label htmlFor="survey-chapter" className="sr-only">Chapter</Label>
+                      <Select value={editor.survey.delivery.chapterId ?? undefined} onValueChange={(chapterId) => editor.updateSurvey({ delivery: { chapterId, scope: "chapter" } })}>
+                        <SelectTrigger id="survey-chapter" className="rounded-none border-foreground/15 bg-transparent shadow-none"><SelectValue placeholder="Choose a chapter" /></SelectTrigger>
+                        <SelectContent>
+                          {chapters.map((chapter) => <SelectItem key={chapter.id} value={chapter.id}>Ch {chapter.position}: {chapter.title}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : null}
+                </div>
               </fieldset>
 
               {isReadOnly ? <p className="border-b border-foreground/10 px-5 py-3 font-mono text-[10px] text-muted-foreground">Questions are locked once readers have responded. Duplicate this survey to revise it.</p> : null}
@@ -400,12 +646,16 @@ function NewSurveyDialog({
   chapters,
   disabled,
   isCreating,
+  limitReached,
   onCreate,
+  onUpgrade,
 }: {
   chapters: SurveyChapter[];
   disabled: boolean;
   isCreating: boolean;
+  limitReached: boolean;
   onCreate: (input: { delivery: SurveyDelivery; name: string }) => void;
+  onUpgrade: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -436,6 +686,16 @@ function NewSurveyDialog({
     setName("");
     setScope("manuscript");
     setOpen(false);
+  }
+
+  if (limitReached) {
+    return (
+      <Button type="button" size="sm" disabled={disabled} onClick={onUpgrade}>
+        <Plus className="h-3.5 w-3.5" />
+        New survey
+        <span className="ml-1 font-mono text-[8px] uppercase tracking-widest">Pro</span>
+      </Button>
+    );
   }
 
   return (

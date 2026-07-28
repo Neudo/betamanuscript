@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AccountPlan } from "@/features/account/types";
 import { FeedbackTagManagerDialog } from "@/features/feedback/components/FeedbackTagManagerDialog";
 import { useManuscriptFeedback } from "@/features/feedback/hooks/use-feedback";
 import type { FeedbackAnnotation, FeedbackTag } from "@/features/feedback/types";
@@ -21,9 +22,10 @@ type FilterChapter = FeedbackAnnotation["chapter"] & { count: number };
 type FilterReader = FeedbackAnnotation["reader"] & { count: number };
 const emptyAnnotations: FeedbackAnnotation[] = [];
 
-export function FeedbackExplorer() {
+export function FeedbackExplorer({ accountPlan }: { accountPlan: AccountPlan }) {
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
   const manuscripts = manuscriptsQuery.data ?? [];
   const manuscriptId = selectedManuscriptId ?? manuscripts[0]?.id ?? null;
@@ -34,8 +36,10 @@ export function FeedbackExplorer() {
 
   return (
     <FeedbackExplorerContent
-      key={manuscriptId ?? "no-manuscript"}
+      key={`${manuscriptId ?? "no-manuscript"}:${selectedVersionId ?? "latest"}`}
+      accountPlan={accountPlan}
       manuscriptId={manuscriptId}
+      manuscriptVersionId={selectedVersionId}
       isResolvingManuscript={!manuscriptId && manuscriptsQuery.isPending}
       manuscriptError={manuscriptsQuery.error}
     />
@@ -47,15 +51,19 @@ function FeedbackNoManuscript() {
 }
 
 function FeedbackExplorerContent({
+  accountPlan,
   isResolvingManuscript,
   manuscriptError,
   manuscriptId,
+  manuscriptVersionId,
 }: {
+  accountPlan: AccountPlan;
   isResolvingManuscript: boolean;
   manuscriptError: Error | null;
   manuscriptId: string | null;
+  manuscriptVersionId: string | null;
 }) {
-  const feedbackQuery = useManuscriptFeedback(manuscriptId);
+  const feedbackQuery = useManuscriptFeedback(manuscriptId, manuscriptVersionId);
   const annotations = feedbackQuery.data ?? emptyAnnotations;
 
   const [selectedTagSlug, setSelectedTagSlug] = useState<string | null>(null);
@@ -102,7 +110,7 @@ function FeedbackExplorerContent({
   return (
     <div className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
       <aside className="border-b border-foreground/10 bg-sidebar px-5 py-7 md:overflow-y-auto md:border-b-0 md:border-r">
-        <FilterGroup label="Tag" action={<FeedbackTagManagerDialog manuscriptId={manuscriptId} />}>
+        <FilterGroup label="Tag" action={<FeedbackTagManagerDialog accountPlan={accountPlan} manuscriptId={manuscriptId} />}>
           {tags.map((tag) => (
             <button
               key={tag.slug}
@@ -181,6 +189,7 @@ function FeedbackExplorerContent({
             annotations={filtered}
             isLoading={isLoading}
             manuscriptId={manuscriptId}
+            manuscriptVersionId={manuscriptVersionId}
             error={queryError}
             emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
               ? "No annotations match these filters."
@@ -194,6 +203,7 @@ function FeedbackExplorerContent({
               annotations={[]}
               isLoading={isLoading}
               manuscriptId={manuscriptId}
+              manuscriptVersionId={manuscriptVersionId}
               error={queryError}
               emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
                 ? "No annotations match these filters."
@@ -210,6 +220,7 @@ function FeedbackExplorerContent({
                       annotation={annotation}
                       compact
                       manuscriptId={manuscriptId}
+                      manuscriptVersionId={manuscriptVersionId}
                     />
                   ))}
                 </section>
@@ -304,12 +315,14 @@ function FeedbackState({
   error,
   isLoading,
   manuscriptId,
+  manuscriptVersionId,
 }: {
   annotations: FeedbackAnnotation[];
   emptyMessage: string;
   error: Error | null;
   isLoading: boolean;
   manuscriptId: string | null;
+  manuscriptVersionId: string | null;
 }) {
   if (isLoading) {
     return <div className="grid min-h-52 place-items-center"><LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
@@ -330,6 +343,7 @@ function FeedbackState({
           key={annotation.id}
           annotation={annotation}
           manuscriptId={manuscriptId}
+          manuscriptVersionId={manuscriptVersionId}
         />
       ))}
     </div>
@@ -340,18 +354,19 @@ function AnnotationRow({
   annotation,
   compact = false,
   manuscriptId,
+  manuscriptVersionId,
 }: {
   annotation: FeedbackAnnotation;
   compact?: boolean;
   manuscriptId: string | null;
+  manuscriptVersionId: string | null;
 }) {
-  const href = manuscriptId
-    ? `/dashboard/manuscript?${new URLSearchParams({
-      annotationId: annotation.id,
-      chapterId: annotation.chapter.id,
-      manuscriptId,
-    }).toString()}`
-    : null;
+  const href = manuscriptId ? `/dashboard/manuscript?${new URLSearchParams({
+    annotationId: annotation.id,
+    chapterId: annotation.chapter.id,
+    manuscriptId,
+    ...(manuscriptVersionId ? { versionId: manuscriptVersionId } : {}),
+  }).toString()}` : null;
 
   return (
     <article className={cn("grid grid-cols-[30px_minmax(0,1fr)] gap-3 py-5", compact && "py-4")}>

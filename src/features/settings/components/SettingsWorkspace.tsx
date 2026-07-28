@@ -49,7 +49,7 @@ const freePlanBenefits = [
   "Default annotation tags",
   "Revision dashboard",
   "Reader reading list",
-  "1 survey",
+  "2 surveys",
   "Shareable invite link",
 ];
 

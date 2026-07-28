@@ -3,10 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  getReaderRounds,
+  getManuscriptReaders,
   inviteReader,
   resendReaderInvitation,
   revokeReaderInvitation,
+  setReaderDraftAccess,
   updateReaderLimit,
 } from "@/features/readers/api/readers";
 import { readerKeys } from "@/features/readers/query-keys";
@@ -25,10 +26,10 @@ function useInvalidateReaderData() {
   };
 }
 
-export function useReaderRounds() {
+export function useManuscriptReaders() {
   return useQuery({
-    queryKey: readerKeys.rounds(),
-    queryFn: getReaderRounds,
+    queryKey: readerKeys.manuscripts(),
+    queryFn: getManuscriptReaders,
     staleTime: 30_000,
   });
 }
@@ -65,6 +66,15 @@ export function useUpdateReaderLimit() {
 
   return useMutation({
     mutationFn: updateReaderLimit,
+    onSettled: invalidate,
+  });
+}
+
+export function useSetReaderDraftAccess() {
+  const invalidate = useInvalidateReaderData();
+
+  return useMutation({
+    mutationFn: setReaderDraftAccess,
     onSettled: invalidate,
   });
 }

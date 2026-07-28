@@ -10,6 +10,7 @@ import {
 } from "@/features/manuscript/api/manuscript-assets";
 import {
   createManuscriptChapter,
+  createManuscriptDraftVersion,
   createManuscript,
   deleteManuscriptChapter,
   deleteManuscript,
@@ -17,6 +18,7 @@ import {
   updateManuscriptSettings,
   updateAnnotationSeenStatus,
   updateChapterEditorialStatus,
+  updateManuscriptDraftVersionTitle,
   type CreateManuscriptChapterInput,
   type UpdateManuscriptChapterInput,
   type UpdateManuscriptSettingsInput,
@@ -36,6 +38,28 @@ export function useCreateManuscriptMutation() {
       await queryClient.invalidateQueries({
         queryKey: manuscriptKeys.list(),
       });
+    },
+  });
+}
+
+export function useCreateManuscriptDraftVersionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createManuscriptDraftVersion,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: manuscriptKeys.all });
+    },
+  });
+}
+
+export function useUpdateManuscriptDraftVersionTitleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateManuscriptDraftVersionTitle,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: manuscriptKeys.all });
     },
   });
 }
@@ -154,6 +178,7 @@ type MutationContext = {
 type UpdateChapterStatusVariables = {
   chapterId: string;
   manuscriptId: string;
+  manuscriptVersionId: string;
   status: ChapterEditorialStatus;
 };
 
@@ -169,7 +194,10 @@ export function useUpdateChapterStatusMutation() {
     mutationFn: ({ chapterId, status }) =>
       updateChapterEditorialStatus({ chapterId, status }),
     onMutate: async (variables) => {
-      const queryKey = manuscriptKeys.detail(variables.manuscriptId);
+      const queryKey = manuscriptKeys.detail(
+        variables.manuscriptId,
+        variables.manuscriptVersionId,
+      );
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ManuscriptWorkspaceData>(queryKey);
 
@@ -190,7 +218,7 @@ export function useUpdateChapterStatusMutation() {
     },
     onError: (_error, variables, context) => {
       queryClient.setQueryData(
-        manuscriptKeys.detail(variables.manuscriptId),
+        manuscriptKeys.detail(variables.manuscriptId, variables.manuscriptVersionId),
         context?.previous,
       );
     },
@@ -206,6 +234,7 @@ type UpdateAnnotationSeenVariables = {
   annotationId: string;
   isSeen: boolean;
   manuscriptId: string;
+  manuscriptVersionId: string;
 };
 
 export function useUpdateAnnotationSeenMutation() {
@@ -220,7 +249,10 @@ export function useUpdateAnnotationSeenMutation() {
     mutationFn: ({ annotationId, isSeen }) =>
       updateAnnotationSeenStatus({ annotationId, isSeen }),
     onMutate: async (variables) => {
-      const queryKey = manuscriptKeys.detail(variables.manuscriptId);
+      const queryKey = manuscriptKeys.detail(
+        variables.manuscriptId,
+        variables.manuscriptVersionId,
+      );
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ManuscriptWorkspaceData>(queryKey);
 
@@ -244,7 +276,7 @@ export function useUpdateAnnotationSeenMutation() {
     },
     onError: (_error, variables, context) => {
       queryClient.setQueryData(
-        manuscriptKeys.detail(variables.manuscriptId),
+        manuscriptKeys.detail(variables.manuscriptId, variables.manuscriptVersionId),
         context?.previous,
       );
     },

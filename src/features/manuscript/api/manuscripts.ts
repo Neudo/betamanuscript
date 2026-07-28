@@ -7,6 +7,7 @@ import {
 import type {
   ChapterEditorialStatus,
   CreatedManuscript,
+  CreatedManuscriptDraftVersion,
   ImportedManuscriptChapter,
   ManuscriptDraft,
   ManuscriptGenre,
@@ -14,6 +15,7 @@ import type {
   ManuscriptWorkspaceAnnotation,
   ManuscriptWorkspaceBlock,
   ManuscriptWorkspaceData,
+  ManuscriptWorkspaceVersion,
 } from "@/features/manuscript/types";
 
 type ManuscriptSummaryRow = {
@@ -179,6 +181,7 @@ export async function getManuscripts(): Promise<ManuscriptSummary[]> {
 
 export async function getManuscript(
   manuscriptId: string,
+  manuscriptVersionId: string | null = null,
 ): Promise<ManuscriptWorkspaceData | null> {
   const supabase = createSupabaseBrowserClient();
   const { data: manuscript, error: manuscriptError } = await supabase
@@ -196,12 +199,14 @@ export async function getManuscript(
     .select("id, title, version_number, logline")
     .eq("manuscript_id", manuscriptId)
     .is("archived_at", null)
-    .order("version_number", { ascending: false })
-    .limit(1);
+    .order("version_number", { ascending: false });
 
   if (versionsError) throw new Error(versionsError.message);
 
-  const version = (versions?.[0] ?? null) as ManuscriptVersionRow | null;
+  const manuscriptVersions = (versions ?? []) as ManuscriptVersionRow[];
+  const version = manuscriptVersionId
+    ? manuscriptVersions.find((item) => item.id === manuscriptVersionId) ?? manuscriptVersions[0] ?? null
+    : manuscriptVersions[0] ?? null;
   if (!version) {
     return {
       chapters: [],
@@ -210,6 +215,7 @@ export async function getManuscript(
       title: manuscript.internal_title,
       totalWordCount: 0,
       version: null,
+      versions: manuscriptVersions.map(toWorkspaceVersion),
     };
   }
 
@@ -244,11 +250,9 @@ export async function getManuscript(
       title: manuscript.internal_title,
       totalWordCount: 0,
       version: {
-        id: version.id,
-        logline: version.logline,
-        number: version.version_number,
-        title: version.title,
+        ...toWorkspaceVersion(version),
       },
+      versions: manuscriptVersions.map(toWorkspaceVersion),
     };
   }
 
@@ -371,11 +375,18 @@ export async function getManuscript(
       0,
     ),
     version: {
-      id: version.id,
-      logline: version.logline,
-      number: version.version_number,
-      title: version.title,
+      ...toWorkspaceVersion(version),
     },
+    versions: manuscriptVersions.map(toWorkspaceVersion),
+  };
+}
+
+function toWorkspaceVersion(version: ManuscriptVersionRow): ManuscriptWorkspaceVersion {
+  return {
+    id: version.id,
+    logline: version.logline,
+    number: version.version_number,
+    title: version.title,
   };
 }
 
@@ -418,6 +429,53 @@ export async function createManuscript({
     manuscriptVersionId: created.manuscript_version_id,
     readingRoundId: created.reading_round_id,
   };
+}
+
+export async function createManuscriptDraftVersion(
+  sourceVersionId: string,
+): Promise<CreatedManuscriptDraftVersion> {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("create_manuscript_draft_version", {
+    p_source_version_id: sourceVersionId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const created = data?.[0];
+  if (!created) {
+    throw new Error("The draft version was created but no identifier was returned.");
+  }
+
+  return {
+    manuscriptVersionId: created.manuscript_version_id,
+    readingRoundId: created.reading_round_id,
+  };
+}
+
+export async function updateManuscriptDraftVersionTitle({
+  manuscriptVersionId,
+  title,
+}: {
+  manuscriptVersionId: string;
+  title: string;
+}) {
+  const normalizedTitle = title.trim();
+  if (!normalizedTitle || normalizedTitle.length > 300) {
+    throw new Error("The draft title must contain between 1 and 300 characters.");
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("manuscript_versions")
+    .update({ title: normalizedTitle })
+    .eq("id", manuscriptVersionId)
+    .select("id, title")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("This draft is no longer available.");
+
+  return data;
 }
 
 export async function updateChapterEditorialStatus({
@@ -509,6 +567,7 @@ export async function updateAnnotationSeenStatus({
 export type UpdateManuscriptSettingsInput = {
   logline: string;
   manuscriptId: string;
+  manuscriptVersionId: string;
   readerClosingNote: string;
   title: string;
 };
@@ -516,6 +575,7 @@ export type UpdateManuscriptSettingsInput = {
 export async function updateManuscriptSettings({
   logline,
   manuscriptId,
+  manuscriptVersionId,
   readerClosingNote,
   title,
 }: UpdateManuscriptSettingsInput) {
@@ -523,6 +583,7 @@ export async function updateManuscriptSettings({
   const { error } = await supabase.rpc("update_manuscript_settings", {
     p_logline: logline,
     p_manuscript_id: manuscriptId,
+    p_manuscript_version_id: manuscriptVersionId,
     p_reader_closing_note: readerClosingNote,
     p_title: title,
   });

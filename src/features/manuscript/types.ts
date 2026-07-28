@@ -56,6 +56,18 @@ export type CreatedManuscript = {
   readingRoundId: string;
 };
 
+export type CreatedManuscriptDraftVersion = {
+  manuscriptVersionId: string;
+  readingRoundId: string;
+};
+
+export type ManuscriptWorkspaceVersion = {
+  id: string;
+  logline: string | null;
+  number: number;
+  title: string;
+};
+
 export type ManuscriptWorkspaceBlock = {
   id: string;
   kind: ManuscriptBlockKind;
@@ -99,10 +111,6 @@ export type ManuscriptWorkspaceData = {
   readerClosingNote: string | null;
   title: string;
   totalWordCount: number;
-  version: {
-    id: string;
-    logline: string | null;
-    number: number;
-    title: string;
-  } | null;
+  version: ManuscriptWorkspaceVersion | null;
+  versions: ManuscriptWorkspaceVersion[];
 };

@@ -21,9 +21,10 @@ import { TagBadge } from "./TagBadge";
 export function DashboardOverview() {
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
   const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
-  const overviewQuery = useDashboardOverview(manuscriptId);
+  const overviewQuery = useDashboardOverview(manuscriptId, selectedVersionId);
   const [selectedTagSlug, setSelectedTagSlug] = useState<string | null>(null);
 
   const isLoading = manuscriptsQuery.isPending || (!manuscriptId ? false : overviewQuery.isPending);
@@ -37,6 +38,7 @@ export function DashboardOverview() {
   return (
     <DashboardContent
       data={overviewQuery.data}
+      manuscriptId={manuscriptId}
       selectedTagSlug={selectedTagSlug}
       onSelectTag={(tagSlug) => setSelectedTagSlug((current) => current === tagSlug ? null : tagSlug)}
     />
@@ -45,10 +47,12 @@ export function DashboardOverview() {
 
 function DashboardContent({
   data,
+  manuscriptId,
   onSelectTag,
   selectedTagSlug,
 }: {
   data: DashboardOverviewData;
+  manuscriptId: string;
   onSelectTag: (tagSlug: string) => void;
   selectedTagSlug: string | null;
 }) {
@@ -77,9 +81,7 @@ function DashboardContent({
           <Heading level={1} size="workspace">{data.title}</Heading>
           <p className="mt-1 text-sm text-muted-foreground">{data.draftLabel} · {formatActivityDate(data.lastActivityAt)}</p>
         </div>
-        {data.readingRoundId ? (
-          <InviteReaderDialog readingRoundId={data.readingRoundId} triggerVariant="outline" />
-        ) : null}
+        <InviteReaderDialog manuscriptId={manuscriptId} triggerVariant="outline" />
       </div>
 
       <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">

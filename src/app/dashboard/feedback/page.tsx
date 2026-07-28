@@ -1,5 +1,8 @@
+import { requireWorkspaceAccount } from "@/features/account/server/require-workspace-account";
 import { FeedbackExplorer } from "@/features/feedback/components/FeedbackExplorer";
 
-export default function FeedbackPage() {
-  return <FeedbackExplorer />;
+export default async function FeedbackPage() {
+  const account = await requireWorkspaceAccount("writer");
+
+  return <FeedbackExplorer accountPlan={account.plan} />;
 }

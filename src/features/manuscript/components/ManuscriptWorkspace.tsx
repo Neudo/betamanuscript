@@ -2,7 +2,7 @@
 
 import { Check, MessageSquareText } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import {
   useManuscripts,
 } from "@/features/manuscript/hooks/use-manuscripts";
 import { ChapterManagerDialog } from "@/features/manuscript/components/ChapterManagerDialog";
+import { DraftVersionSwitcher } from "@/features/manuscript/components/DraftVersionSwitcher";
 import {
   ManuscriptFullPageState,
   NoManuscriptState,
@@ -73,18 +74,31 @@ export function ManuscriptWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedVersionIdFromUrl = searchParams.get("versionId");
   const focusedAnnotationIdFromUrl = searchParams.get("annotationId");
   const selectedChapterIdFromUrl = searchParams.get("chapterId");
   const manuscriptsQuery = useManuscripts();
   const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
-  const manuscriptQuery = useManuscript(manuscriptId);
+  const manuscriptQuery = useManuscript(manuscriptId, selectedVersionIdFromUrl);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const updateChapterStatus = useUpdateChapterStatusMutation();
   const updateAnnotationSeen = useUpdateAnnotationSeenMutation();
 
+  useEffect(() => {
+    const loadedVersionId = manuscriptQuery.data?.version?.id;
+    if (!loadedVersionId || loadedVersionId === selectedVersionIdFromUrl) return;
+
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set("versionId", loadedVersionId);
+    router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
+  }, [manuscriptQuery.data?.version?.id, pathname, router, searchParams, selectedVersionIdFromUrl]);
+
   function handleManuscriptDeleted() {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("manuscriptId");
+    nextSearchParams.delete("versionId");
+    nextSearchParams.delete("chapterId");
+    nextSearchParams.delete("annotationId");
     const queryString = nextSearchParams.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
       scroll: false,
@@ -141,7 +155,12 @@ export function ManuscriptWorkspace() {
         title={manuscript.title}
         description="This version has no chapters yet. Add one now, or import a source document when you create the next version."
       >
-        <div className="mt-5">
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          <DraftVersionSwitcher
+            activeVersionId={manuscript.version?.id ?? null}
+            onVersionChange={handleVersionChange}
+            versions={manuscript.versions}
+          />
           <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
         </div>
       </ManuscriptFullPageState>
@@ -156,6 +175,7 @@ export function ManuscriptWorkspace() {
     updateChapterStatus.mutate({
       chapterId: selectedChapter.id,
       manuscriptId: workspace.id,
+      manuscriptVersionId: workspace.version?.id ?? "",
       status,
     });
   }
@@ -165,7 +185,17 @@ export function ManuscriptWorkspace() {
       annotationId: annotation.id,
       isSeen: !annotation.isSeenByAuthor,
       manuscriptId: workspace.id,
+      manuscriptVersionId: workspace.version?.id ?? "",
     });
+  }
+
+  function handleVersionChange(versionId: string) {
+    setSelectedChapterId(null);
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set("versionId", versionId);
+    nextSearchParams.delete("chapterId");
+    nextSearchParams.delete("annotationId");
+    router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
   }
 
   function handleChapterSelect(chapterId: string) {
@@ -198,7 +228,7 @@ export function ManuscriptWorkspace() {
               </p>
               <p className="mt-2 text-sm font-medium leading-snug">{manuscript.title}</p>
               <p className="mt-1 font-mono text-[9px] text-muted-foreground">
-                Draft {manuscript.version?.number ?? "—"} · {wordCountFormat.format(manuscript.totalWordCount)} words · {completeCount}/{manuscript.chapters.length} complete
+                {wordCountFormat.format(manuscript.totalWordCount)} words · {completeCount}/{manuscript.chapters.length} complete
               </p>
             </div>
             <ManuscriptSettingsDialog
@@ -206,6 +236,12 @@ export function ManuscriptWorkspace() {
               onDeleted={handleManuscriptDeleted}
             />
           </div>
+          <DraftVersionSwitcher
+            activeVersionId={manuscript.version?.id ?? null}
+            className="mt-4"
+            onVersionChange={handleVersionChange}
+            versions={manuscript.versions}
+          />
         </div>
 
         <div className="border-b border-foreground/10 bg-card px-5 py-3">

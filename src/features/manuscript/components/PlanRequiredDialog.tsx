@@ -15,15 +15,19 @@ import {
 } from "@/components/ui/dialog";
 
 type PlanRequiredDialogProps = {
+  description?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onNavigate?: () => void;
+  title?: string;
 };
 
 export function PlanRequiredDialog({
+  description = "Your free plan is limited to one manuscript. Upgrade to Pro to create and manage additional projects.",
   open,
   onOpenChange,
   onNavigate,
+  title = "Add unlimited manuscripts",
 }: PlanRequiredDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,11 +37,10 @@ export function PlanRequiredDialog({
             Pro plan
           </p>
           <DialogTitle className="pt-1 text-lg tracking-normal">
-            Add unlimited manuscripts
+            {title}
           </DialogTitle>
           <DialogDescription className="pt-1 text-sm leading-6">
-            Your free plan is limited to one manuscript. Upgrade to Pro to create
-            and manage additional projects.
+            {description}
           </DialogDescription>
         </DialogHeader>
 

@@ -90,6 +90,7 @@ export function ManuscriptSettingsDialog({
       await updateSettings.mutateAsync({
         logline,
         manuscriptId: manuscript.id,
+        manuscriptVersionId: manuscript.version?.id ?? "",
         readerClosingNote,
         title: normalizedTitle,
       });
@@ -132,7 +133,7 @@ export function ManuscriptSettingsDialog({
         <DialogHeader>
           <DialogTitle>Manuscript settings</DialogTitle>
           <DialogDescription className="leading-6">
-            Update this manuscript&apos;s current draft details.
+            Update the selected draft&apos;s details.
           </DialogDescription>
         </DialogHeader>
 

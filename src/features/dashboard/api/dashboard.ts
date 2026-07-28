@@ -120,6 +120,7 @@ const readerColors = ["#8B1A1A", "#3B4A8A", "#1E5C2E", "#7A4800", "#1A5C50"];
 
 export async function getDashboardOverview(
   manuscriptId: string,
+  manuscriptVersionId: string | null = null,
 ): Promise<DashboardOverviewData | null> {
   const supabase = createSupabaseBrowserClient();
   const { data: manuscriptData, error: manuscriptError } = await supabase
@@ -133,17 +134,18 @@ export async function getDashboardOverview(
   const manuscript = manuscriptData as ManuscriptRow | null;
   if (!manuscript) return null;
 
-  const { data: versionData, error: versionError } = await supabase
+  const { data: versionRows, error: versionError } = await supabase
     .from("manuscript_versions")
     .select("id, version_number")
     .eq("manuscript_id", manuscript.id)
     .is("archived_at", null)
-    .order("version_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("version_number", { ascending: false });
 
   if (versionError) throw new Error(versionError.message);
-  const version = versionData as VersionRow | null;
+  const activeVersions = (versionRows ?? []) as VersionRow[];
+  const version = manuscriptVersionId
+    ? activeVersions.find((item) => item.id === manuscriptVersionId) ?? activeVersions[0] ?? null
+    : activeVersions[0] ?? null;
   if (!version) return createEmptyDashboard(manuscript.internal_title);
 
   const [chapterResult, roundResult] = await Promise.all([

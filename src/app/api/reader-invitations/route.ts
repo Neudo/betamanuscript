@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const invitationSchema = z.object({
+  manuscriptId: z.string().uuid(),
   personalNote: z.string().trim().max(4000).optional().default(""),
-  readingRoundId: z.string().uuid(),
   recipientEmail: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
 });
 
@@ -49,9 +49,9 @@ export async function POST(request: Request) {
 
   const rawToken = randomBytes(32).toString("base64url");
   const tokenDigest = createHash("sha256").update(rawToken).digest("hex");
-  const { data, error } = await supabase.rpc("create_reading_invitation", {
+  const { data, error } = await supabase.rpc("create_manuscript_reader_invitation", {
+    p_manuscript_id: payload.manuscriptId,
     p_personal_note: payload.personalNote,
-    p_reading_round_id: payload.readingRoundId,
     p_recipient_email: payload.recipientEmail,
     p_token_digest: tokenDigest,
   });

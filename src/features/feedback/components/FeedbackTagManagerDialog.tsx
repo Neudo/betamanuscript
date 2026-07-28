@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { AccountPlan } from "@/features/account/types";
 import type { ManuscriptAnnotationTag } from "@/features/feedback/api/feedback-tags";
 import {
   useCreateManuscriptAnnotationTag,
@@ -33,14 +34,17 @@ import {
   useSetManuscriptAnnotationTagActive,
   useUpdateManuscriptAnnotationTagColor,
 } from "@/features/feedback/hooks/use-feedback-tags";
+import { PlanRequiredDialog } from "@/features/manuscript/components/PlanRequiredDialog";
 import { Heading } from "@/shared/ui/Heading";
 
 type FeedbackTagManagerDialogProps = {
+  accountPlan: AccountPlan;
   manuscriptId: string | null;
 };
 
-export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDialogProps) {
+export function FeedbackTagManagerDialog({ accountPlan, manuscriptId }: FeedbackTagManagerDialogProps) {
   const [open, setOpen] = useState(false);
+  const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const tagsQuery = useManuscriptAnnotationTags(manuscriptId);
   const createTag = useCreateManuscriptAnnotationTag();
   const updateColor = useUpdateManuscriptAnnotationTagColor();
@@ -49,10 +53,15 @@ export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDia
   const [color, setColor] = useState("#3B4A8A");
   const tags = tagsQuery.data ?? [];
   const isMutating = createTag.isPending || updateColor.isPending || setTagActive.isPending;
+  const canCreateTag = accountPlan === "pro";
 
   function addTag(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!manuscriptId) return;
+    if (!canCreateTag) {
+      setPlanDialogOpen(true);
+      return;
+    }
 
     createTag.mutate(
       { color, label, manuscriptId },
@@ -70,20 +79,21 @@ export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDia
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="-mr-2 text-muted-foreground hover:text-foreground"
-          disabled={!manuscriptId}
-          aria-label="Manage feedback tags"
-          title="Manage feedback tags"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-        </Button>
-      </DialogTrigger>
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="-mr-2 text-muted-foreground hover:text-foreground"
+            disabled={!manuscriptId}
+            aria-label="Manage feedback tags"
+            title="Manage feedback tags"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+          </Button>
+        </DialogTrigger>
       <DialogContent className="max-h-[min(760px,calc(100dvh-2rem))] max-w-xl overflow-y-auto p-0">
         <DialogHeader className="border-b border-foreground/10 px-6 py-5">
           <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">Feedback setup</p>
@@ -94,30 +104,40 @@ export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDia
         </DialogHeader>
 
         <div className="space-y-6 px-6 py-5">
-          <form onSubmit={addTag} className="border border-foreground/10 bg-muted/25 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <Plus className="h-3.5 w-3.5 text-primary" />
-              <Heading level={3} size="small">Add a tag</Heading>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_118px_auto] sm:items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="new-feedback-tag" className="text-xs">Tag name</Label>
-                <Input
-                  id="new-feedback-tag"
-                  value={label}
-                  onChange={(event) => setLabel(event.target.value)}
-                  placeholder="e.g. Dialogue"
-                  maxLength={80}
-                  disabled={isMutating}
-                  className="h-9 border-foreground/15 bg-card text-xs"
-                />
+          {canCreateTag ? (
+            <form onSubmit={addTag} className="border border-foreground/10 bg-muted/25 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Plus className="h-3.5 w-3.5 text-primary" />
+                <Heading level={3} size="small">Add a tag</Heading>
               </div>
-              <ColorField id="new-feedback-tag-color" value={color} onChange={setColor} disabled={isMutating} />
-              <Button type="submit" size="sm" disabled={isMutating || !label.trim()}>
-                Add tag
-              </Button>
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_118px_auto] sm:items-end">
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-feedback-tag" className="text-xs">Tag name</Label>
+                  <Input
+                    id="new-feedback-tag"
+                    value={label}
+                    onChange={(event) => setLabel(event.target.value)}
+                    placeholder="e.g. Dialogue"
+                    maxLength={80}
+                    disabled={isMutating}
+                    className="h-9 border-foreground/15 bg-card text-xs"
+                  />
+                </div>
+                <ColorField id="new-feedback-tag-color" value={color} onChange={setColor} disabled={isMutating} />
+                <Button type="submit" size="sm" disabled={isMutating || !label.trim()}>
+                  Add tag
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-foreground/10 bg-muted/25 p-4">
+              <div>
+                <Heading level={3} size="small">Custom tags are on Pro</Heading>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">Your default feedback tags remain available to readers.</p>
+              </div>
+              <Button type="button" size="sm" onClick={() => setPlanDialogOpen(true)}>View Pro plan</Button>
             </div>
-          </form>
+          )}
 
           <section>
             <div className="mb-3 flex items-center justify-between gap-4">
@@ -157,7 +177,14 @@ export function FeedbackTagManagerDialog({ manuscriptId }: FeedbackTagManagerDia
           </section>
         </div>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <PlanRequiredDialog
+        description="Your free plan includes the default feedback tags. Upgrade to Pro to create custom tags for each manuscript."
+        open={planDialogOpen}
+        onOpenChange={setPlanDialogOpen}
+        title="Create custom feedback tags"
+      />
+    </>
   );
 }
 

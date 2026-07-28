@@ -745,6 +745,32 @@ export type Database = {
           },
         ]
       }
+      reader_draft_access: {
+        Row: {
+          created_at: string
+          id: string
+          reader_assignment_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reader_assignment_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reader_assignment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_draft_access_reader_assignment_id_fkey"
+            columns: ["reader_assignment_id"]
+            isOneToOne: true
+            referencedRelation: "reader_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reading_invitations: {
         Row: {
           accepted_at: string | null
@@ -1160,12 +1186,40 @@ export type Database = {
         Args: { p_chapter_id: string; p_reader_assignment_id: string }
         Returns: undefined
       }
+      clone_manuscript_surveys: {
+        Args: {
+          p_source_survey_ids: string[]
+          p_target_manuscript_version_id: string
+        }
+        Returns: {
+          survey_id: string
+        }[]
+      }
       create_manuscript_from_draft: {
         Args: { p_draft: Json }
         Returns: {
           manuscript_id: string
           manuscript_version_id: string
           reading_round_id: string
+        }[]
+      }
+      create_manuscript_draft_version: {
+        Args: { p_source_version_id: string }
+        Returns: {
+          manuscript_version_id: string
+          reading_round_id: string
+        }[]
+      }
+      create_manuscript_reader_invitation: {
+        Args: {
+          p_manuscript_id: string
+          p_personal_note: string
+          p_recipient_email: string
+          p_token_digest: string
+        }
+        Returns: {
+          expires_at: string
+          invitation_id: string
         }[]
       }
       create_manuscript_chapter: {
@@ -1203,6 +1257,14 @@ export type Database = {
       }
       revoke_reading_invitation: {
         Args: { p_invitation_id: string }
+        Returns: undefined
+      }
+      set_reader_draft_access: {
+        Args: {
+          p_enabled: boolean
+          p_manuscript_version_id: string
+          p_reader_profile_id: string
+        }
         Returns: undefined
       }
       submit_reader_survey: {
@@ -1255,6 +1317,7 @@ export type Database = {
         Args: {
           p_logline: string
           p_manuscript_id: string
+          p_manuscript_version_id: string
           p_reader_closing_note: string
           p_title: string
         }

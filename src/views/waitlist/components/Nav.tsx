@@ -23,6 +23,9 @@ export function Nav() {
         className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 text-xs md:flex"
         style={{ color: INK, fontFamily: SANS }}
       >
+        <Link href="/how-it-works" className="transition-colors hover:opacity-65">
+          How it works
+        </Link>
         <Link href="/for-readers" className="transition-colors hover:opacity-65">
           For readers
         </Link>

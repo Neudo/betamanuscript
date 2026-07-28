@@ -3,6 +3,7 @@ import type {
   ManuscriptSurvey,
   ManuscriptSurveysData,
   SurveyChapter,
+  SurveyCloneSource,
   SurveyQuestion,
   SurveyQuestionType,
   SurveyResponseAnswer,
@@ -11,10 +12,13 @@ import type {
 
 type ManuscriptVersionRow = {
   id: string;
+  title: string;
+  version_number: number;
 };
 
 type ReadingRoundRow = {
   id: string;
+  manuscript_version_id: string;
 };
 
 type SurveyRow = {
@@ -85,25 +89,31 @@ const questionTypeToDatabase: Record<SurveyQuestionType, QuestionRow["question_t
   "yes-no": "yes_no",
 };
 
-/** Returns surveys for the latest non-archived reading round of the active draft. */
+/** Returns surveys for the latest non-archived reading round of the selected draft. */
 export async function getManuscriptSurveys(
   manuscriptId: string,
+  manuscriptVersionId: string | null = null,
 ): Promise<ManuscriptSurveysData | null> {
   const supabase = createSupabaseBrowserClient();
   const { data: versionRows, error: versionError } = await supabase
     .from("manuscript_versions")
-    .select("id")
+    .select("id, title, version_number")
     .eq("manuscript_id", manuscriptId)
     .is("archived_at", null)
-    .order("version_number", { ascending: false })
-    .limit(1);
+    .order("version_number", { ascending: false });
 
   if (versionError) throw new Error(versionError.message);
 
-  const version = (versionRows?.[0] ?? null) as ManuscriptVersionRow | null;
+  const activeVersions = (versionRows ?? []) as ManuscriptVersionRow[];
+  const version = manuscriptVersionId
+    ? activeVersions.find((item) => item.id === manuscriptVersionId) ?? activeVersions[0] ?? null
+    : activeVersions[0] ?? null;
   if (!version) return null;
+  const otherVersionIds = activeVersions
+    .filter((item) => item.id !== version.id)
+    .map((item) => item.id);
 
-  const [chaptersResult, readingRoundsResult] = await Promise.all([
+  const [chaptersResult, readingRoundsResult, surveyCountResult, otherRoundsResult] = await Promise.all([
     supabase
       .from("manuscript_chapters")
       .select("id, position, title")
@@ -116,15 +126,73 @@ export async function getManuscriptSurveys(
       .neq("status", "archived")
       .order("created_at", { ascending: false })
       .limit(1),
+    supabase
+      .from("surveys")
+      .select(
+        "id, reading_rounds!inner (manuscript_versions!inner (manuscript_id))",
+        { count: "exact", head: true },
+      )
+      .eq("reading_rounds.manuscript_versions.manuscript_id", manuscriptId),
+    otherVersionIds.length > 0
+      ? supabase
+        .from("reading_rounds")
+        .select("id, manuscript_version_id")
+        .in("manuscript_version_id", otherVersionIds)
+        .neq("status", "archived")
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (chaptersResult.error) throw new Error(chaptersResult.error.message);
   if (readingRoundsResult.error) throw new Error(readingRoundsResult.error.message);
+  if (surveyCountResult.error) throw new Error(surveyCountResult.error.message);
+  if (otherRoundsResult.error) throw new Error(otherRoundsResult.error.message);
 
   const chapters = (chaptersResult.data ?? []) as SurveyChapter[];
+  const surveyCount = surveyCountResult.count ?? 0;
   const readingRound = (readingRoundsResult.data?.[0] ?? null) as ReadingRoundRow | null;
+  const otherRounds = (otherRoundsResult.data ?? []) as ReadingRoundRow[];
+  const otherRoundIds = otherRounds.map((round) => round.id);
+  const { data: otherSurveyRows, error: otherSurveyError } = otherRoundIds.length > 0
+    ? await supabase
+      .from("surveys")
+      .select("id, reading_round_id, name, status, trigger_type, chapter_id")
+      .in("reading_round_id", otherRoundIds)
+      .order("created_at", { ascending: true })
+    : { data: [], error: null };
+
+  if (otherSurveyError) throw new Error(otherSurveyError.message);
+
+  const versionById = new Map(activeVersions.map((item) => [item.id, item]));
+  const versionIdByRoundId = new Map(otherRounds.map((round) => [round.id, round.manuscript_version_id]));
+  const otherDraftSurveys = ((otherSurveyRows ?? []) as SurveyRow[]).flatMap((survey) => {
+    const sourceVersionId = versionIdByRoundId.get(survey.reading_round_id);
+    const sourceVersion = sourceVersionId ? versionById.get(sourceVersionId) : null;
+    if (!sourceVersionId || !sourceVersion) return [];
+
+    return [{
+      delivery: {
+        chapterId: survey.chapter_id,
+        scope: survey.trigger_type === "after_chapter" ? "chapter" : "manuscript",
+      },
+      id: survey.id,
+      name: survey.name,
+      sourceVersionId,
+      sourceVersionNumber: sourceVersion.version_number,
+      sourceVersionTitle: sourceVersion.title,
+    } satisfies SurveyCloneSource];
+  }).sort((left, right) => (
+    right.sourceVersionNumber - left.sourceVersionNumber || left.name.localeCompare(right.name)
+  ));
+
   if (!readingRound) {
-    return { chapters, readingRoundId: null, surveys: [] };
+    return {
+      chapters,
+      manuscriptVersionId: version.id,
+      otherDraftSurveys,
+      readingRoundId: null,
+      surveyCount,
+      surveys: [],
+    };
   }
 
   const { data: surveyRows, error: surveyError } = await supabase
@@ -137,7 +205,10 @@ export async function getManuscriptSurveys(
 
   return {
     chapters,
+    manuscriptVersionId: version.id,
+    otherDraftSurveys,
     readingRoundId: readingRound.id,
+    surveyCount,
     surveys: await hydrateSurveys(
       supabase,
       (surveyRows ?? []) as SurveyRow[],
@@ -165,6 +236,29 @@ export async function createSurvey(input: SurveyWriteInput): Promise<ManuscriptS
 
   await replaceSurveyQuestions(supabase, data.id, input.questions);
   return getSurvey(data.id);
+}
+
+export async function cloneSurveys({
+  sourceSurveyIds,
+  targetManuscriptVersionId,
+}: {
+  sourceSurveyIds: string[];
+  targetManuscriptVersionId: string;
+}) {
+  const uniqueSourceSurveyIds = [...new Set(sourceSurveyIds)];
+  if (uniqueSourceSurveyIds.length === 0) {
+    throw new Error("Choose at least one survey to clone.");
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("clone_manuscript_surveys", {
+    p_source_survey_ids: uniqueSourceSurveyIds,
+    p_target_manuscript_version_id: targetManuscriptVersionId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((survey) => survey.survey_id);
 }
 
 export async function saveSurvey(survey: ManuscriptSurvey): Promise<ManuscriptSurvey> {
@@ -213,6 +307,16 @@ export async function updateSurveyStatus({
   const { error } = await supabase
     .from("surveys")
     .update({ status })
+    .eq("id", surveyId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteSurvey(surveyId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("surveys")
+    .delete()
     .eq("id", surveyId);
 
   if (error) throw new Error(error.message);

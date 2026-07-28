@@ -54,6 +54,9 @@ export function ManuscriptSwitcher({
   function selectManuscript(manuscriptId: string) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.set("manuscriptId", manuscriptId);
+    nextSearchParams.delete("versionId");
+    nextSearchParams.delete("chapterId");
+    nextSearchParams.delete("annotationId");
     router.replace(`${pathname}?${nextSearchParams.toString()}`, {
       scroll: false,
     });

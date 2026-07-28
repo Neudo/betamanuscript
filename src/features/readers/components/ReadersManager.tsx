@@ -1,19 +1,11 @@
 "use client";
 
-import { Clock3, Mail, RotateCcw, UserRoundX } from "lucide-react";
-import { useState } from "react";
+import { Mail, RotateCcw, UserRoundX } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,16 +15,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/features/dashboard/components/PageHeader";
-import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
-import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
-import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
-import { ReaderLimitDialog } from "@/features/readers/components/ReaderLimitDialog";
 import type { AccountPlan } from "@/features/account/types";
-import type { ReaderStatus } from "@/features/readers/api/readers";
+import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
+import { DraftAccessDialog } from "@/features/readers/components/DraftAccessDialog";
+import { ReaderLimitDialog } from "@/features/readers/components/ReaderLimitDialog";
+import type { ManuscriptReaders, ReaderStatus } from "@/features/readers/api/readers";
 import {
-  useReaderRounds,
+  useManuscriptReaders,
   useResendReaderInvitation,
   useRevokeReaderInvitation,
+  useSetReaderDraftAccess,
 } from "@/features/readers/hooks/use-readers";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -63,202 +55,219 @@ function formatDate(value: string | null) {
 }
 
 export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
-  const [selectedRoundId, setSelectedRoundId] = useState<string | null>(null);
-  const readerRoundsQuery = useReaderRounds();
-  const manuscriptsQuery = useManuscripts();
+  const manuscriptsQuery = useManuscriptReaders();
   const resendMutation = useResendReaderInvitation();
   const revokeMutation = useRevokeReaderInvitation();
-  const readerRounds = readerRoundsQuery.data ?? [];
-  const hasManuscripts = (manuscriptsQuery.data?.length ?? 0) > 0;
-  const isLoading = readerRoundsQuery.isLoading || manuscriptsQuery.isLoading;
-  const error = readerRoundsQuery.error ?? manuscriptsQuery.error;
-  const activeRound = readerRounds.find((round) => round.id === selectedRoundId)
-    ?? readerRounds[0]
-    ?? null;
-
-  const startedCount = activeRound
-    ? activeRound.readers.filter((reader) => reader.status === "started" || reader.status === "completed").length
-    : 0;
-  const pendingCount = activeRound
-    ? activeRound.readers.filter((reader) => reader.status === "pending").length
-    : 0;
-  const completedCount = activeRound
-    ? activeRound.readers.filter((reader) => reader.status === "completed").length
-    : 0;
-
-  if (!isLoading && !error && !hasManuscripts) {
-    return <NoManuscriptState onCreated={() => { void readerRoundsQuery.refetch(); }} />;
-  }
+  const draftAccessMutation = useSetReaderDraftAccess();
+  const manuscripts = manuscriptsQuery.data ?? [];
 
   return (
     <div className="min-h-full">
-      <PageHeader
-        eyebrow="Readers"
-        title="Beta readers"
-        description={activeRound ? `${activeRound.manuscriptTitle} · ${activeRound.versionTitle}` : undefined}
-        actions={activeRound ? <InviteReaderDialog readingRoundId={activeRound.id} triggerVariant="default" /> : undefined}
-      />
+      <PageHeader eyebrow="Readers" title="Beta readers" />
 
       <div className="max-w-[1100px] space-y-6 p-5 sm:p-8">
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading reader invitations…</p>
+        {manuscriptsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading readers…</p>
         ) : null}
 
-        {error ? (
+        {manuscriptsQuery.error ? (
           <Alert variant="destructive">
-            <AlertDescription>{error.message}</AlertDescription>
+            <AlertDescription>{manuscriptsQuery.error.message}</AlertDescription>
           </Alert>
         ) : null}
 
-        {!isLoading && !error && !activeRound ? (
+        {!manuscriptsQuery.isLoading && !manuscriptsQuery.error && manuscripts.length === 0 ? (
           <Card className="border-dashed p-8 text-center">
             <Mail className="mx-auto h-5 w-5 text-muted-foreground" />
-            <Heading level={2} size="subsection" className="mt-4">No reading round yet</Heading>
+            <Heading level={2} size="subsection" className="mt-4">No manuscript yet</Heading>
             <p className="mt-2 text-sm text-muted-foreground">
-              Set up a reading round from your manuscript to invite beta readers here.
+              Create a manuscript before inviting beta readers.
             </p>
           </Card>
         ) : null}
 
-        {activeRound ? (
-          <>
-            {readerRounds.length > 1 ? (
-              <div className="max-w-sm space-y-2">
-                <label className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground" htmlFor="reading-round">
-                  Reading round
-                </label>
-                <Select value={activeRound.id} onValueChange={setSelectedRoundId}>
-                  <SelectTrigger id="reading-round"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {readerRounds.map((round) => (
-                      <SelectItem key={round.id} value={round.id}>
-                        {round.manuscriptTitle} · {round.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
+        {manuscripts.map((manuscript) => (
+          <ManuscriptReadersSection
+            key={manuscript.id}
+            isResending={resendMutation.isPending}
+            isRevoking={revokeMutation.isPending}
+            isUpdatingDraftAccess={draftAccessMutation.isPending}
+            accountPlan={accountPlan}
+            manuscript={manuscript}
+            onResend={(invitationId) => resendMutation.mutate(invitationId)}
+            onRevoke={(invitationId) => revokeMutation.mutate(invitationId)}
+            onDraftAccessChange={(input) => draftAccessMutation.mutate(input)}
+          />
+        ))}
 
-            <section className="grid gap-3 sm:grid-cols-3">
-              {[
-                ["Readers started", `${startedCount} / ${activeRound.maxReaders}`],
-                ["Pending invitations", String(pendingCount)],
-                ["Completed", String(completedCount)],
-              ].map(([label, value], index) => (
-                <div key={label} className="border border-foreground/10 bg-card p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
-                    {index === 0 ? (
-                      <ReaderLimitDialog
-                        accountPlan={accountPlan}
-                        currentLimit={activeRound.maxReaders}
-                        minimumLimit={Math.max(1, startedCount)}
-                        readingRoundId={activeRound.id}
-                      />
-                    ) : null}
-                  </div>
-                  <p className="mt-3 text-3xl font-normal">{value}</p>
-                </div>
-              ))}
-            </section>
-
-            {startedCount >= activeRound.maxReaders && pendingCount > 0 ? (
-              <Alert className="border-warning/25 bg-warning/5">
-                <Clock3 className="h-4 w-4 text-warning" />
-                <AlertDescription>
-                  The round is currently full. Pending invitations stay pending,
-                  but the next acceptance will be refused until a reader is removed.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
-            <Card className="overflow-hidden border-foreground/10">
-              <Table>
-                <TableHeader className="bg-sidebar/70">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Reader</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Status</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Started</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-widest">Invitation</TableHead>
-                    <TableHead className="w-44"><span className="sr-only">Actions</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeRound.readers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-28 text-center text-sm text-muted-foreground">
-                        No invitations have been sent for this round.
-                      </TableCell>
-                    </TableRow>
-                  ) : activeRound.readers.map((reader) => (
-                    <TableRow key={reader.id}>
-                      <TableCell>
-                        <div>
-                          <span className="block text-xs font-medium">{reader.name ?? reader.email}</span>
-                          <span className="block text-[10px] text-muted-foreground">{reader.email}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={`rounded-none font-mono text-[8px] uppercase ${statusStyles[reader.status]}`}>
-                          {statusLabels[reader.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatDate(reader.startedAt)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {reader.status === "pending" ? (reader.sentAt ? `Sent · expires ${formatDate(reader.expiresAt)}` : "Email not sent") : "Accepted"}
-                      </TableCell>
-                      <TableCell>
-                        {reader.invitationId && reader.status === "pending" ? (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => resendMutation.mutate(reader.invitationId!)}
-                              disabled={resendMutation.isPending}
-                            >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                              Resend
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => revokeMutation.mutate(reader.invitationId!)}
-                              disabled={revokeMutation.isPending}
-                            >
-                              <UserRoundX className="h-3.5 w-3.5" />
-                              Revoke
-                            </Button>
-                          </div>
-                        ) : reader.invitationId && (reader.status === "started" || reader.status === "completed") ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="ml-auto flex"
-                            onClick={() => revokeMutation.mutate(reader.invitationId!)}
-                            disabled={revokeMutation.isPending}
-                          >
-                            <UserRoundX className="h-3.5 w-3.5" />
-                            Remove
-                          </Button>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-
-            {resendMutation.isError || revokeMutation.isError ? (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {resendMutation.error?.message ?? revokeMutation.error?.message}
-                </AlertDescription>
-              </Alert>
-            ) : null}
-          </>
+        {resendMutation.isError || revokeMutation.isError || draftAccessMutation.isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              {resendMutation.error?.message ?? revokeMutation.error?.message ?? draftAccessMutation.error?.message}
+            </AlertDescription>
+          </Alert>
         ) : null}
       </div>
     </div>
+  );
+}
+
+function ManuscriptReadersSection({
+  accountPlan,
+  isResending,
+  isRevoking,
+  isUpdatingDraftAccess,
+  manuscript,
+  onResend,
+  onRevoke,
+  onDraftAccessChange,
+}: {
+  accountPlan: AccountPlan;
+  isResending: boolean;
+  isRevoking: boolean;
+  isUpdatingDraftAccess: boolean;
+  manuscript: ManuscriptReaders;
+  onResend: (invitationId: string) => void;
+  onRevoke: (invitationId: string) => void;
+  onDraftAccessChange: (input: {
+    enabled: boolean;
+    manuscriptVersionId: string;
+    readerProfileId: string;
+  }) => void;
+}) {
+  const startedCount = manuscript.readers.filter((reader) => (
+    reader.status === "started" || reader.status === "active" || reader.status === "completed"
+  )).length;
+  const pendingCount = manuscript.readers.filter((reader) => reader.status === "pending").length;
+  const completedCount = manuscript.readers.filter((reader) => reader.status === "completed").length;
+  const isAtReaderLimit = manuscript.maxReaders !== null && startedCount >= manuscript.maxReaders;
+
+  return (
+    <section className="space-y-4 border-t border-foreground/10 pt-6 first:border-t-0 first:pt-0">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <Heading level={2} size="subsection">{manuscript.title}</Heading>
+        <InviteReaderDialog manuscriptId={manuscript.id} triggerVariant="default" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="border border-foreground/10 bg-card p-5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Readers started</p>
+            {manuscript.readingRoundId && manuscript.maxReaders !== null ? (
+              <ReaderLimitDialog
+                accountPlan={accountPlan}
+                currentLimit={manuscript.maxReaders}
+                minimumLimit={Math.max(1, startedCount)}
+                readingRoundId={manuscript.readingRoundId}
+              />
+            ) : null}
+          </div>
+          <p className="mt-3 text-3xl font-normal">{startedCount} / {manuscript.maxReaders ?? "—"}</p>
+        </div>
+        <div className="border border-foreground/10 bg-card p-5">
+          <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Pending invitations</p>
+          <p className="mt-3 text-3xl font-normal">{pendingCount}</p>
+        </div>
+        <div className="border border-foreground/10 bg-card p-5">
+          <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">Completed</p>
+          <p className="mt-3 text-3xl font-normal">{completedCount}</p>
+        </div>
+      </div>
+
+      {isAtReaderLimit && pendingCount > 0 ? (
+        <Alert>
+          <AlertDescription>
+            The reader limit has been reached. Pending invitations can be accepted after you increase it.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Card className="overflow-hidden border-foreground/10">
+        <Table>
+          <TableHeader className="bg-sidebar/70">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="font-mono text-[9px] uppercase tracking-widest">Reader</TableHead>
+              <TableHead className="font-mono text-[9px] uppercase tracking-widest">Status</TableHead>
+              <TableHead className="font-mono text-[9px] uppercase tracking-widest">Started</TableHead>
+              <TableHead className="font-mono text-[9px] uppercase tracking-widest">Invitation</TableHead>
+              <TableHead className="font-mono text-[9px] uppercase tracking-widest">Draft access</TableHead>
+              <TableHead className="w-44"><span className="sr-only">Actions</span></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {manuscript.readers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-28 text-center text-sm text-muted-foreground">
+                  No readers have been invited to this book.
+                </TableCell>
+              </TableRow>
+            ) : manuscript.readers.map((reader) => (
+              <TableRow key={reader.id}>
+                <TableCell>
+                  <div>
+                    <span className="block text-xs font-medium">{reader.name ?? reader.email}</span>
+                    <span className="block text-[10px] text-muted-foreground">{reader.email}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={`rounded-none font-mono text-[8px] uppercase ${statusStyles[reader.status]}`}>
+                    {statusLabels[reader.status]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{formatDate(reader.startedAt)}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {reader.status === "pending"
+                    ? reader.sentAt ? `Sent · expires ${formatDate(reader.expiresAt)}` : "Email not sent"
+                    : reader.status === "revoked" ? "Revoked" : "Accepted"}
+                </TableCell>
+                <TableCell>
+                  <DraftAccessDialog
+                    drafts={manuscript.drafts}
+                    isUpdating={isUpdatingDraftAccess}
+                    onAccessChange={onDraftAccessChange}
+                    reader={reader}
+                  />
+                </TableCell>
+                <TableCell>
+                  {reader.invitationId && reader.status === "pending" ? (
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onResend(reader.invitationId!)}
+                        disabled={isResending}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Resend
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onRevoke(reader.invitationId!)}
+                        disabled={isRevoking}
+                      >
+                        <UserRoundX className="h-3.5 w-3.5" />
+                        Revoke
+                      </Button>
+                    </div>
+                  ) : reader.invitationId && (reader.status === "started" || reader.status === "completed") ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto flex"
+                      onClick={() => onRevoke(reader.invitationId!)}
+                      disabled={isRevoking}
+                    >
+                      <UserRoundX className="h-3.5 w-3.5" />
+                      Remove
+                    </Button>
+                  ) : null}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </section>
   );
 }

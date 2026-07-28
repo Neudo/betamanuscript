@@ -38,12 +38,13 @@ type AnnotationTagRow = {
 const readerColors = ["#7B1D1D", "#3B4A8A", "#1E5C2E", "#7A4800", "#1A5C50"];
 
 /**
- * Reads only the annotations attached to the current draft of one manuscript.
+ * Reads only the annotations attached to one selected draft of a manuscript.
  * Keeping this lookup explicit makes the author-facing scope easy to audit and
  * avoids mixing feedback from archived drafts.
  */
 export async function getManuscriptFeedback(
   manuscriptId: string,
+  manuscriptVersionId: string | null = null,
 ): Promise<FeedbackAnnotation[]> {
   const supabase = createSupabaseBrowserClient();
 
@@ -52,12 +53,14 @@ export async function getManuscriptFeedback(
     .select("id")
     .eq("manuscript_id", manuscriptId)
     .is("archived_at", null)
-    .order("version_number", { ascending: false })
-    .limit(1);
+    .order("version_number", { ascending: false });
 
   if (versionError) throw new Error(versionError.message);
 
-  const version = (versionRows?.[0] ?? null) as ManuscriptVersionRow | null;
+  const activeVersions = (versionRows ?? []) as ManuscriptVersionRow[];
+  const version = manuscriptVersionId
+    ? activeVersions.find((item) => item.id === manuscriptVersionId) ?? activeVersions[0] ?? null
+    : activeVersions[0] ?? null;
   if (!version) return [];
 
   const { data: chapterRows, error: chapterError } = await supabase

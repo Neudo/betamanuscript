@@ -22,14 +22,61 @@ const sections: Array<{
   { status: "finished", title: "Finished", statTitle: "Finished" },
 ];
 
+type ReaderManuscriptBook = {
+  drafts: ReaderManuscriptListItem[];
+  id: string;
+  selectedDraft: ReaderManuscriptListItem;
+};
+
+const readingStatusPriority: Record<ReaderManuscriptListItem["status"], number> = {
+  reading: 0,
+  "not-started": 1,
+  finished: 2,
+};
+
 function formatDeadline(value: string | null) {
   if (!value) return null;
   return new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 }
 
+function compareDrafts(left: ReaderManuscriptListItem, right: ReaderManuscriptListItem) {
+  return readingStatusPriority[left.status] - readingStatusPriority[right.status]
+    || right.versionNumber - left.versionNumber;
+}
+
+function groupManuscriptsByBook(
+  manuscripts: ReaderManuscriptListItem[],
+): ReaderManuscriptBook[] {
+  const draftsByBook = new Map<string, Map<string, ReaderManuscriptListItem>>();
+
+  for (const manuscript of manuscripts) {
+    const drafts = draftsByBook.get(manuscript.id) ?? new Map<string, ReaderManuscriptListItem>();
+    const existingDraft = drafts.get(manuscript.versionId);
+
+    if (!existingDraft || compareDrafts(manuscript, existingDraft) < 0) {
+      drafts.set(manuscript.versionId, manuscript);
+    }
+
+    draftsByBook.set(manuscript.id, drafts);
+  }
+
+  return [...draftsByBook.entries()]
+    .map(([id, drafts]) => {
+      const sortedDrafts = [...drafts.values()].sort(compareDrafts);
+
+      return {
+        drafts: sortedDrafts,
+        id,
+        selectedDraft: sortedDrafts[0],
+      };
+    })
+    .sort((left, right) => compareDrafts(left.selectedDraft, right.selectedDraft));
+}
+
 export function ReadingList() {
   const manuscriptsQuery = useReaderManuscripts();
   const manuscripts = manuscriptsQuery.data ?? [];
+  const books = groupManuscriptsByBook(manuscripts);
 
   return (
     <div className="min-h-full">
@@ -44,7 +91,7 @@ export function ReadingList() {
           <Alert variant="destructive"><AlertDescription>{manuscriptsQuery.error.message}</AlertDescription></Alert>
         ) : null}
 
-        {!manuscriptsQuery.isLoading && !manuscriptsQuery.isError && manuscripts.length === 0 ? (
+        {!manuscriptsQuery.isLoading && !manuscriptsQuery.isError && books.length === 0 ? (
           <Card className="border-dashed p-8 text-center">
             <BookOpen className="mx-auto h-5 w-5 text-muted-foreground" />
             <Heading level={2} size="subsection" className="mt-4">No manuscript yet</Heading>
@@ -54,20 +101,20 @@ export function ReadingList() {
           </Card>
         ) : null}
 
-        {manuscripts.length > 0 ? (
+        {books.length > 0 ? (
           <>
             <section className="grid gap-3 sm:grid-cols-3">
               {sections.map((section) => (
                 <div key={section.status} className="border border-foreground/10 bg-card p-5">
                   <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">{section.statTitle}</p>
-                  <p className="mt-3 text-3xl font-normal">{manuscripts.filter((item) => item.status === section.status).length}</p>
+                  <p className="mt-3 text-3xl font-normal">{books.filter((book) => book.selectedDraft.status === section.status).length}</p>
                 </div>
               ))}
             </section>
 
             {sections.map((section) => {
-              const items = manuscripts.filter((item) => item.status === section.status);
-              if (items.length === 0) return null;
+              const bookItems = books.filter((book) => book.selectedDraft.status === section.status);
+              if (bookItems.length === 0) return null;
 
               return (
                 <section key={section.status}>
@@ -76,7 +123,7 @@ export function ReadingList() {
                     <span className="h-px flex-1 bg-border" />
                   </div>
                   <div className="space-y-4">
-                    {items.map((item) => <ReadingCard key={item.assignmentId} item={item} />)}
+                    {bookItems.map((book) => <ReadingCard key={book.id} book={book} />)}
                   </div>
                 </section>
               );
@@ -88,16 +135,19 @@ export function ReadingList() {
   );
 }
 
-function ReadingCard({ item }: { item: ReaderManuscriptListItem }) {
+function ReadingCard({ book }: { book: ReaderManuscriptBook }) {
+  const item = book.selectedDraft;
   const progress = item.totalChapters > 0
     ? Math.round((item.completedChapters / item.totalChapters) * 100)
     : 0;
   const deadline = formatDeadline(item.deadline);
-  const readingHref = item.status === "reading" && item.latestChapterId
-    ? `/reader/${item.id}?chapter=${item.latestChapterId}`
-    : item.status === "finished"
-      ? `/reader/${item.id}?reread=1`
-    : `/reader/${item.id}`;
+  const readingParams = new URLSearchParams({ version: item.versionId });
+  if (item.status === "reading" && item.latestChapterId) {
+    readingParams.set("chapter", item.latestChapterId);
+  } else if (item.status === "finished") {
+    readingParams.set("reread", "1");
+  }
+  const readingHref = `/reader/${item.id}?${readingParams.toString()}`;
 
   return (
     <Card className="group relative overflow-hidden border-foreground/10 p-0 transition-colors hover:border-primary/35">
@@ -119,7 +169,9 @@ function ReadingCard({ item }: { item: ReaderManuscriptListItem }) {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <Heading level={3}>{item.title}</Heading>
-              <p className="mt-1 text-xs text-muted-foreground">Draft {item.versionNumber}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Draft {item.versionNumber}{book.drafts.length > 1 ? ` of ${book.drafts.length}` : ""}
+              </p>
             </div>
             <Badge variant="outline" className="rounded-none font-mono text-[8px] uppercase">
               {item.status === "not-started" ? "Not started" : item.status}

@@ -19,7 +19,12 @@ import { dashboardKeys } from "@/features/dashboard/query-keys";
 
 export const readingKeys = {
   all: ["reader-manuscripts"] as const,
-  detail: (manuscriptId: string) => [...readingKeys.all, "detail", manuscriptId] as const,
+  detail: (manuscriptId: string, manuscriptVersionId: string | null) => [
+    ...readingKeys.all,
+    "detail",
+    manuscriptId,
+    manuscriptVersionId,
+  ] as const,
   list: () => [...readingKeys.all, "list"] as const,
   submittedSurveys: () => [...readingKeys.all, "submitted-surveys"] as const,
   tags: (readerAssignmentId: string) => [...readingKeys.all, "annotation-tags", readerAssignmentId] as const,
@@ -33,10 +38,10 @@ export function useReaderManuscripts() {
   });
 }
 
-export function useReaderManuscript(manuscriptId: string) {
+export function useReaderManuscript(manuscriptId: string, manuscriptVersionId: string | null) {
   return useQuery({
-    queryKey: readingKeys.detail(manuscriptId),
-    queryFn: () => getReaderManuscript(manuscriptId),
+    queryKey: readingKeys.detail(manuscriptId, manuscriptVersionId),
+    queryFn: () => getReaderManuscript(manuscriptId, manuscriptVersionId),
     enabled: Boolean(manuscriptId),
     staleTime: 30_000,
   });

@@ -30,7 +30,7 @@ const freeFeatures = [
   "Default annotation tags",
   "Revision dashboard",
   "Reader reading list",
-  "1 survey",
+  "2 surveys",
   "Shareable invite link",
 ];
 
@@ -55,7 +55,7 @@ const comparisonRows: Array<{
   { feature: "Annotation tags", free: "Default tags", author: "Custom tags" },
   { feature: "Revision dashboard", free: true, author: true },
   { feature: "Reader reading list", free: true, author: true },
-  { feature: "Surveys", free: "1", author: "Unlimited" },
+  { feature: "Surveys", free: "2", author: "Unlimited" },
   { feature: "Free for readers", free: "Yes", author: "Yes" },
   { feature: "Shareable invite link", free: true, author: true },
   { feature: "CSV & PDF export", free: false, author: true },

@@ -19,12 +19,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useInviteReader } from "@/features/readers/hooks/use-readers";
 
 type InviteReaderDialogProps = {
-  readingRoundId: string;
+  manuscriptId: string;
   triggerVariant?: ButtonProps["variant"];
 };
 
 export function InviteReaderDialog({
-  readingRoundId,
+  manuscriptId,
   triggerVariant = "outline",
 }: InviteReaderDialogProps) {
   const [open, setOpen] = useState(false);
@@ -47,8 +47,8 @@ export function InviteReaderDialog({
     event.preventDefault();
     inviteMutation.mutate(
       {
+        manuscriptId,
         personalNote,
-        readingRoundId,
         recipientEmail: email,
       },
       {
@@ -76,8 +76,8 @@ export function InviteReaderDialog({
         <DialogHeader>
           <DialogTitle className="text-2xl font-medium">Invite a reader</DialogTitle>
           <DialogDescription>
-            The invitation is emailed now. It stays pending until the recipient
-            signs in and accepts it.
+            The invitation gives this reader access to every draft of this book.
+            It stays pending until they sign in and accept it.
           </DialogDescription>
         </DialogHeader>
         <form className="mt-2 space-y-4" onSubmit={handleSubmit} noValidate>

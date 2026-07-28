@@ -53,8 +53,20 @@ export type SurveyChapter = {
   title: string;
 };
 
+export type SurveyCloneSource = {
+  delivery: SurveyDelivery;
+  id: string;
+  name: string;
+  sourceVersionId: string;
+  sourceVersionNumber: number;
+  sourceVersionTitle: string;
+};
+
 export type ManuscriptSurveysData = {
   chapters: SurveyChapter[];
+  manuscriptVersionId: string;
+  otherDraftSurveys: SurveyCloneSource[];
   readingRoundId: string | null;
+  surveyCount: number;
   surveys: ManuscriptSurvey[];
 };

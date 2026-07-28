@@ -35,6 +35,7 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedVersionId = searchParams.get("versionId");
 
   function withSelectedManuscript(href: string) {
     if (!selectedManuscriptId) return href;
@@ -42,6 +43,7 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
     const [path, query = ""] = href.split("?");
     const nextSearchParams = new URLSearchParams(query);
     nextSearchParams.set("manuscriptId", selectedManuscriptId);
+    if (selectedVersionId) nextSearchParams.set("versionId", selectedVersionId);
     return `${path}?${nextSearchParams.toString()}`;
   }
 
