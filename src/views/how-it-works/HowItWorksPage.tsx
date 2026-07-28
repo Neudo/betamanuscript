@@ -113,7 +113,6 @@ export function HowItWorksPage() {
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.72, ease: premiumEase }}
             >
-              <Eyebrow>How it works</Eyebrow>
               <Heading level={1} className="max-w-2xl text-balance">
                 Your beta round, from first reader to <em>better revision.</em>
               </Heading>

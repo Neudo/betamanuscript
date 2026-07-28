@@ -116,13 +116,6 @@ export function PricingPage() {
       <main>
         <section className="px-6 pb-12 pt-20 text-center sm:pt-28 md:px-12">
           <div className="mx-auto max-w-3xl">
-            <div className="mb-8 flex items-center justify-center gap-3" aria-label="Pricing">
-              <span className="h-px w-10" style={{ background: "rgba(28,24,18,0.16)" }} />
-              <span className="text-[10px] uppercase tracking-[0.28em]" style={{ fontFamily: MONO, color: MUTED }}>
-                Pricing
-              </span>
-              <span className="h-px w-10" style={{ background: "rgba(28,24,18,0.16)" }} />
-            </div>
             <Heading level={1} className="text-balance">
               Make every reader note <em>count.</em>
             </Heading>

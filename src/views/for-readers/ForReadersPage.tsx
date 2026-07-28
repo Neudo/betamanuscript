@@ -89,10 +89,6 @@ export function ForReadersPage() {
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.72, ease: premiumEase }}
             >
-              <p className="mb-7 flex items-center gap-3 text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: MUTED }}>
-                <span className="h-px w-8" style={{ background: "rgba(28,24,18,0.24)" }} />
-                For beta readers
-              </p>
               <Heading level={1} className="max-w-2xl text-balance">
                 Your reading deserves <em>a clear place to land.</em>
               </Heading>
