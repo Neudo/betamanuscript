@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { WorkspaceAccountMenu } from "@/features/account/components/WorkspaceAccountMenu";
 import type { AuthenticatedAccount } from "@/features/account/types";
 import { ManuscriptSwitcher } from "@/features/manuscript/components/ManuscriptSwitcher";
+import { NotificationCenter } from "@/features/notifications/components/NotificationCenter";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -56,6 +57,9 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
           priority
           imageClassName="h-7"
         />
+        <div className="ml-auto">
+          <NotificationCenter profileId={account.id} />
+        </div>
       </div>
 
       <ManuscriptSwitcher

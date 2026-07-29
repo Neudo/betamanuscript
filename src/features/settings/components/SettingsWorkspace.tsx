@@ -16,15 +16,9 @@ import { RolePicker } from "@/features/account/components/RolePicker";
 import { updateRole } from "@/features/account/api/update-role";
 import type { UserRole } from "@/features/account/domain/user-role";
 import type { AuthenticatedAccount } from "@/features/account/types";
+import { NotificationPreferencesForm } from "@/features/notifications/components/NotificationPreferencesForm";
 import { authorPricing } from "@/shared/config/pricing";
 import { Heading } from "@/shared/ui/Heading";
-
-const notificationOptions = [
-  ["New annotation", "When a reader leaves feedback in the manuscript."],
-  ["Survey response", "When a reader completes a chapter or book survey."],
-  ["Reader progress", "When a reader starts or finishes your manuscript."],
-  ["Weekly digest", "A weekly summary of activity and repeated signals."],
-];
 
 const socialFields = [
   ["Substack", "substack.com/"],
@@ -129,7 +123,7 @@ export function SettingsWorkspace({
 
       <div className="min-w-0 md:h-full md:overflow-y-auto">
         <TabsContent value="profile" className="m-0"><SettingsPage title="Profile"><ProfileSettings account={account} /></SettingsPage></TabsContent>
-        <TabsContent value="notifications" className="m-0"><SettingsPage title="Notifications"><div className="divide-y divide-foreground/[0.08]">{notificationOptions.map(([title, description], index) => <SettingsRow key={title} label={title} hint={description}><Switch defaultChecked={index !== 2} aria-label={title} /></SettingsRow>)}</div><SettingsFooter><Button size="sm">Save preferences</Button></SettingsFooter></SettingsPage></TabsContent>
+        <TabsContent value="notifications" className="m-0"><SettingsPage title="In-app notifications"><NotificationPreferencesForm profileId={account.id} /></SettingsPage></TabsContent>
         <TabsContent value="portal" className="m-0"><SettingsPage title="Reader portal"><SettingsRow label="Welcome message" hint="Shown before readers open your manuscript."><Textarea className="min-h-28 border-foreground/15 bg-transparent" defaultValue="Thank you for reading. Honest, specific feedback is the most useful gift you can give this draft." /></SettingsRow><SettingsRow label="Show author profile" hint="Display your bio and public links."><Switch defaultChecked /></SettingsRow><SettingsFooter><Button size="sm">Save portal</Button></SettingsFooter></SettingsPage></TabsContent>
         <TabsContent value="account" className="m-0"><SettingsPage title="Account"><SettingsRow label="Account role" hint="Controls which workspaces you can access."><div className="space-y-3"><RolePicker value={role} onChange={setRole} compact /><Button size="sm" disabled={roleMutation.isPending || role === account.role} onClick={() => roleMutation.mutate({ accountId: account.id, role })}>{roleMutation.isPending ? "Updating..." : "Update role"}</Button>{roleMutation.isError ? <p className="text-xs text-destructive">{roleMutation.error.message}</p> : null}</div></SettingsRow><SettingsRow label="Password" hint="Update the password used to sign in."><Button variant="outline" size="sm">Change password</Button></SettingsRow><SettingsRow label="Export data" hint="Download your manuscripts, readers, and feedback."><Button variant="outline" size="sm"><Download className="h-3.5 w-3.5" />Export account data</Button></SettingsRow><SettingsRow label="Delete account" hint="Permanently removes all manuscripts and feedback."><DeleteAccount /></SettingsRow></SettingsPage></TabsContent>
         <TabsContent value="plan" className="m-0">

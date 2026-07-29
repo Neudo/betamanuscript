@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      author_notification_preferences: {
+        Row: {
+          new_annotation: boolean
+          profile_id: string
+          reader_progress: boolean
+          survey_response: boolean
+          updated_at: string
+        }
+        Insert: {
+          new_annotation?: boolean
+          profile_id: string
+          reader_progress?: boolean
+          survey_response?: boolean
+          updated_at?: string
+        }
+        Update: {
+          new_annotation?: boolean
+          profile_id?: string
+          reader_progress?: boolean
+          survey_response?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "author_notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      author_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          event_key: string
+          event_type: string
+          href: string
+          id: string
+          profile_id: string
+          read_at: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          event_key: string
+          event_type: string
+          href: string
+          id?: string
+          profile_id: string
+          read_at?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          event_key?: string
+          event_type?: string
+          href?: string
+          id?: string
+          profile_id?: string
+          read_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "author_notifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       annotation_tags: {
         Row: {
           color: string
