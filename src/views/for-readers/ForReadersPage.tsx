@@ -37,28 +37,28 @@ const steps = [
     number: "01",
     title: "Open your invitation",
     detail:
-      "Your author sends an invitation by email. Create an account or sign in with that same email address to accept it.",
+      "Your author sends you a private invitation by email. Create an account or sign in with the same email address to access the manuscript and save your progress.",
   },
   {
     Icon: BookmarkCheck,
     number: "02",
-    title: "Pick up the manuscript",
+    title: "Start reading",
     detail:
-      "Once accepted, it appears in your reading list. Chapters, your place in the book, and any deadline stay together.",
+      "The manuscript appears in your reading list with its chapters, deadline, and saved reading progress in one place.",
   },
   {
     Icon: Highlighter,
     number: "03",
     title: "React in the moment",
     detail:
-      "Select the passage that made you pause, choose a tag, and add a note if it helps explain your reaction.",
+      "Highlight the passage that made you react, choose a feedback tag, and add a note when you want to explain why.",
   },
   {
     Icon: MessageSquareText,
     number: "04",
-    title: "Answer when it matters",
+    title: "Answer the author’s questions",
     detail:
-      "If the author includes feedback questions, answer while the chapter is fresh or come back to them from your reader workspace.",
+      "Complete chapter or manuscript surveys while your reactions are fresh, or return to them later from your reader workspace.",
   },
 ];
 
@@ -90,10 +90,10 @@ export function ForReadersPage() {
               transition={{ duration: 0.72, ease: premiumEase }}
             >
               <Heading level={1} className="max-w-2xl text-balance">
-                Your reading deserves <em>a clear place to land.</em>
+                Read the manuscript. Share your reactions as they happen.
               </Heading>
               <p className="mt-7 max-w-xl text-pretty text-base leading-8 sm:text-lg" style={{ color: BODY }}>
-                BetaManuscript gives you one focused place to read the chapters an author sends you, keep your place, and leave feedback exactly where a reaction happened.
+                BetaManuscript gives you a focused place to read an author&apos;s manuscript, save your progress, and leave feedback on the exact passages that made you react.
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
@@ -113,7 +113,7 @@ export function ForReadersPage() {
                 </a>
               </div>
               <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
-                No invitation yet? Your author will send the link when your reading round begins.
+                Free for beta readers · No subscription or payment details required
               </p>
             </motion.div>
 
@@ -131,7 +131,6 @@ export function ForReadersPage() {
         <section className="border-b px-6 py-16 md:px-12 md:py-24" style={{ background: WARM, borderColor: "rgba(28,24,18,0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.76fr_1.24fr] lg:gap-20">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: MUTED }}>A reader&apos;s role</p>
               <Heading level={2} className="mt-5 max-w-md">
                 React honestly. <em>Not perfectly.</em>
               </Heading>
@@ -140,22 +139,22 @@ export function ForReadersPage() {
               <ReaderPrinciple
                 eyebrow="Read"
                 title="Stay with the story"
-                detail="Read chapter by chapter in a dedicated view, with your assigned manuscripts gathered in one reading list."
+                detail="Read each manuscript chapter by chapter in a clean, distraction-free view. Everything you have been invited to read stays in one reading list."
               />
               <ReaderPrinciple
                 eyebrow="Notice"
                 title="Mark the exact moment"
-                detail="A note attached to the words is more useful than a vague memory of where something felt off."
+                detail="Highlight the exact passage that made you pause, smile, doubt, or want to keep reading."
               />
               <ReaderPrinciple
                 eyebrow="Explain"
-                title="Say what changed for you"
-                detail="Confusion, delight, doubt, curiosity — your reaction gives the author something concrete to consider."
+                title="Describe your reaction"
+                detail="Confusion, delight, doubt, curiosity—tell the author what you experienced and which passage caused it."
               />
               <ReaderPrinciple
                 eyebrow="Continue"
-                title="Leave and return easily"
-                detail="Your progress stays with the manuscript, so you can resume without reconstructing your place."
+                title="Pick up where you left off"
+                detail="When you complete a chapter, your progress is saved, so you can return to the next chapter later."
               />
             </div>
           </div>
@@ -166,7 +165,7 @@ export function ForReadersPage() {
             <div className="max-w-2xl">
               <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: MUTED }}>The reading flow</p>
               <Heading level={2} className="mt-5">
-                Four small steps. <em>One useful reading experience.</em>
+                From invitation to feedback in four simple steps.
               </Heading>
             </div>
 
@@ -201,7 +200,7 @@ export function ForReadersPage() {
                 You don&apos;t need to be an editor to give excellent feedback.
               </Heading>
               <p className="mt-6 max-w-lg text-base leading-7" style={{ color: "#DED7CA" }}>
-                The valuable part is the reader&apos;s experience: where you leaned in, where you doubted, and where you wanted more. Keep the note specific to the moment that caused it.
+                Your job is not to rewrite the manuscript. Tell the author where you felt engaged, confused, unconvinced, or eager to continue—and point to the passage that caused that reaction.
               </p>
             </div>
             <div className="grid gap-3">
@@ -225,27 +224,30 @@ export function ForReadersPage() {
 
         <section className="px-6 py-20 md:px-12 md:py-28" style={{ background: CARD }}>
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: MUTED }}>Questions readers ask</p>
             <Heading level={2} className="mt-5">
-              The practical bits.
+              What beta readers need to know.
             </Heading>
 
             <div className="mt-12 border-y text-left" style={{ borderColor: "rgba(28,24,18,0.14)" }}>
               <ReaderQuestion
-                question="Do I need an invitation?"
-                answer="Yes. Your author sends the invitation. Use the email address that received it when you create an account or sign in."
+                question="Is BetaManuscript free for beta readers?"
+                answer="Yes. Authors pay for the workspace. You can read manuscripts and leave feedback without purchasing a subscription or entering payment details."
               />
               <ReaderQuestion
-                question="What happens when I select a passage?"
-                answer="You can choose a feedback tag and add a comment. The note stays tied to that specific passage for the author."
+                question="Why do I need an account?"
+                answer="Your account keeps invited manuscripts private, saves your reading progress, and gathers your current reading rounds in one place."
               />
               <ReaderQuestion
-                question="Can I come back later?"
-                answer="Yes. Your reading list keeps the manuscripts you have accepted, and your reading progress stays with each one."
+                question="Can other beta readers see my feedback?"
+                answer="No. Your annotations and survey responses are visible to you and the author, not to other beta readers."
               />
               <ReaderQuestion
-                question="Will I be asked questions about the manuscript?"
-                answer="Some authors include feedback questions. When they do, you can answer immediately or return to them later from your reader workspace."
+                question="Can I edit a note after submitting it?"
+                answer="Yes. Open your own annotation to change its tag or comment, or delete it. The selected passage stays fixed."
+              />
+              <ReaderQuestion
+                question="Can I share the manuscript with someone else?"
+                answer="No. Your invitation gives you private access to the manuscript. Do not copy or share it with anyone else."
               />
             </div>
           </div>
@@ -257,7 +259,7 @@ export function ForReadersPage() {
             Already invited to read?
           </Heading>
           <p className="mx-auto mt-4 max-w-md text-sm leading-6" style={{ color: BODY }}>
-            Sign in with the address your author invited to open your reader workspace.
+            Sign in with the email address that received the invitation to open the manuscript and continue reading.
           </p>
           <Link
             href="/login"

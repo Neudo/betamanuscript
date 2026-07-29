@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { ForReadersPage } from "@/views/for-readers/ForReadersPage";
 
 export const metadata: Metadata = {
-  title: "For Beta Readers | BetaManuscript",
+  title: "For Beta Readers: Read and Share Manuscript Feedback | BetaManuscript",
   description:
-    "Learn how to read a manuscript, leave passage-level feedback, and keep track of your beta reading with BetaManuscript.",
+    "Open an author’s invitation, read their manuscript chapter by chapter, leave passage-level feedback, and answer beta reader surveys for free.",
 };
 
 export default function Page() {
