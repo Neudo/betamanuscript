@@ -56,7 +56,7 @@ const steps = [
   {
     Icon: BarChart2,
     number: "03",
-    label: "Find the signal",
+    label: "Collect feedback and find the patterns",
     title: "Turn scattered reactions into revision decisions.",
     detail:
       "Review tagged notes, survey responses, and recurring issues by chapter. The patterns stay visible when it is time to decide what to revise.",
@@ -66,22 +66,18 @@ const steps = [
 
 const presentationSlides = [
   {
-    number: "01",
     label: "Manuscript",
     src: "/images/slide-manuscript.jpg",
   },
   {
-    number: "02",
     label: "Readers",
     src: "/images/slide-reader.jpg",
   },
   {
-    number: "03",
     label: "Feedback",
     src: "/images/slide-feedback.jpg",
   },
   {
-    number: "04",
     label: "Revision",
     src: "/images/slide-survey.jpg",
   },
@@ -114,7 +110,7 @@ export function HowItWorksPage() {
               transition={{ duration: 0.72, ease: premiumEase }}
             >
               <Heading level={1} className="max-w-2xl text-balance">
-                Your beta round, from first reader to <em>better revision.</em>
+                Run your beta reading round without the Google Docs mess.
               </Heading>
               <p className="mt-7 max-w-xl text-pretty text-base leading-8 sm:text-lg" style={{ color: BODY }}>
                 BetaManuscript keeps your chapters, readers, passage-level feedback, and revision decisions together in one focused workspace.
@@ -137,7 +133,7 @@ export function HowItWorksPage() {
                 </a>
               </div>
               <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
-                Built for authors who want clear reader signal, not more scattered threads.
+                Bring your own beta readers. BetaManuscript gives them a focused place to read and gives you one place to understand their feedback.
               </p>
             </motion.div>
 
@@ -156,9 +152,8 @@ export function HowItWorksPage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-8 md:grid-cols-[0.72fr_1.28fr] md:items-end">
               <div>
-                <Eyebrow>The beta-reading flow</Eyebrow>
                 <Heading level={2} className="max-w-md text-balance">
-                  A simple process with <em>a better handoff.</em>
+                  A clear workflow from manuscript to revision.
                 </Heading>
               </div>
               <p className="max-w-xl text-base leading-7" style={{ color: BODY }}>
@@ -205,7 +200,7 @@ export function HowItWorksPage() {
             <div>
               <Eyebrow inverse>From reaction to decision</Eyebrow>
               <Heading level={2} tone="inverse" className="max-w-md text-balance">
-                The context is there when you need to <em>choose what changes.</em>
+                Review the original passage before deciding what to revise.
               </Heading>
               <p className="mt-6 max-w-lg text-base leading-7" style={{ color: "#DED7CA" }}>
                 Reader reactions remain tied to the chapter, the passage, and the theme behind them. You can move from a pattern to the original feedback without rebuilding the trail.
@@ -270,6 +265,9 @@ function ProductPresentationSlider({
   return (
     <section className="border-b px-6 py-10 md:px-12 md:py-14" style={{ borderColor: "rgba(28,24,18,0.1)", background: CARD }} aria-label="BetaManuscript product presentation">
       <div className="mx-auto max-w-6xl">
+        <Heading level={2} size="page" className="mb-8 text-balance">
+          Everything you need for a structured beta round.
+        </Heading>
         <div className="relative overflow-hidden border paper-shadow" style={{ borderColor: "rgba(28,24,18,0.16)", background: PAPER }}>
           <Swiper
             modules={[A11y, Autoplay]}
@@ -283,7 +281,7 @@ function ProductPresentationSlider({
             }}
           >
             {presentationSlides.map((slide, index) => (
-              <SwiperSlide key={slide.number}>
+              <SwiperSlide key={slide.label}>
                 <div className="relative aspect-[143/65] min-h-52 bg-[#EDE8DC]">
                   <Image
                     alt={`BetaManuscript ${slide.label.toLowerCase()} workspace`}
@@ -305,18 +303,17 @@ function ProductPresentationSlider({
 
                 return (
                   <button
-                    key={slide.number}
+                    key={slide.label}
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => slider?.slideToLoop(index)}
-                    className="inline-flex min-h-10 shrink-0 items-center gap-2 border px-3 text-left text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#7b1d1d]"
+                    className="inline-flex min-h-10 shrink-0 items-center border px-3 text-left text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#7b1d1d]"
                     style={{
                       borderColor: isActive ? OXBLOOD : "rgba(28,24,18,0.18)",
                       background: isActive ? OXBLOOD : "rgba(245,240,232,0.94)",
                       color: isActive ? PAPER : INK,
                     }}
                   >
-                    <span className="text-[9px] tracking-[0.12em]" style={{ color: isActive ? "rgba(245,240,232,0.72)" : MUTED, fontFamily: MONO }}>{slide.number}</span>
                     <span>{slide.label}</span>
                   </button>
                 );
@@ -385,19 +382,18 @@ function StepPreview({ kind }: { kind: StepPreviewKind }) {
       </div>
       <div className="mt-5 space-y-3">
         {[
-          ["Pacing", 76, OXBLOOD],
-          ["Character", 55, FOREST],
-          ["Confusion", 38, "#B3844F"],
-        ].map(([label, width, color]) => (
+          ["Pacing", "7 annotations"],
+          ["Character motivation", "5 annotations"],
+          ["Confusion", "3 annotations"],
+        ].map(([label, detail]) => (
           <div key={label}>
-            <div className="flex justify-between text-[9px]" style={{ color: BODY, fontFamily: MONO }}><span>{label}</span><span>{width}%</span></div>
-            <div className="mt-1.5 h-1.5" style={{ background: "rgba(28,24,18,0.08)" }}><div className="h-full" style={{ width: `${width}%`, background: color }} /></div>
+            <div className="flex justify-between gap-4 text-[9px]" style={{ color: BODY, fontFamily: MONO }}><span>{label}</span><span className="text-right">{detail}</span></div>
           </div>
         ))}
       </div>
       <div className="mt-5 border p-3" style={{ borderColor: "rgba(123,29,29,0.16)", background: "rgba(123,29,29,0.05)" }}>
-        <p className="text-[9px] uppercase tracking-[0.14em]" style={{ color: OXBLOOD, fontFamily: MONO }}>Revision focus</p>
-        <p className="mt-2 text-[12px] leading-5" style={{ color: BODY }}>Revisit the scene transition in Chapter 04.</p>
+        <p className="text-[9px] uppercase tracking-[0.14em]" style={{ color: OXBLOOD, fontFamily: MONO }}>Revision priority</p>
+        <p className="mt-2 text-[12px] leading-5" style={{ color: BODY }}>Pacing feedback in Chapter 04.</p>
       </div>
     </div>
   );
@@ -411,11 +407,11 @@ function RevisionPathPreview() {
         <span className="text-[9px]" style={{ color: "#C8C2B6", fontFamily: MONO }}>Chapter 04</span>
       </div>
       <div className="mt-5 space-y-3">
-        <DarkPathCard label="Reader pattern" title="Three readers wanted one more clue before the reveal." meta="Pacing · 3 annotations" accent="#D69C9C" />
+        <DarkPathCard label="Reader pattern" title="Three annotations flagged pacing in Chapter 04." meta="Pacing · 3 annotations" accent="#D69C9C" />
         <div className="ml-5 border-l pl-5" style={{ borderColor: "rgba(245,240,232,0.25)" }}>
           <DarkPathCard label="Source feedback" title="“I understood it once the reveal happened, but felt lost for a page before.”" meta="Sasha · selected passage" accent="#9EB39E" compact />
         </div>
-        <DarkPathCard label="Revision focus" title="Seed the orchard’s history in the prior scene." meta="Open priority" accent="#E7C789" />
+        <DarkPathCard label="Revision priority" title="Pacing feedback in Chapter 04." meta="3 annotations" accent="#E7C789" />
       </div>
     </div>
   );
@@ -425,7 +421,7 @@ function DarkPathCard({ accent, compact = false, label, meta, title }: { accent:
   return (
     <div className="border p-4" style={{ borderColor: "rgba(245,240,232,0.14)", background: "rgba(245,240,232,0.04)" }}>
       <p className="text-[9px] uppercase tracking-[0.15em]" style={{ color: accent, fontFamily: MONO }}>{label}</p>
-      <p className={`mt-2 leading-5 ${compact ? "text-[12px] italic" : "text-sm"}`} style={{ color: PAPER, fontFamily: compact ? SERIF : SANS }}>{title}</p>
+      <p className={`mt-2 leading-5 ${compact ? "text-[12px] italic" : "text-sm"}`} style={{ color: PAPER, fontFamily: SANS }}>{title}</p>
       <p className="mt-3 text-[9px]" style={{ color: "#C8C2B6", fontFamily: MONO }}>{meta}</p>
     </div>
   );

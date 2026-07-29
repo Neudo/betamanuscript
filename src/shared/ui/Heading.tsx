@@ -3,7 +3,7 @@ import { type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
 import { MONO, MUTED, PAPER, SANS, SERIF } from "@/shared/config/design-tokens";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
-type HeadingSize = "display" | "section" | "page" | "card" | "workspace" | "subsection" | "small" | "label";
+type HeadingSize = "display" | "section" | "page" | "card" | "feature" | "workspace" | "subsection" | "small" | "label";
 type HeadingTone = "default" | "inverse" | "muted";
 
 type HeadingProps = HTMLAttributes<HTMLHeadingElement> & {
@@ -59,6 +59,12 @@ const headingStyles: Record<HeadingSize, CSSProperties> = {
     fontWeight: 500,
     letterSpacing: "-0.012em",
     lineHeight: 1.15,
+  },
+  feature: {
+    fontFamily: SERIF,
+    fontSize: "1.15rem",
+    fontWeight: 500,
+    lineHeight: 1.2,
   },
   workspace: {
     fontFamily: SANS,
