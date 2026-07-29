@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { createNoIndexMetadata } from "@/shared/config/seo";
 import { SignUpScreen } from "@/features/account/components/SignUpScreen";
 import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
@@ -10,6 +11,8 @@ type SignUpPageProps = {
     next?: string | string[];
   }>;
 };
+
+export const metadata = createNoIndexMetadata("Create your account | BetaManuscript");
 
 export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const account = await getAuthenticatedAccount();

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-
+import { createPublicMetadata } from "@/shared/config/seo";
 import { LegalList, LegalPage, LegalSection } from "@/views/legal/LegalPage";
 
-export const metadata: Metadata = {
+export const metadata = createPublicMetadata({
   title: "Privacy Policy | BetaManuscript",
   description: "How BetaManuscript collects, uses, and protects personal data.",
-};
+  pathname: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

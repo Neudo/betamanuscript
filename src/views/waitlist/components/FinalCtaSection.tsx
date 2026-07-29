@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { Reveal } from "../../../shared/ui/motion";
 import { INK, MONO, OXBLOOD, PAPER, SERIF, SANS, premiumEase } from "../../../shared/config/design-tokens";
+import { Heading } from "@/shared/ui/Heading";
 
 export function FinalCtaSection() {
   const reduceMotion = useReducedMotion();
@@ -21,7 +22,8 @@ export function FinalCtaSection() {
         <Reveal className="grid md:grid-cols-[1fr_420px] gap-16 items-start">
           <div>
             <div className="w-8 h-px mb-8" style={{ background: "rgba(245,240,232,0.25)" }} />
-            <h2
+            <Heading
+              level={2}
               className="mb-5 leading-tight"
               style={{
                 fontFamily: SERIF,
@@ -32,7 +34,7 @@ export function FinalCtaSection() {
               }}
             >
               Bring clarity to your next beta reading round.
-            </h2>
+            </Heading>
             <p
               className="text-base leading-relaxed mb-4 max-w-md"
               style={{ color: "rgba(245,240,232,0.65)", fontWeight: 300, lineHeight: 1.65 }}
@@ -90,7 +92,7 @@ export function FinalCtaSection() {
               {[
                 "Your manuscript stays private — no public sharing",
                 "Structured annotations, not open-ended comment threads",
-                "Revision priorities built from reader frequency, not guesswork",
+                "Reader feedback patterns, organized in one workspace",
                 "Designed for indie authors, not publishing houses",
               ].map((point, i) => (
                 <motion.div

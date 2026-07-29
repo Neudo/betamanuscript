@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async headers() {
+    const headers = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+
+    return [
+      { source: "/api/:path*", headers },
+      { source: "/auth/:path*", headers },
+      { source: "/dashboard/:path*", headers },
+      { source: "/invite/:path*", headers },
+      { source: "/login", headers },
+      { source: "/onboarding", headers },
+      { source: "/reader/:path*", headers },
+      { source: "/signup", headers },
+    ];
+  },
   reactStrictMode: true,
   reactCompiler: true,
   images: {

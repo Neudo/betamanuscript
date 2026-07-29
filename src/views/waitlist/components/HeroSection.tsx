@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { TagBadge, type TagKey } from "../../../features/product-preview";
 import { BODY, CARD, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF, premiumEase } from "../../../shared/config/design-tokens";
+import { Heading } from "@/shared/ui/Heading";
 
 export function HeroSection() {
   const reduceMotion = useReducedMotion();
@@ -23,7 +24,8 @@ export function HeroSection() {
           animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.82, delay: 0.08, ease: premiumEase }}
         >
-          <h1
+          <Heading
+            level={1}
             className="mb-6 leading-[1.08]"
             style={{
               fontFamily: SERIF,
@@ -33,9 +35,9 @@ export function HeroSection() {
               letterSpacing: "-0.02em",
             }}
           >
-            Turn beta reader feedback into clear{" "}
-            <em>revision priorities.</em>
-          </h1>
+            Turn beta reader feedback into{" "}
+            <em>clearer revisions.</em>
+          </Heading>
           <p
             className="text-lg mb-2 leading-relaxed max-w-lg"
             style={{ color: BODY, fontWeight: 300, lineHeight: 1.65 }}
@@ -91,7 +93,7 @@ export function HeroSection() {
               style={{ borderColor: "rgba(28,24,18,0.08)" }}
             >
               <div className="text-[9px] uppercase tracking-widest mb-2" style={{ fontFamily: MONO, color: MUTED }}>
-                Top revision note
+                Feedback summary
               </div>
               <p
                 className="text-[12px] leading-relaxed italic"
@@ -100,7 +102,7 @@ export function HeroSection() {
                 &ldquo;The guild confrontation scene loses clarity mid-way. Three readers flagged confusion at the same passage.&rdquo;
               </p>
               <div className="mt-2 text-[9px]" style={{ fontFamily: MONO, color: MUTED }}>
-                — generated from 18 reader annotations
+                — based on 18 reader annotations
               </div>
             </div>
           </div>

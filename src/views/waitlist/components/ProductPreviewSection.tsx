@@ -3,6 +3,7 @@ import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
 import { BODY, CARD, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF } from "../../../shared/config/design-tokens";
 import Link from "next/link";
+import { Heading } from "@/shared/ui/Heading";
 
 export function ProductPreviewSection() {
   return (
@@ -18,7 +19,8 @@ export function ProductPreviewSection() {
         </Reveal>
         <Reveal delay={0.08} className="grid md:grid-cols-[280px_1fr] gap-12 items-start mb-8">
           <div>
-            <h2
+            <Heading
+              level={2}
               className="mb-4 leading-snug"
               style={{
                 fontFamily: SERIF,
@@ -30,8 +32,8 @@ export function ProductPreviewSection() {
             >
               Structured feedback.
               <br />
-              <em>Clear priorities.</em>
-            </h2>
+              <em>Clearer revisions.</em>
+            </Heading>
             <p className="text-sm leading-relaxed mb-5" style={{ color: "#6B6456" }}>
               Readers annotate directly in the text. You see which passages repeated across
               readers, what landed, and what needs work — all in one place.

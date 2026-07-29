@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { createNoIndexMetadata } from "@/shared/config/seo";
 import { AccountPersonalizationScreen } from "@/features/account/components/AccountPersonalizationScreen";
 import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
@@ -9,6 +10,8 @@ type OnboardingPageProps = {
     next?: string | string[];
   }>;
 };
+
+export const metadata = createNoIndexMetadata("Set up your account | BetaManuscript");
 
 export default async function OnboardingPage({ searchParams }: OnboardingPageProps) {
   const account = await getAuthenticatedAccount();

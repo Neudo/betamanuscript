@@ -44,7 +44,7 @@ export function FeaturesSection() {
               Icon: ListChecks,
               title: "Revision dashboard",
               detail:
-                "See repeated issues and strongest moments at a glance. Export a prioritized revision list based on reader frequency, not gut feeling.",
+                "Review annotations by tag and chapter, so recurring feedback is easier to assess when you revise.",
             },
           ].map((card, i) => (
             <Lift key={i} className="p-8" style={{ background: PAPER }}>

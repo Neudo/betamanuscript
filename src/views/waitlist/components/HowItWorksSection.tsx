@@ -2,6 +2,7 @@ import { BarChart2, ChevronRight, Upload, Users } from "lucide-react";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
 import { INK, MONO, MUTED, OXBLOOD, PAPER, SERIF, WARM } from "../../../shared/config/design-tokens";
+import { Heading } from "@/shared/ui/Heading";
 
 export function HowItWorksSection() {
   return (
@@ -14,7 +15,8 @@ export function HowItWorksSection() {
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
           <SectionLabel>How it works</SectionLabel>
-          <h2
+          <Heading
+            level={2}
             className="mb-14"
             style={{
               fontFamily: SERIF,
@@ -25,7 +27,7 @@ export function HowItWorksSection() {
             }}
           >
             Three steps to a cleaner beta round.
-          </h2>
+          </Heading>
         </Reveal>
         <div className="grid md:grid-cols-3 gap-12">
           {[
@@ -46,9 +48,9 @@ export function HowItWorksSection() {
             {
               num: "03",
               Icon: BarChart2,
-              title: "Review tagged feedback, surveys, and revision priorities",
+              title: "Review tagged feedback, surveys, and recurring notes",
               detail:
-                "See every annotation by tag and chapter. Spot which issues appear across multiple readers and turn that signal into a revision list.",
+                "Review annotations by tag and chapter. Notice recurring feedback across readers and decide what to revise next.",
             },
           ].map((step, i) => (
             <Lift key={i} className="relative p-4">
@@ -61,12 +63,13 @@ export function HowItWorksSection() {
               >
                 <step.Icon size={16} strokeWidth={1.5} />
               </div>
-              <h3
+              <Heading
+                level={3}
                 className="mb-3"
                 style={{ fontFamily: SERIF, fontSize: "1.15rem", fontWeight: 500, color: INK }}
               >
                 {step.title}
-              </h3>
+              </Heading>
               <p className="text-sm leading-relaxed" style={{ color: "#6B6456" }}>
                 {step.detail}
               </p>

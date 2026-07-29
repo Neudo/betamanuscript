@@ -1,5 +1,6 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import { Card } from "@/components/ui/card";
+import { createNoIndexMetadata } from "@/shared/config/seo";
 import { InviteReaderAccess } from "@/features/readers/components/InviteReaderAccess";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
 import { Heading } from "@/shared/ui/Heading";
@@ -7,6 +8,8 @@ import { Heading } from "@/shared/ui/Heading";
 type InviteReaderPageProps = {
   searchParams: Promise<{ token?: string | string[] }>;
 };
+
+export const metadata = createNoIndexMetadata("Reader invitation | BetaManuscript");
 
 export default async function InviteReaderPage({ searchParams }: InviteReaderPageProps) {
   const { token } = await searchParams;

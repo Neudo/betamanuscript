@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { createNoIndexMetadata } from "@/shared/config/seo";
 import { LoginScreen } from "@/features/account/components/LoginScreen";
 import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
@@ -11,6 +12,8 @@ type LoginPageProps = {
     next?: string | string[];
   }>;
 };
+
+export const metadata = createNoIndexMetadata("Log in | BetaManuscript");
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const account = await getAuthenticatedAccount();

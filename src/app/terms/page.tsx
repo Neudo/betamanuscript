@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-
+import { createPublicMetadata } from "@/shared/config/seo";
 import { LegalList, LegalPage, LegalSection } from "@/views/legal/LegalPage";
 
-export const metadata: Metadata = {
+export const metadata = createPublicMetadata({
   title: "Terms of Service | BetaManuscript",
   description: "The terms that govern use of the BetaManuscript beta-reader feedback workspace.",
-};
+  pathname: "/terms",
+});
 
 export default function TermsPage() {
   return (

@@ -1,36 +1,36 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://betamanuscript.com").replace(/\/$/, "");
+import { site } from "@/shared/config/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
-      url: siteUrl,
+      url: site.url,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: `${siteUrl}/how-it-works`,
+      url: `${site.url}/how-it-works`,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/for-readers`,
+      url: `${site.url}/for-readers`,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/pricing`,
+      url: `${site.url}/pricing`,
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${siteUrl}/privacy`,
+      url: `${site.url}/privacy`,
       changeFrequency: "yearly",
       priority: 0.3,
     },
     {
-      url: `${siteUrl}/terms`,
+      url: `${site.url}/terms`,
       changeFrequency: "yearly",
       priority: 0.3,
     },

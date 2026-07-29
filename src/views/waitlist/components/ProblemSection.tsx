@@ -1,6 +1,7 @@
 import { Lift, Reveal } from "../../../shared/ui/motion";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { INK, OXBLOOD, SERIF, WARM } from "../../../shared/config/design-tokens";
+import { Heading } from "@/shared/ui/Heading";
 
 export function ProblemSection() {
   return (
@@ -13,7 +14,8 @@ export function ProblemSection() {
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
           <SectionLabel>The problem</SectionLabel>
-          <h2
+          <Heading
+            level={2}
             className="mb-12 max-w-2xl"
             style={{
               fontFamily: SERIF,
@@ -26,7 +28,7 @@ export function ProblemSection() {
             Most beta reading rounds generate noise,
             <br />
             <em>not clarity.</em>
-          </h2>
+          </Heading>
         </Reveal>
         <div className="grid md:grid-cols-3 gap-px" style={{ background: "rgba(28,24,18,0.1)" }}>
           {[
@@ -56,12 +58,13 @@ export function ProblemSection() {
               >
                 {card.glyph}
               </div>
-              <h3
+              <Heading
+                level={3}
                 className="mb-3 leading-snug"
                 style={{ fontFamily: SERIF, fontSize: "1.1rem", fontWeight: 500, color: INK }}
               >
                 {card.title}
-              </h3>
+              </Heading>
               <p className="text-sm leading-relaxed" style={{ color: "#6B6456" }}>
                 {card.detail}
               </p>

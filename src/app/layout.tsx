@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { DM_Mono, EB_Garamond, Inter } from "next/font/google";
 import "../index.css";
 import { Toaster } from "@/components/ui/sonner";
+import { site } from "@/shared/config/site";
 import { Providers } from "./providers";
 
 const inter = Inter({
@@ -23,9 +24,7 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Beta Reader Feedback for Better Revisions | BetaManuscript",
-  description:
-    "Organize beta reader feedback in one place. Invite readers, collect tagged annotations, spot recurring issues, and revise your manuscript with clarity.",
+  metadataBase: new URL(site.url),
   icons: {
     icon: [
       { url: "/favicon.png", type: "image/png" },
@@ -34,7 +33,35 @@ export const metadata: Metadata = {
       { url: "/logo-small.png", type: "image/png" },
     ],
   },
+  verification: {
+    google: "4CJoR1L_QByu5LWxKrQldEOgOaEjDBvhH7zA1W4CZKQ",
+  },
 };
+
+const structuredData = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    logo: `${site.url}/logo-full.svg`,
+    name: site.name,
+    url: site.url,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: site.name,
+    url: site.url,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    applicationCategory: "BusinessApplication",
+    description: site.defaultDescription,
+    name: site.name,
+    operatingSystem: "Web",
+    url: site.url,
+  },
+]).replace(/</g, "\\u003c");
 
 export default function RootLayout({
   children,
@@ -47,10 +74,11 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${inter.variable} ${ebGaramond.variable} ${dmMono.variable}`}
     >
-      <head>
-        <meta name="google-site-verification" content="4CJoR1L_QByu5LWxKrQldEOgOaEjDBvhH7zA1W4CZKQ" />
-      </head>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: structuredData }}
+        />
         <Providers>{children}</Providers>
         <Toaster />
         <Analytics />

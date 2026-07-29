@@ -31,18 +31,14 @@ const freeFeatures = [
   "Revision dashboard",
   "Reader reading list",
   "2 surveys",
-  "Shareable invite link",
+  "Email reader invitations",
 ];
 
 const authorFeatures = [
   "Unlimited manuscripts",
   "Unlimited beta readers",
   "Custom annotation tags",
-  "Advanced revision priorities",
   "Unlimited surveys",
-  "CSV & PDF export",
-  "Custom reader portal",
-  "Priority support",
 ];
 
 const comparisonRows: Array<{
@@ -57,10 +53,7 @@ const comparisonRows: Array<{
   { feature: "Reader reading list", free: true, author: true },
   { feature: "Surveys", free: "2", author: "Unlimited" },
   { feature: "Free for readers", free: "Yes", author: "Yes" },
-  { feature: "Shareable invite link", free: true, author: true },
-  { feature: "CSV & PDF export", free: false, author: true },
-  { feature: "Custom reader portal", free: false, author: true },
-  { feature: "Priority support", free: false, author: true },
+  { feature: "Email reader invitations", free: true, author: true },
 ];
 
 const faqs = [
@@ -75,24 +68,9 @@ const faqs = [
       "Nothing is deleted. You can choose one manuscript to keep active on Free; the rest remain safely stored until you upgrade again.",
   },
   {
-    question: "Is there a limit on manuscript or chapter length?",
-    answer:
-      "There is no artificial word-count limit. Keep chapters reasonably sized for a comfortable reading and annotation experience.",
-  },
-  {
-    question: "Can I export all my feedback data?",
-    answer:
-      "Author includes CSV and PDF exports, so you can keep an archive of annotations, reader responses, and revision priorities outside the app.",
-  },
-  {
     question: "Is my manuscript data private?",
     answer:
       "Yes. Your manuscript is visible only to you and the readers you invite. We do not publish, sell, or use your writing to train public models.",
-  },
-  {
-    question: "Are there discounts for book coaches or writing groups?",
-    answer:
-      "We are happy to discuss group access for coaches and writing communities. Send us a note with the size of your group and how you work.",
   },
 ];
 
@@ -120,7 +98,7 @@ export function PricingPage() {
               Make every reader note <em>count.</em>
             </Heading>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 sm:text-lg" style={{ color: BODY }}>
-              Start free and upgrade when you&apos;re ready to run serious beta rounds. No per-reader fees, no feature gating, no surprises.
+              Start free, then upgrade when you need more manuscripts, readers, surveys, or custom annotation tags.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
