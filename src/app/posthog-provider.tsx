@@ -3,11 +3,19 @@
 import posthog from "posthog-js";
 import { useEffect } from "react";
 
+const ANALYTICS_OPT_OUT_COOKIE = "betamanuscript_analytics_opt_out=1";
+
+function isAnalyticsOptedOut() {
+  return document.cookie
+    .split("; ")
+    .some((cookie) => cookie === ANALYTICS_OPT_OUT_COOKIE);
+}
+
 export function PostHogProvider() {
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
-    if (!key) {
+    if (!key || isAnalyticsOptedOut()) {
       return;
     }
 
