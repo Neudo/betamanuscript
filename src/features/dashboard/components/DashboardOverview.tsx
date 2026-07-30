@@ -180,7 +180,7 @@ function DashboardContent({
             </div>
             {data.readers.length > 0 ? (
               <div className="space-y-4">
-                {data.readers.map((reader) => <ReaderProgress key={reader.id} reader={reader} totalChapters={data.chapters.length} />)}
+                {data.readers.map((reader) => <ReaderProgress key={reader.id} reader={reader} />)}
               </div>
             ) : <EmptyPanel message="Invite readers to start tracking progress." />}
           </section>
@@ -239,8 +239,8 @@ function RecentAnnotation({ annotation }: { annotation: DashboardAnnotation }) {
   );
 }
 
-function ReaderProgress({ reader, totalChapters }: { reader: DashboardReader; totalChapters: number }) {
-  const progress = totalChapters > 0 ? Math.round(reader.completedChapters / totalChapters * 100) : 0;
+function ReaderProgress({ reader }: { reader: DashboardReader }) {
+  const progress = reader.totalChapters > 0 ? Math.round(reader.completedChapters / reader.totalChapters * 100) : 0;
   return (
     <div>
       <div className="flex items-center gap-2.5">
@@ -249,7 +249,7 @@ function ReaderProgress({ reader, totalChapters }: { reader: DashboardReader; to
         <span className="px-1.5 py-0.5 font-mono text-[8px] uppercase" style={{ color: reader.status === "pending" ? "#8B7355" : reader.color, backgroundColor: `${reader.color}14` }}>{formatReaderStatus(reader.status)}</span>
       </div>
       <div className="mt-2 pl-8">
-        <div className="mb-1 flex justify-between font-mono text-[8px] text-muted-foreground"><span>Ch {reader.completedChapters} of {totalChapters}</span><span>{progress}%</span></div>
+        <div className="mb-1 flex justify-between font-mono text-[8px] text-muted-foreground"><span>Ch {reader.completedChapters} of {reader.totalChapters}</span><span>{progress}%</span></div>
         <div className="h-0.5 bg-foreground/[0.08]"><div className="h-full" style={{ width: `${progress}%`, backgroundColor: reader.status === "pending" ? "rgba(28,24,18,.2)" : reader.color }} /></div>
       </div>
     </div>

@@ -24,6 +24,7 @@ import {
   useManuscriptReaders,
   useResendReaderInvitation,
   useRevokeReaderInvitation,
+  useSetReaderChapterAccess,
   useSetReaderDraftAccess,
 } from "@/features/readers/hooks/use-readers";
 import { Heading } from "@/shared/ui/Heading";
@@ -58,6 +59,7 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
   const manuscriptsQuery = useManuscriptReaders();
   const resendMutation = useResendReaderInvitation();
   const revokeMutation = useRevokeReaderInvitation();
+  const chapterAccessMutation = useSetReaderChapterAccess();
   const draftAccessMutation = useSetReaderDraftAccess();
   const manuscripts = manuscriptsQuery.data ?? [];
 
@@ -91,19 +93,24 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
             key={manuscript.id}
             isResending={resendMutation.isPending}
             isRevoking={revokeMutation.isPending}
+            isUpdatingChapterAccess={chapterAccessMutation.isPending}
             isUpdatingDraftAccess={draftAccessMutation.isPending}
             accountPlan={accountPlan}
             manuscript={manuscript}
             onResend={(invitationId) => resendMutation.mutate(invitationId)}
             onRevoke={(invitationId) => revokeMutation.mutate(invitationId)}
+            onChapterAccessChange={(input, options) => chapterAccessMutation.mutate(input, options)}
             onDraftAccessChange={(input) => draftAccessMutation.mutate(input)}
           />
         ))}
 
-        {resendMutation.isError || revokeMutation.isError || draftAccessMutation.isError ? (
+        {resendMutation.isError || revokeMutation.isError || chapterAccessMutation.isError || draftAccessMutation.isError ? (
           <Alert variant="destructive">
             <AlertDescription>
-              {resendMutation.error?.message ?? revokeMutation.error?.message ?? draftAccessMutation.error?.message}
+              {resendMutation.error?.message
+                ?? revokeMutation.error?.message
+                ?? chapterAccessMutation.error?.message
+                ?? draftAccessMutation.error?.message}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -116,19 +123,26 @@ function ManuscriptReadersSection({
   accountPlan,
   isResending,
   isRevoking,
+  isUpdatingChapterAccess,
   isUpdatingDraftAccess,
   manuscript,
   onResend,
   onRevoke,
+  onChapterAccessChange,
   onDraftAccessChange,
 }: {
   accountPlan: AccountPlan;
   isResending: boolean;
   isRevoking: boolean;
+  isUpdatingChapterAccess: boolean;
   isUpdatingDraftAccess: boolean;
   manuscript: ManuscriptReaders;
   onResend: (invitationId: string) => void;
   onRevoke: (invitationId: string) => void;
+  onChapterAccessChange: (
+    input: { chapterIds: string[]; readerAssignmentId: string },
+    options: { onSuccess: () => void },
+  ) => void;
   onDraftAccessChange: (input: {
     enabled: boolean;
     manuscriptVersionId: string;
@@ -223,8 +237,10 @@ function ManuscriptReadersSection({
                 <TableCell>
                   <DraftAccessDialog
                     drafts={manuscript.drafts}
-                    isUpdating={isUpdatingDraftAccess}
+                    isUpdatingChapterAccess={isUpdatingChapterAccess}
+                    isUpdatingDraftAccess={isUpdatingDraftAccess}
                     onAccessChange={onDraftAccessChange}
+                    onChapterAccessChange={onChapterAccessChange}
                     reader={reader}
                   />
                 </TableCell>

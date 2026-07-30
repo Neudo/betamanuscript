@@ -16,7 +16,7 @@ export function ProblemSection() {
           <SectionLabel>The problem</SectionLabel>
           <Heading
             level={2}
-            className="mb-12 max-w-2xl"
+            className="mb-4 max-w-2xl"
             style={{
               fontFamily: SERIF,
               fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
@@ -29,6 +29,9 @@ export function ProblemSection() {
             <br />
             <em>not clarity.</em>
           </Heading>
+          <p className="mb-12 max-w-xl text-sm leading-6 md:text-base" style={{ color: "#6B6456" }}>
+            No AI-generated ideas or rewrites. Just human reader reactions, with you in control of every creative decision.
+          </p>
         </Reveal>
         <div className="grid md:grid-cols-3 gap-px" style={{ background: "rgba(28,24,18,0.1)" }}>
           {[

@@ -58,6 +58,11 @@ const comparisonRows: Array<{
 
 const faqs = [
   {
+    question: "Will AI write, rewrite, or shape my manuscript?",
+    answer:
+      "No. BetaManuscript organizes feedback from human beta readers. It does not generate ideas, rewrite your chapters, or produce critiques of your manuscript. You make the creative decisions; reader reactions help you decide what to revise.",
+  },
+  {
     question: "Do my beta readers need to pay?",
     answer:
       "No. Your plan covers the workspace. Readers can open an invite, read your manuscript, and leave feedback without paying for an account.",

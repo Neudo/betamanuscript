@@ -3,10 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  getInviteableChapters,
   getManuscriptReaders,
   inviteReader,
   resendReaderInvitation,
   revokeReaderInvitation,
+  setReaderChapterAccess,
   setReaderDraftAccess,
   updateReaderLimit,
 } from "@/features/readers/api/readers";
@@ -30,6 +32,15 @@ export function useManuscriptReaders() {
   return useQuery({
     queryKey: readerKeys.manuscripts(),
     queryFn: getManuscriptReaders,
+    staleTime: 30_000,
+  });
+}
+
+export function useInviteableChapters(manuscriptId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: readerKeys.inviteableChapters(manuscriptId),
+    queryFn: () => getInviteableChapters(manuscriptId),
+    enabled,
     staleTime: 30_000,
   });
 }
@@ -75,6 +86,15 @@ export function useSetReaderDraftAccess() {
 
   return useMutation({
     mutationFn: setReaderDraftAccess,
+    onSettled: invalidate,
+  });
+}
+
+export function useSetReaderChapterAccess() {
+  const invalidate = useInvalidateReaderData();
+
+  return useMutation({
+    mutationFn: setReaderChapterAccess,
     onSettled: invalidate,
   });
 }

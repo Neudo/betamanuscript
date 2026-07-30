@@ -23,6 +23,7 @@ export type DashboardReader = {
   lastActiveAt: string | null;
   name: string;
   status: "finished" | "pending" | "reading" | "started";
+  totalChapters: number;
 };
 
 export type DashboardAnnotation = {
@@ -87,6 +88,7 @@ type ReaderAssignmentRow = {
   last_active_at: string | null;
   reader_display_name: string | null;
   reader_email: string;
+  reader_assignment_chapter_access: Array<{ chapter_id: string }>;
   started_at: string | null;
   status: Database["public"]["Enums"]["reader_assignment_status"];
 };
@@ -175,7 +177,7 @@ export async function getDashboardOverview(
     round
       ? supabase
         .from("reader_assignments")
-        .select("id, reader_display_name, reader_email, status, started_at, completed_at, last_active_at")
+        .select("id, reader_display_name, reader_email, status, started_at, completed_at, last_active_at, reader_assignment_chapter_access(chapter_id)")
         .eq("reading_round_id", round.id)
         .neq("status", "revoked")
         .order("created_at", { ascending: true })
@@ -232,6 +234,15 @@ export async function getDashboardOverview(
   if (surveySubmissionsResult.error) throw new Error(surveySubmissionsResult.error.message);
 
   const progressRows = (progressResult.data ?? []) as ChapterProgressRow[];
+  const accessibleChapterIdsByAssignment = new Map(
+    assignments.map((assignment) => [
+      assignment.id,
+      new Set(assignment.reader_assignment_chapter_access.map((access) => access.chapter_id)),
+    ]),
+  );
+  const visibleProgressRows = progressRows.filter((progress) => (
+    accessibleChapterIdsByAssignment.get(progress.reader_assignment_id)?.has(progress.chapter_id)
+  ));
   const tagsBySlug = new Map(
     ((tagsResult.data ?? []) as Array<AnnotationTagRow & { id: string }>).map((tag) => [tag.id, tag]),
   );
@@ -239,7 +250,7 @@ export async function getDashboardOverview(
   const completedReadersByChapterId = new Map<string, Set<string>>();
   const progressByAssignmentId = new Map<string, ChapterProgressRow[]>();
 
-  for (const progress of progressRows) {
+  for (const progress of visibleProgressRows) {
     const readerProgress = progressByAssignmentId.get(progress.reader_assignment_id) ?? [];
     readerProgress.push(progress);
     progressByAssignmentId.set(progress.reader_assignment_id, readerProgress);
@@ -259,7 +270,7 @@ export async function getDashboardOverview(
   const readers = assignments.map((assignment, index) => toDashboardReader(
     assignment,
     progressByAssignmentId.get(assignment.id) ?? [],
-    chapters.length,
+    accessibleChapterIdsByAssignment.get(assignment.id)?.size ?? 0,
     readerColors[index % readerColors.length],
   ));
   const readersById = new Map(readers.map((reader) => [reader.id, reader]));
@@ -289,7 +300,7 @@ export async function getDashboardOverview(
   const submittedSurveyRows = (surveySubmissionsResult.data ?? []) as SurveySubmissionRow[];
   const lastActivityAt = latestDate([
     ...dashboardAnnotations.map((annotation) => annotation.createdAt),
-    ...progressRows.map((progress) => progress.last_read_at),
+    ...visibleProgressRows.map((progress) => progress.last_read_at),
     ...assignments.flatMap((assignment) => [assignment.last_active_at, assignment.completed_at, assignment.started_at]),
     ...submittedSurveyRows.map((submission) => submission.submitted_at),
   ]);
@@ -368,6 +379,7 @@ function toDashboardReader(
     lastActiveAt: assignment.last_active_at ?? lastProgress?.last_read_at ?? assignment.started_at,
     name,
     status,
+    totalChapters,
   };
 }
 

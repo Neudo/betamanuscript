@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { personalizeAccount } from "../api/personalize-account";
-import { getWorkspaceHome, type UserRole } from "../domain/user-role";
+import { getWorkspaceHome, type WorkspaceRole } from "../domain/user-role";
 import { accountPersonalizationSchema } from "../schemas/account-personalization.schema";
 import { RolePicker } from "./RolePicker";
 
@@ -22,11 +22,11 @@ export function AccountPersonalizationForm({
 }: {
   accountId: string;
   initialDisplayName: string;
-  initialRole: UserRole;
+  initialRole: WorkspaceRole;
   next: string | null;
 }) {
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>(initialRole);
+  const [role, setRole] = useState<WorkspaceRole>(initialRole);
   const [nameError, setNameError] = useState<string | null>(null);
   const mutation = useMutation({
     mutationFn: personalizeAccount,

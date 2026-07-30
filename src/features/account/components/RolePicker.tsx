@@ -5,7 +5,7 @@ import { BookOpenText, Feather, Repeat2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import { roleOptions, type UserRole } from "../domain/user-role";
+import { roleOptions, type WorkspaceRole } from "../domain/user-role";
 
 const roleIcons = {
   writer: Feather,
@@ -14,8 +14,8 @@ const roleIcons = {
 };
 
 type RolePickerProps = {
-  value: UserRole;
-  onChange: (role: UserRole) => void;
+  value: WorkspaceRole;
+  onChange: (role: WorkspaceRole) => void;
   compact?: boolean;
 };
 
@@ -23,7 +23,7 @@ export function RolePicker({ value, onChange, compact = false }: RolePickerProps
   return (
     <RadioGroup
       value={value}
-      onValueChange={(nextValue) => onChange(nextValue as UserRole)}
+      onValueChange={(nextValue) => onChange(nextValue as WorkspaceRole)}
       className={cn("grid gap-3", compact ? "md:grid-cols-3" : "")}
     >
       {roleOptions.map((option) => {

@@ -102,6 +102,7 @@ export type ReaderSubmittedSurvey = {
 
 type ReaderAssignmentRow = {
   id: string;
+  reader_assignment_chapter_access: Array<{ chapter_id: string }>;
   status: "completed" | "pending" | "started";
   reading_rounds: {
     id: string;
@@ -144,6 +145,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       reader_assignments!inner (
         id,
         status,
+        reader_assignment_chapter_access (chapter_id),
         reading_rounds!inner (
           id,
           status,
@@ -159,17 +161,12 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
   if (draftAccessError) throw new Error(draftAccessError.message);
 
   const rows = ((draftAccess ?? []) as unknown as ReaderDraftAccessRow[])
-    .flatMap((access) => access.reader_assignments ? [access.reader_assignments] : []);
+    .flatMap((access) => access.reader_assignments ? [access.reader_assignments] : [])
+    .filter((assignment) => assignment.reader_assignment_chapter_access.length > 0);
   const versionIds = rows.flatMap((row) => row.reading_rounds?.manuscript_versions?.id ?? []);
   const assignmentIds = rows.map((row) => row.id);
 
-  const [chaptersResult, progressResult, coversResult] = await Promise.all([
-    versionIds.length > 0
-      ? supabase
-        .from("manuscript_chapters")
-        .select("id, manuscript_version_id")
-        .in("manuscript_version_id", versionIds)
-      : Promise.resolve({ data: [], error: null }),
+  const [progressResult, coversResult] = await Promise.all([
     assignmentIds.length > 0
       ? supabase
         .from("chapter_reading_progress")
@@ -186,7 +183,6 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       : Promise.resolve({ data: [], error: null }),
   ]);
 
-  if (chaptersResult.error) throw new Error(chaptersResult.error.message);
   if (progressResult.error) throw new Error(progressResult.error.message);
   if (coversResult.error) throw new Error(coversResult.error.message);
 
@@ -203,18 +199,21 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     }),
   );
 
-  const totalByVersion = new Map<string, number>();
-  for (const chapter of chaptersResult.data ?? []) {
-    totalByVersion.set(
-      chapter.manuscript_version_id,
-      (totalByVersion.get(chapter.manuscript_version_id) ?? 0) + 1,
-    );
-  }
+  const accessibleChapterIdsByAssignment = new Map(
+    rows.map((assignment) => [
+      assignment.id,
+      new Set(assignment.reader_assignment_chapter_access.map((access) => access.chapter_id)),
+    ]),
+  );
 
   const completedByAssignment = new Map<string, number>();
   const completedChapterIdsByAssignment = new Map<string, string[]>();
   const latestProgressByAssignment = new Map<string, ChapterProgressRow>();
   for (const progress of (progressResult.data ?? []) as ChapterProgressRow[]) {
+    if (!accessibleChapterIdsByAssignment.get(progress.reader_assignment_id)?.has(progress.chapter_id)) {
+      continue;
+    }
+
     if (progress.status === "completed") {
       completedByAssignment.set(
         progress.reader_assignment_id,
@@ -236,7 +235,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     const version = readingRound?.manuscript_versions;
     if (!readingRound || !version) return [];
 
-    const totalChapters = totalByVersion.get(version.id) ?? 0;
+    const totalChapters = accessibleChapterIdsByAssignment.get(assignment.id)?.size ?? 0;
     const completedChapters = completedByAssignment.get(assignment.id) ?? 0;
     const status: ReaderManuscriptListItem["status"] = assignment.status === "completed" || (totalChapters > 0 && completedChapters >= totalChapters)
       ? "finished"

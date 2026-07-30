@@ -24,6 +24,8 @@ import {
   type UpdateManuscriptSettingsInput,
 } from "@/features/manuscript/api/manuscripts";
 import { manuscriptKeys } from "@/features/manuscript/query-keys";
+import { dashboardKeys } from "@/features/dashboard/query-keys";
+import { readerKeys } from "@/features/readers/query-keys";
 import type {
   ChapterEditorialStatus,
   ManuscriptWorkspaceData,
@@ -144,6 +146,12 @@ function useInvalidateManuscriptAfterChapterChange<TVariables extends { manuscri
         queryClient.invalidateQueries({
           queryKey: manuscriptKeys.list(),
         }),
+        queryClient.invalidateQueries({
+          queryKey: dashboardKeys.all,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: readerKeys.all,
+        }),
       ]);
     },
   });
@@ -151,9 +159,10 @@ function useInvalidateManuscriptAfterChapterChange<TVariables extends { manuscri
 
 export function useCreateManuscriptChapterMutation() {
   return useInvalidateManuscriptAfterChapterChange<CreateChapterVariables>(
-    ({ content, manuscriptVersionId, title }) => createManuscriptChapter({
+    ({ content, manuscriptVersionId, readerAssignmentIds, title }) => createManuscriptChapter({
       content,
       manuscriptVersionId,
+      readerAssignmentIds,
       title,
     }),
   );

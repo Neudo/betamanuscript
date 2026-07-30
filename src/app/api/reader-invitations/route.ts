@@ -9,6 +9,10 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const invitationSchema = z.object({
+  chapterIds: z.array(z.string().uuid()).min(1).max(500).refine(
+    (chapterIds) => new Set(chapterIds).size === chapterIds.length,
+    "Each chapter can only be selected once.",
+  ),
   manuscriptId: z.string().uuid(),
   personalNote: z.string().trim().max(4000).optional().default(""),
   recipientEmail: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
@@ -49,7 +53,8 @@ export async function POST(request: Request) {
 
   const rawToken = randomBytes(32).toString("base64url");
   const tokenDigest = createHash("sha256").update(rawToken).digest("hex");
-  const { data, error } = await supabase.rpc("create_manuscript_reader_invitation", {
+  const { data, error } = await supabase.rpc("create_manuscript_reader_invitation_with_chapters", {
+    p_chapter_ids: payload.chapterIds,
     p_manuscript_id: payload.manuscriptId,
     p_personal_note: payload.personalNote,
     p_recipient_email: payload.recipientEmail,

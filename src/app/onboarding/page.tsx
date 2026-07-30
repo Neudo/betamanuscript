@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createNoIndexMetadata } from "@/shared/config/seo";
 import { AccountPersonalizationScreen } from "@/features/account/components/AccountPersonalizationScreen";
 import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
+import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
 
 type OnboardingPageProps = {
@@ -23,6 +24,10 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
       ? `/login?next=${encodeURIComponent(`/onboarding?next=${safeNext}`)}`
       : "/login";
     redirect(loginUrl);
+  }
+
+  if (account.role === "super_admin") {
+    redirect(getWorkspaceHome(account.role));
   }
 
   return (

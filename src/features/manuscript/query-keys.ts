@@ -8,5 +8,10 @@ export const manuscriptKeys = {
       manuscriptId,
       ...(manuscriptVersionId ? [manuscriptVersionId] : []),
     ] as const,
+  chapterAccessReaders: (manuscriptVersionId: string) => [
+    ...manuscriptKeys.all,
+    "chapter-access-readers",
+    manuscriptVersionId,
+  ] as const,
   genres: () => [...manuscriptKeys.all, "genres"] as const,
 };

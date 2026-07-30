@@ -7,7 +7,10 @@ import type {
   AccountPlan,
   AuthenticatedAccount,
 } from "@/features/account/types";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const ACTIVITY_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export const getAuthenticatedAccount = cache(
   async (): Promise<AuthenticatedAccount | null> => {
@@ -23,13 +26,15 @@ export const getAuthenticatedAccount = cache(
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("display_name, role, plan")
+      .select("display_name, role, plan, last_active_at")
       .eq("id", user.id)
       .single();
 
     if (profileError || !profile) {
       throw new Error("Authenticated user profile is missing.");
     }
+
+    await refreshAccountActivity(user.id, profile.last_active_at);
 
     return {
       id: user.id,
@@ -40,3 +45,28 @@ export const getAuthenticatedAccount = cache(
     };
   },
 );
+
+async function refreshAccountActivity(accountId: string, lastActiveAt: string | null) {
+  const lastActivityTimestamp = lastActiveAt ? Date.parse(lastActiveAt) : Number.NaN;
+
+  if (
+    Number.isFinite(lastActivityTimestamp) &&
+    Date.now() - lastActivityTimestamp < ACTIVITY_REFRESH_INTERVAL_MS
+  ) {
+    return;
+  }
+
+  try {
+    const admin = createSupabaseAdminClient();
+    const { error } = await admin
+      .from("profiles")
+      .update({ last_active_at: new Date().toISOString() })
+      .eq("id", accountId);
+
+    if (error) {
+      console.error("Unable to refresh authenticated account activity.", error);
+    }
+  } catch (error) {
+    console.error("Unable to initialize account activity tracking.", error);
+  }
+}

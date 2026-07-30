@@ -1,9 +1,12 @@
-export const userRoles = ["reader", "writer", "both"] as const;
+export const workspaceRoles = ["reader", "writer", "both"] as const;
 
-export type UserRole = (typeof userRoles)[number];
+export const userRoles = workspaceRoles;
+
+export type WorkspaceRole = (typeof workspaceRoles)[number];
+export type UserRole = WorkspaceRole | "super_admin";
 
 export const roleOptions: Array<{
-  value: UserRole;
+  value: WorkspaceRole;
   label: string;
   description: string;
 }> = [
@@ -33,6 +36,8 @@ export function canWrite(role: UserRole) {
 }
 
 export function getRoleLabel(role: UserRole) {
+  if (role === "super_admin") return "Super admin";
+
   return roleOptions.find((option) => option.value === role)?.label ?? role;
 }
 

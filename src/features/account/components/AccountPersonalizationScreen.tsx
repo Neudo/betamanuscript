@@ -2,7 +2,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { Heading } from "@/shared/ui/Heading";
 
 import { AccountPersonalizationForm } from "./AccountPersonalizationForm";
-import type { UserRole } from "../domain/user-role";
+import type { WorkspaceRole } from "../domain/user-role";
 
 export function AccountPersonalizationScreen({
   accountId,
@@ -12,7 +12,7 @@ export function AccountPersonalizationScreen({
 }: {
   accountId: string;
   initialDisplayName: string;
-  initialRole: UserRole;
+  initialRole: WorkspaceRole;
   next: string | null;
 }) {
   return (

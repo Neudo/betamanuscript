@@ -6,6 +6,7 @@ import {
   FilePlus2,
   PencilLine,
   Trash2,
+  UsersRound,
 } from "lucide-react";
 import { FormEvent, useState } from "react";
 
@@ -20,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +39,7 @@ import {
   useDeleteManuscriptChapterMutation,
   useUpdateManuscriptChapterMutation,
 } from "@/features/manuscript/hooks/use-manuscript-mutations";
+import { useManuscriptChapterAccessReaders } from "@/features/manuscript/hooks/use-manuscripts";
 import type {
   ManuscriptWorkspaceChapter,
   ManuscriptWorkspaceData,
@@ -60,17 +63,25 @@ export function ChapterManagerDialog({
   const [chapterToDelete, setChapterToDelete] = useState<ManuscriptWorkspaceChapter | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [readerAssignmentIds, setReaderAssignmentIds] = useState<Set<string> | null>(null);
   const createChapter = useCreateManuscriptChapterMutation();
   const updateChapter = useUpdateManuscriptChapterMutation();
   const deleteChapter = useDeleteManuscriptChapterMutation();
   const isSaving = createChapter.isPending || updateChapter.isPending;
   const isBusy = isSaving || deleteChapter.isPending;
   const mutationError = createChapter.error ?? updateChapter.error ?? deleteChapter.error;
+  const chapterReadersQuery = useManuscriptChapterAccessReaders(
+    manuscript.version?.id ?? null,
+    editingChapter === "new",
+  );
+  const chapterReaders = chapterReadersQuery.data ?? [];
+  const selectedReaderAssignmentIds = readerAssignmentIds ?? new Set(chapterReaders.map((reader) => reader.id));
 
   function resetEditor() {
     setEditingChapter(null);
     setTitle("");
     setContent("");
+    setReaderAssignmentIds(null);
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -91,6 +102,7 @@ export function ChapterManagerDialog({
     updateChapter.reset();
     setTitle(`Chapter ${manuscript.chapters.length + 1}`);
     setContent("");
+    setReaderAssignmentIds(null);
     setEditingChapter("new");
   }
 
@@ -99,7 +111,17 @@ export function ChapterManagerDialog({
     updateChapter.reset();
     setTitle(chapter.title);
     setContent(chapter.blocks.map((block) => block.content).join("\n\n"));
+    setReaderAssignmentIds(null);
     setEditingChapter(chapter);
+  }
+
+  function toggleReaderAccess(readerAssignmentId: string, checked: boolean) {
+    setReaderAssignmentIds((current) => {
+      const next = new Set(current ?? chapterReaders.map((reader) => reader.id));
+      if (checked) next.add(readerAssignmentId);
+      else next.delete(readerAssignmentId);
+      return next;
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -114,6 +136,7 @@ export function ChapterManagerDialog({
           content,
           manuscriptId: manuscript.id,
           manuscriptVersionId: manuscript.version.id,
+          readerAssignmentIds: [...selectedReaderAssignmentIds],
           title,
         });
         if (typeof chapterId === "string") onChapterSelected(chapterId);
@@ -211,6 +234,84 @@ export function ChapterManagerDialog({
                   You can leave this empty and add the text later.
                 </p>
               </div>
+              {editingChapter === "new" ? (
+                <fieldset className="border border-foreground/15 bg-muted/[0.16]">
+                  <legend className="sr-only">Reader access</legend>
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-foreground/10 px-4 py-3">
+                    <div className="flex min-w-0 gap-3">
+                      <UsersRound className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} />
+                      <div>
+                        <p className="text-sm font-medium">Reader access</p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                          Only selected readers can open and annotate this new chapter.
+                        </p>
+                      </div>
+                    </div>
+                    {chapterReaders.length > 0 ? (
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                          {selectedReaderAssignmentIds.size} selected
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          onClick={() => setReaderAssignmentIds(new Set(chapterReaders.map((reader) => reader.id)))}
+                          className="text-[10px] font-medium text-primary underline-offset-4 hover:underline disabled:pointer-events-none disabled:opacity-50"
+                        >
+                          Select all
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          onClick={() => setReaderAssignmentIds(new Set())}
+                          className="text-[10px] font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-50"
+                        >
+                          Unselect all
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {chapterReadersQuery.isPending ? (
+                    <p className="px-4 py-5 text-xs text-muted-foreground">Loading readers…</p>
+                  ) : chapterReadersQuery.error ? (
+                    <p className="px-4 py-5 text-xs text-destructive">
+                      Readers could not be loaded. Please try again before adding this chapter.
+                    </p>
+                  ) : chapterReaders.length === 0 ? (
+                    <p className="px-4 py-5 text-xs leading-5 text-muted-foreground">
+                      No readers have access to this draft yet. This chapter will stay private until you share it.
+                    </p>
+                  ) : (
+                    <div className="divide-y divide-foreground/[0.08]">
+                      {chapterReaders.map((reader) => {
+                        const inputId = `chapter-reader-${reader.id}`;
+                        const checked = selectedReaderAssignmentIds.has(reader.id);
+
+                        return (
+                          <label
+                            key={reader.id}
+                            htmlFor={inputId}
+                            className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-background/70"
+                          >
+                            <Checkbox
+                              id={inputId}
+                              checked={checked}
+                              disabled={isSaving}
+                              onCheckedChange={(value) => toggleReaderAccess(reader.id, value === true)}
+                            />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium">{reader.name ?? reader.email}</span>
+                              {reader.name ? (
+                                <span className="block truncate text-[10px] text-muted-foreground">{reader.email}</span>
+                              ) : null}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </fieldset>
+              ) : null}
             </div>
 
             {mutationError ? <p className="mt-4 text-xs text-destructive">{mutationError.message}</p> : null}
@@ -219,7 +320,11 @@ export function ChapterManagerDialog({
               <Button type="button" variant="outline" disabled={isSaving} onClick={resetEditor} className="rounded-none">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving || !title.trim()} className="rounded-none">
+              <Button
+                type="submit"
+                disabled={isSaving || !title.trim() || (editingChapter === "new" && (chapterReadersQuery.isPending || chapterReadersQuery.isError))}
+                className="rounded-none"
+              >
                 {isSaving ? "Saving…" : editingChapter === "new" ? "Add chapter" : "Save chapter"}
               </Button>
             </DialogFooter>
@@ -229,7 +334,7 @@ export function ChapterManagerDialog({
             <DialogHeader>
               <DialogTitle>Manage chapters</DialogTitle>
               <DialogDescription className="leading-6">
-                Add, edit, or remove chapters before this draft is shared with readers. Once reader access opens, create a new manuscript version to protect their feedback.
+                Add a new chapter and choose the readers who can receive it. Existing reader-visible chapters stay locked to protect feedback.
               </DialogDescription>
             </DialogHeader>
 

@@ -1,4 +1,4 @@
-import type { UserRole } from "@/features/account/domain/user-role";
+import type { WorkspaceRole } from "@/features/account/domain/user-role";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export async function updateRole({
@@ -6,7 +6,7 @@ export async function updateRole({
   role,
 }: {
   accountId: string;
-  role: UserRole;
+  role: WorkspaceRole;
 }) {
   const supabase = createSupabaseBrowserClient();
   const { error } = await supabase

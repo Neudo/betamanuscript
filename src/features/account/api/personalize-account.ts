@@ -1,5 +1,5 @@
 import type { AccountPersonalizationInput } from "@/features/account/schemas/account-personalization.schema";
-import type { UserRole } from "@/features/account/domain/user-role";
+import type { WorkspaceRole } from "@/features/account/domain/user-role";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export async function personalizeAccount({
@@ -21,6 +21,6 @@ export async function personalizeAccount({
 
   return {
     displayName: data.display_name,
-    role: data.role as UserRole,
+    role: data.role as WorkspaceRole,
   };
 }

@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { RolePicker } from "@/features/account/components/RolePicker";
 import { updateRole } from "@/features/account/api/update-role";
-import type { UserRole } from "@/features/account/domain/user-role";
+import type { WorkspaceRole } from "@/features/account/domain/user-role";
+import type { WorkspaceAuthenticatedAccount } from "@/features/account/server/require-workspace-account";
 import type { AuthenticatedAccount } from "@/features/account/types";
 import { NotificationPreferencesForm } from "@/features/notifications/components/NotificationPreferencesForm";
 import { authorPricing } from "@/shared/config/pricing";
@@ -94,11 +95,11 @@ export function SettingsWorkspace({
   account,
   initialTab = "profile",
 }: {
-  account: AuthenticatedAccount;
+  account: WorkspaceAuthenticatedAccount;
   initialTab?: SettingsTab;
 }) {
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>(account.role);
+  const [role, setRole] = useState<WorkspaceRole>(account.role);
   const hasProPlan = account.plan === "pro";
   const currentPlanBenefits = hasProPlan ? proPlanBenefits : freePlanBenefits;
   const roleMutation = useMutation({

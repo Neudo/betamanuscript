@@ -497,18 +497,65 @@ export async function updateChapterEditorialStatus({
 export type CreateManuscriptChapterInput = {
   content: string;
   manuscriptVersionId: string;
+  readerAssignmentIds?: string[];
   title: string;
 };
+
+export type ManuscriptChapterAccessReader = {
+  email: string;
+  id: string;
+  name: string | null;
+};
+
+type ChapterAccessReaderRow = {
+  id: string;
+  reader_display_name: string | null;
+  reader_email: string;
+};
+
+export async function getManuscriptChapterAccessReaders(
+  manuscriptVersionId: string,
+): Promise<ManuscriptChapterAccessReader[]> {
+  const supabase = createSupabaseBrowserClient();
+  const { data: readingRound, error: readingRoundError } = await supabase
+    .from("reading_rounds")
+    .select("id")
+    .eq("manuscript_version_id", manuscriptVersionId)
+    .neq("status", "archived")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (readingRoundError) throw new Error(readingRoundError.message);
+  if (!readingRound) return [];
+
+  const { data, error } = await supabase
+    .from("reader_assignments")
+    .select("id, reader_email, reader_display_name")
+    .eq("reading_round_id", readingRound.id)
+    .in("status", ["pending", "started", "completed"])
+    .order("reader_email", { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  return ((data ?? []) as unknown as ChapterAccessReaderRow[]).map((reader) => ({
+    email: reader.reader_email,
+    id: reader.id,
+    name: reader.reader_display_name,
+  }));
+}
 
 export async function createManuscriptChapter({
   content,
   manuscriptVersionId,
+  readerAssignmentIds = [],
   title,
 }: CreateManuscriptChapterInput) {
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase.rpc("create_manuscript_chapter", {
     p_content: content,
     p_manuscript_version_id: manuscriptVersionId,
+    p_reader_assignment_ids: readerAssignmentIds,
     p_title: title,
   });
 

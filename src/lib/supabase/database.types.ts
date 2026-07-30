@@ -611,6 +611,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          last_active_at: string | null
           plan: Database["public"]["Enums"]["account_plan"]
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -621,6 +622,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          last_active_at?: string | null
           plan?: Database["public"]["Enums"]["account_plan"]
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -631,6 +633,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          last_active_at?: string | null
           plan?: Database["public"]["Enums"]["account_plan"]
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -753,6 +756,39 @@ export type Database = {
           stripe_event_id?: string
         }
         Relationships: []
+      }
+      reader_assignment_chapter_access: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          reader_assignment_id: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          reader_assignment_id: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          reader_assignment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_assignment_chapter_access_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "manuscript_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reader_assignment_chapter_access_reader_assignment_id_fkey"
+            columns: ["reader_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "reader_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reader_assignments: {
         Row: {
@@ -1298,10 +1334,24 @@ export type Database = {
           invitation_id: string
         }[]
       }
+      create_manuscript_reader_invitation_with_chapters: {
+        Args: {
+          p_chapter_ids: string[]
+          p_manuscript_id: string
+          p_personal_note: string
+          p_recipient_email: string
+          p_token_digest: string
+        }
+        Returns: {
+          expires_at: string
+          invitation_id: string
+        }[]
+      }
       create_manuscript_chapter: {
         Args: {
           p_content?: string
           p_manuscript_version_id: string
+          p_reader_assignment_ids?: string[]
           p_title: string
         }
         Returns: string
@@ -1340,6 +1390,13 @@ export type Database = {
           p_enabled: boolean
           p_manuscript_version_id: string
           p_reader_profile_id: string
+        }
+        Returns: undefined
+      }
+      set_reader_chapter_access: {
+        Args: {
+          p_chapter_ids: string[]
+          p_reader_assignment_id: string
         }
         Returns: undefined
       }
@@ -1433,7 +1490,7 @@ export type Database = {
       survey_status: "draft" | "active" | "closed"
       survey_submission_status: "in_progress" | "submitted"
       survey_trigger_type: "after_chapter" | "after_manuscript"
-      user_role: "reader" | "writer" | "both"
+      user_role: "reader" | "writer" | "both" | "super_admin"
       word_count_band: "under_40k" | "40k_80k" | "80k_120k" | "120k_plus"
     }
     CompositeTypes: {
@@ -1588,7 +1645,7 @@ export const Constants = {
       survey_status: ["draft", "active", "closed"],
       survey_submission_status: ["in_progress", "submitted"],
       survey_trigger_type: ["after_chapter", "after_manuscript"],
-      user_role: ["reader", "writer", "both"],
+      user_role: ["reader", "writer", "both", "super_admin"],
       word_count_band: ["under_40k", "40k_80k", "80k_120k", "120k_plus"],
     },
   },

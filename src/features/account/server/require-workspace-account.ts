@@ -6,12 +6,19 @@ import {
   canRead,
   canWrite,
   getWorkspaceHome,
+  type WorkspaceRole,
 } from "@/features/account/domain/user-role";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
+import type { AuthenticatedAccount } from "@/features/account/types";
 
 type Workspace = "reader" | "writer";
+export type WorkspaceAuthenticatedAccount = AuthenticatedAccount & {
+  role: WorkspaceRole;
+};
 
-export async function requireWorkspaceAccount(workspace: Workspace) {
+export async function requireWorkspaceAccount(
+  workspace: Workspace,
+): Promise<WorkspaceAuthenticatedAccount> {
   const account = await getAuthenticatedAccount();
 
   if (!account) {
@@ -19,12 +26,13 @@ export async function requireWorkspaceAccount(workspace: Workspace) {
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }
 
-  const hasAccess =
-    workspace === "reader" ? canRead(account.role) : canWrite(account.role);
+  const hasAccess = account.role === "super_admin"
+    ? workspace === "writer"
+    : workspace === "reader" ? canRead(account.role) : canWrite(account.role);
 
   if (!hasAccess) {
     redirect(getWorkspaceHome(account.role));
   }
 
-  return account;
+  return account as WorkspaceAuthenticatedAccount;
 }

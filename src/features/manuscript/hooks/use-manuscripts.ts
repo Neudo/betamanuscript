@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   getManuscript,
+  getManuscriptChapterAccessReaders,
   getManuscriptGenres,
   getManuscripts,
 } from "@/features/manuscript/api/manuscripts";
@@ -35,5 +36,17 @@ export function useManuscriptGenres(enabled = true) {
     queryFn: getManuscriptGenres,
     enabled,
     staleTime: 5 * 60_000,
+  });
+}
+
+export function useManuscriptChapterAccessReaders(
+  manuscriptVersionId: string | null,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: manuscriptKeys.chapterAccessReaders(manuscriptVersionId ?? "none"),
+    queryFn: () => getManuscriptChapterAccessReaders(manuscriptVersionId!),
+    enabled: enabled && Boolean(manuscriptVersionId),
+    staleTime: 30_000,
   });
 }
