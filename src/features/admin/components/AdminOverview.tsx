@@ -11,7 +11,9 @@ import {
 } from "lucide-react";
 
 import type { AdminOverview as AdminOverviewData } from "@/features/admin/server/get-admin-overview";
+import type { ManualProEntitlement } from "@/features/admin/server/get-manual-pro-entitlements";
 import { Heading } from "@/shared/ui/Heading";
+import { ManualProEntitlements } from "./ManualProEntitlements";
 
 type Metric = {
   icon: LucideIcon;
@@ -22,7 +24,13 @@ type Metric = {
 
 const numberFormat = new Intl.NumberFormat("en-US");
 
-export function AdminOverview({ overview }: { overview: AdminOverviewData }) {
+export function AdminOverview({
+  entitlements,
+  overview,
+}: {
+  entitlements: ManualProEntitlement[];
+  overview: AdminOverviewData;
+}) {
   const coreMetrics: Metric[] = [
     { label: "Manuscripts", value: overview.manuscripts, icon: BookOpen, tone: "accent" },
     { label: "Customers", value: overview.customerAccounts, icon: UsersRound },
@@ -33,7 +41,8 @@ export function AdminOverview({ overview }: { overview: AdminOverviewData }) {
       icon: Activity,
       tone: "success",
     },
-    { label: "Pro accounts", value: overview.paidCustomerAccounts, icon: CreditCard, tone: "accent" },
+    { label: "Stripe paid", value: overview.stripePaidCustomerAccounts, icon: CreditCard, tone: "accent" },
+    { label: "Manual Pro", value: overview.manualProAccounts, icon: CreditCard, tone: "success" },
   ];
 
   const signalMetrics: Metric[] = [
@@ -65,7 +74,7 @@ export function AdminOverview({ overview }: { overview: AdminOverviewData }) {
           </Heading>
           <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">All time</p>
         </div>
-        <MetricStrip metrics={coreMetrics} columns="five" />
+        <MetricStrip metrics={coreMetrics} columns="six" />
       </section>
 
       <section className="mt-5" aria-labelledby="signal-metrics-heading">
@@ -77,12 +86,14 @@ export function AdminOverview({ overview }: { overview: AdminOverviewData }) {
         </div>
         <MetricStrip metrics={signalMetrics} columns="three" />
       </section>
+
+      <ManualProEntitlements entitlements={entitlements} />
     </div>
   );
 }
 
-function MetricStrip({ metrics, columns }: { columns: "three" | "five"; metrics: Metric[] }) {
-  const gridClass = columns === "five" ? "grid-cols-2 md:grid-cols-5" : "grid-cols-3";
+function MetricStrip({ metrics, columns }: { columns: "three" | "six"; metrics: Metric[] }) {
+  const gridClass = columns === "six" ? "grid-cols-2 md:grid-cols-6" : "grid-cols-3";
 
   return (
     <dl className={`grid overflow-hidden border border-foreground/15 bg-foreground/15 ${gridClass}`}>

@@ -1,36 +1,22 @@
-import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
-import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import type { SignInInput } from "@/features/account/schemas/sign-in.schema";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-export async function signIn(input: SignInInput & { next?: string | null }) {
-  const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: input.email,
-    password: input.password,
+export async function signIn(
+  input: SignInInput & { captchaToken?: string; next?: string | null },
+) {
+  const response = await fetch("/api/auth/sign-in", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
   });
-
-  if (error) {
-    throw new Error(
-      error.code === "invalid_credentials"
-        ? "Email or password is incorrect."
-        : error.message,
-    );
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .single();
-
-  if (profileError || !profile) {
-    await supabase.auth.signOut();
-    throw new Error("Your account profile could not be loaded.");
-  }
-
-  return {
-    redirectTo:
-      getSafeInternalPath(input.next) ?? getWorkspaceHome(profile.role),
+  const result = (await response.json()) as {
+    error?: string;
+    ok?: boolean;
+    redirectTo?: string;
   };
+
+  if (!response.ok || !result.ok || !result.redirectTo) {
+    throw new Error(result.error ?? "Could not log you in. Please try again.");
+  }
+
+  return { redirectTo: result.redirectTo };
 }

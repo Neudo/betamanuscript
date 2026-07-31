@@ -1,34 +1,26 @@
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { getSafeInternalPath } from "../domain/auth-redirect";
 import type { SignUpInput } from "../schemas/sign-up.schema";
 
-export async function signUp(input: SignUpInput & { next?: string | null }) {
-  const supabase = createSupabaseBrowserClient();
-  const safeNext = getSafeInternalPath(input.next);
-  const redirectTo = safeNext
-    ? `/onboarding?next=${encodeURIComponent(safeNext)}`
-    : "/onboarding";
-  const callbackUrl = new URL("/auth/callback", window.location.origin);
-  callbackUrl.searchParams.set("intent", "signup");
-
-  if (safeNext) {
-    callbackUrl.searchParams.set("next", safeNext);
-  }
-
-  const { data, error } = await supabase.auth.signUp({
-    email: input.email,
-    password: input.password,
-    options: {
-      emailRedirectTo: callbackUrl.toString(),
-    },
+export async function signUp(
+  input: SignUpInput & { captchaToken?: string; next?: string | null },
+) {
+  const response = await fetch("/api/auth/sign-up", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
   });
+  const result = (await response.json()) as {
+    error?: string;
+    ok?: boolean;
+    redirectTo?: string;
+    status?: "authenticated" | "confirmation-required";
+  };
 
-  if (error) {
-    throw new Error(error.message);
+  if (!response.ok || !result.ok || !result.redirectTo || !result.status) {
+    throw new Error(result.error ?? "Could not create your account. Please try again.");
   }
 
   return {
-    status: data.session ? ("authenticated" as const) : ("confirmation-required" as const),
-    redirectTo,
+    redirectTo: result.redirectTo,
+    status: result.status,
   };
 }

@@ -13,17 +13,25 @@ import { signIn } from "@/features/account/api/sign-in";
 import { signInWithGoogle } from "@/features/account/api/sign-in-with-google";
 import { signInSchema } from "@/features/account/schemas/sign-in.schema";
 import { GoogleMark } from "./GoogleMark";
+import { Turnstile } from "./Turnstile";
 
 type FieldErrors = Partial<Record<"email" | "password", string>>;
 
 export function LoginForm({ next }: { next: string | null }) {
   const router = useRouter();
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const mutation = useMutation({
     mutationFn: signIn,
     onSuccess(result) {
       router.replace(result.redirectTo);
       router.refresh();
+    },
+    onError() {
+      setCaptchaToken(null);
+      setCaptchaRefreshKey((value) => value + 1);
     },
   });
   const googleMutation = useMutation({
@@ -48,7 +56,12 @@ export function LoginForm({ next }: { next: string | null }) {
     }
 
     setFieldErrors({});
-    mutation.mutate({ ...result.data, next });
+
+    if (turnstileSiteKey && !captchaToken) {
+      return;
+    }
+
+    mutation.mutate({ ...result.data, captchaToken: captchaToken ?? undefined, next });
   }
 
   return (
@@ -80,6 +93,14 @@ export function LoginForm({ next }: { next: string | null }) {
         ) : null}
       </div>
 
+      {turnstileSiteKey ? (
+        <Turnstile
+          onTokenChange={setCaptchaToken}
+          refreshKey={captchaRefreshKey}
+          siteKey={turnstileSiteKey}
+        />
+      ) : null}
+
       {mutation.isError || googleMutation.isError ? (
         <Alert variant="destructive">
           <AlertTitle>Could not log you in</AlertTitle>
@@ -89,7 +110,11 @@ export function LoginForm({ next }: { next: string | null }) {
         </Alert>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={mutation.isPending}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={mutation.isPending || Boolean(turnstileSiteKey && !captchaToken)}
+      >
         {mutation.isPending ? "Logging in..." : "Log in"}
         <ArrowRight className="h-4 w-4" />
       </Button>

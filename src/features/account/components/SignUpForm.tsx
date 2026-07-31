@@ -14,11 +14,15 @@ import { signUp } from "../api/sign-up";
 import { signInWithGoogle } from "../api/sign-in-with-google";
 import { signUpSchema } from "../schemas/sign-up.schema";
 import { GoogleMark } from "./GoogleMark";
+import { Turnstile } from "./Turnstile";
 
 type FieldErrors = Partial<Record<"email" | "password", string>>;
 
 export function SignUpForm({ next }: { next: string | null }) {
   const router = useRouter();
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const mutation = useMutation({
     mutationFn: signUp,
@@ -27,6 +31,10 @@ export function SignUpForm({ next }: { next: string | null }) {
         router.replace(result.redirectTo);
         router.refresh();
       }
+    },
+    onError() {
+      setCaptchaToken(null);
+      setCaptchaRefreshKey((value) => value + 1);
     },
   });
   const googleMutation = useMutation({
@@ -51,7 +59,12 @@ export function SignUpForm({ next }: { next: string | null }) {
     }
 
     setFieldErrors({});
-    mutation.mutate({ ...result.data, next });
+
+    if (turnstileSiteKey && !captchaToken) {
+      return;
+    }
+
+    mutation.mutate({ ...result.data, captchaToken: captchaToken ?? undefined, next });
   }
 
   if (mutation.data?.status === "confirmation-required") {
@@ -126,6 +139,14 @@ export function SignUpForm({ next }: { next: string | null }) {
           )}
         </div>
 
+        {turnstileSiteKey ? (
+          <Turnstile
+            onTokenChange={setCaptchaToken}
+            refreshKey={captchaRefreshKey}
+            siteKey={turnstileSiteKey}
+          />
+        ) : null}
+
         {mutation.isError ? (
           <Alert variant="destructive">
             <AlertTitle>Could not create your account</AlertTitle>
@@ -133,7 +154,11 @@ export function SignUpForm({ next }: { next: string | null }) {
           </Alert>
         ) : null}
 
-        <Button type="submit" className="w-full" disabled={mutation.isPending}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={mutation.isPending || Boolean(turnstileSiteKey && !captchaToken)}
+        >
           {mutation.isPending ? "Creating account..." : "Create account"}
           <ArrowRight className="h-4 w-4" />
         </Button>

@@ -53,7 +53,7 @@ function ProductMockup() {
             The Last Cartographer
           </span>
           <span className="text-[10px]" style={{ fontFamily: MONO, color: MUTED }}>
-            Draft 2 · 9 chapters · 5 readers · 64 annotations
+            Fictional demo · Draft 2 · 9 chapters · 5 readers · 64 annotations
           </span>
         </div>
         <div className="flex items-center gap-1">

@@ -47,10 +47,8 @@ function ReaderPanel() {
               The guild had never asked him to be accurate. They had asked him to be useful.
             </p>
             <p className="mb-4">
-              &ldquo;I mapped the world as it should be,&rdquo;{" "}
-              {ann("a2")}
-              , carrying the weight of careful deception. &ldquo;What you do with those maps
-              is your own affair.&rdquo;
+              &ldquo;I mapped the world as it should be,&rdquo; he said. &ldquo;What you do with those
+              maps is your own affair.&rdquo; {ann("a2")}
             </p>
             <p className="mb-4">
               {ann("a3")} enough when the guild first approached him — a coastal survey,

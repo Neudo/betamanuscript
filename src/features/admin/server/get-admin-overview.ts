@@ -8,10 +8,11 @@ export type AdminOverview = {
   activeCustomerAccountsLast7Days: number;
   annotations: number;
   customerAccounts: number;
+  manualProAccounts: number;
   newCustomerAccountsLast30Days: number;
-  paidCustomerAccounts: number;
   readerAssignments: number;
   manuscripts: number;
+  stripePaidCustomerAccounts: number;
   surveys: number;
 };
 
@@ -31,10 +32,11 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     manuscripts,
     surveys,
     activeCustomerAccountsLast7Days,
-    paidCustomerAccounts,
     newCustomerAccountsLast30Days,
     readerAssignments,
     annotations,
+    activeStripeSubscriptions,
+    manualProEntitlements,
   ] = await Promise.all([
     admin
       .from("profiles")
@@ -51,15 +53,32 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       .from("profiles")
       .select("id", { count: "exact", head: true })
       .neq("role", "super_admin")
-      .eq("plan", "pro"),
-    admin
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .neq("role", "super_admin")
       .gte("created_at", thirtyDaysAgo),
     admin.from("reader_assignments").select("id", { count: "exact", head: true }),
     admin.from("annotations").select("id", { count: "exact", head: true }),
+    admin
+      .from("stripe_subscriptions")
+      .select("profile_id")
+      .in("status", ["active", "trialing"])
+      .gt("current_period_end", new Date(now).toISOString()),
+    admin.from("profile_plan_overrides").select("profile_id, expires_at"),
   ]);
+
+  const stripePaidCustomerAccounts = await countCustomerProfiles(
+    admin,
+    activeStripeSubscriptions,
+    "Stripe-paid customer accounts",
+  );
+  const manualProAccounts = await countCustomerProfiles(
+    admin,
+    {
+      data: (manualProEntitlements.data ?? []).filter((entitlement) => {
+        return !entitlement.expires_at || Date.parse(entitlement.expires_at) > now;
+      }),
+      error: manualProEntitlements.error,
+    },
+    "manual Pro accounts",
+  );
 
   return {
     customerAccounts: getCount(customerAccounts, "customer accounts"),
@@ -69,7 +88,8 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       activeCustomerAccountsLast7Days,
       "active customer accounts",
     ),
-    paidCustomerAccounts: getCount(paidCustomerAccounts, "paid customer accounts"),
+    stripePaidCustomerAccounts,
+    manualProAccounts,
     newCustomerAccountsLast30Days: getCount(
       newCustomerAccountsLast30Days,
       "new customer accounts",
@@ -85,4 +105,31 @@ function getCount(result: CountResult, label: string) {
   }
 
   return result.count ?? 0;
+}
+
+async function countCustomerProfiles(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  result: {
+    data: Array<{ profile_id: string }> | null;
+    error: { message: string } | null;
+  },
+  label: string,
+) {
+  if (result.error) {
+    throw new Error(`Unable to load ${label}: ${result.error.message}`);
+  }
+
+  const profileIds = [...new Set((result.data ?? []).map((row) => row.profile_id))];
+
+  if (profileIds.length === 0) {
+    return 0;
+  }
+
+  const profiles = await admin
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .neq("role", "super_admin")
+    .in("id", profileIds);
+
+  return getCount(profiles, label);
 }

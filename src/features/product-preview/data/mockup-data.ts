@@ -25,12 +25,12 @@ const annotations: Annotation[] = [
   {
     id: "a2",
     tag: "strong",
-    phrase: "he said, his voice carrying the weight of thirty years",
+    phrase: "The guild had never asked him to be accurate. They had asked him to be useful.",
     comments: [
-      { reader: "Sarah K.", text: "This landed. The compression of time in 'thirty years' is doing exactly the right work." },
-      { reader: "Priya N.", text: "Best line in the chapter. The voice earned it." },
-      { reader: "Tom W.", text: "Stopped here and read it again. Quietly devastating." },
-      { reader: "Diana L.", text: "This is the emotional center — make sure the rest earns it." },
+      { reader: "Sarah K.", text: "This reframed the maps for me. The contrast between accurate and useful made the guild's motive clear." },
+      { reader: "Marcus R.", text: "I like the turn, but the contrast feels stated rather than discovered. Could the scene let us infer more of it?" },
+      { reader: "Priya N.", text: "This was the first line that made me understand why he kept drawing the maps." },
+      { reader: "Tom W.", text: "The idea landed, though I wanted one more beat after it before the dialogue moved on." },
     ],
   },
   {
@@ -58,7 +58,7 @@ const repeatedAnnotationIssues: RepeatedAnnotationIssue[] = [
     { tag: "pacing" as TagKey, count: 11, chapters: "Ch 4, 6, 7" },
     { tag: "missing" as TagKey, count: 9, chapters: "Ch 3, 8" },
     { tag: "emotional" as TagKey, count: 6, chapters: "Ch 2, 5" },
-    { tag: "strong" as TagKey, count: 21, chapters: "Ch 2, 3, 5, 9" },
+    { tag: "strong" as TagKey, count: 6, chapters: "Ch 3, 4" },
   ];
 const strongestMoments: StrongestMoment[] = [
     { chapter: "Ch 3", scene: "The guild confrontation", score: 4 },

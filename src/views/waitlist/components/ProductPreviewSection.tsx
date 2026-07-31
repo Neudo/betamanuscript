@@ -16,6 +16,9 @@ export function ProductPreviewSection() {
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
           <SectionLabel>Product preview</SectionLabel>
+          <p className="mt-2 text-[10px]" style={{ color: MUTED, fontFamily: MONO }}>
+            Fictional manuscript and reader notes, shown to illustrate the workflow.
+          </p>
         </Reveal>
         <Reveal delay={0.08} className="grid md:grid-cols-[280px_1fr] gap-12 items-start mb-8">
           <div>
@@ -70,9 +73,9 @@ export function ProductPreviewSection() {
                   each one a different lie
                 </span>
                 <span className="text-[9px] ml-1 align-super" style={{ fontFamily: MONO, color: TAGS.confusing.color }}>3</span>
-                . &ldquo;I mapped the world as it should be,&rdquo;{" "}
+                . &ldquo;I mapped the world as it should be,&rdquo; he said. &ldquo;What you do with those maps is your own affair.&rdquo;{" "}
                 <span style={{ background: TAGS.strong.bg, borderBottom: `1.5px solid ${TAGS.strong.color}`, padding: "0 2px" }}>
-                  he said, his voice carrying the weight of thirty years
+                  The guild had never asked him to be accurate. They had asked him to be useful
                 </span>
                 <span className="text-[9px] ml-1 align-super" style={{ fontFamily: MONO, color: TAGS.strong.color }}>4</span>
                 .{" "}
@@ -99,7 +102,7 @@ export function ProductPreviewSection() {
                 {[
                   { tag: "confusing" as TagKey, count: 18, note: "6 passages across Ch 3, 5, 7" },
                   { tag: "pacing" as TagKey, count: 11, note: "Guild intro and mid-chapter" },
-                  { tag: "strong" as TagKey, count: 21, note: "Strongest response in the draft" },
+                  { tag: "strong" as TagKey, count: 6, note: "Mixed reactions on the guild's motive" },
                 ].map((row) => (
                   <div key={row.tag}>
                     <div className="flex items-center justify-between mb-1.5">
@@ -110,7 +113,7 @@ export function ProductPreviewSection() {
                       <span className="text-[10px] font-medium" style={{ fontFamily: MONO, color: INK }}>{row.count}</span>
                     </div>
                     <div className="h-0.5" style={{ background: "rgba(28,24,18,0.08)" }}>
-                      <div style={{ width: `${(row.count / 21) * 100}%`, height: "100%", background: TAGS[row.tag].bar, opacity: 0.65 }} />
+                      <div style={{ width: `${(row.count / 18) * 100}%`, height: "100%", background: TAGS[row.tag].bar, opacity: 0.65 }} />
                     </div>
                   </div>
                 ))}
