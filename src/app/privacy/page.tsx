@@ -1,4 +1,5 @@
 import { createPublicMetadata } from "@/shared/config/seo";
+import { SupportEmailLink } from "@/shared/ui/SupportEmailLink";
 import { LegalList, LegalPage, LegalSection } from "@/views/legal/LegalPage";
 
 export const metadata = createPublicMetadata({
@@ -20,7 +21,11 @@ export default function PrivacyPage() {
           BetaManuscript is a workspace for authors to share manuscripts with invited readers and organise feedback. The operator of BetaManuscript is the controller for the personal data described in this policy.
         </p>
         <p>
-          For privacy questions or to exercise your rights, contact us at <a className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]" href="mailto:support@betamanuscript.com">support@betamanuscript.com</a>.
+          For privacy questions or to exercise your rights, contact us at{" "}
+          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]">
+            Email support
+          </SupportEmailLink>
+          .
         </p>
       </LegalSection>
 
@@ -56,7 +61,13 @@ export default function PrivacyPage() {
 
       <LegalSection title="7. Your rights">
         <p>Depending on where you live, you may have rights to access, correct, delete, restrict, or port your personal data; object to certain processing; and withdraw consent where processing is based on consent. You may also lodge a complaint with your local data-protection authority.</p>
-        <p>To make a request, email <a className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]" href="mailto:support@betamanuscript.com">support@betamanuscript.com</a>. We may need to verify your identity before responding.</p>
+        <p>
+          To make a request, email{" "}
+          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]">
+            support
+          </SupportEmailLink>
+          . We may need to verify your identity before responding.
+        </p>
       </LegalSection>
 
       <LegalSection title="8. Security and changes">

@@ -1,5 +1,6 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import Link from "next/link";
+import { SupportEmailLink } from "@/shared/ui/SupportEmailLink";
 import {
   BODY,
   MONO,
@@ -33,7 +34,9 @@ export function Footer() {
           <FooterGroup title="Account">
             <FooterLink href="/login">Log in</FooterLink>
             <FooterLink href="/signup">Create account</FooterLink>
-            <a className="block text-xs leading-6 text-[#4A4035] transition-colors hover:text-[#7B1D1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7B1D1D]" href="mailto:support@betamanuscript.com">Contact</a>
+            <SupportEmailLink className="block text-xs leading-6 text-[#4A4035] transition-colors hover:text-[#7B1D1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7B1D1D]">
+              Contact
+            </SupportEmailLink>
           </FooterGroup>
 
           <FooterGroup title="Legal">

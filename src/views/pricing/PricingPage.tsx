@@ -6,6 +6,7 @@ import { type ReactNode, useState } from "react";
 
 import { authorPricing } from "@/shared/config/pricing";
 import { Heading } from "@/shared/ui/Heading";
+import { SupportEmailLink } from "@/shared/ui/SupportEmailLink";
 import { Footer } from "@/views/waitlist/components/Footer";
 import { Nav } from "@/views/waitlist/components/Nav";
 import {
@@ -255,9 +256,12 @@ export function PricingPage() {
               })}
               <p className="mt-7 text-sm" style={{ color: BODY }}>
                 Still have questions?{" "}
-                <a className="underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65" href="mailto:support@betamanuscript.com" style={{ color: OXBLOOD }}>
-                  support@betamanuscript.com
-                </a>
+                <SupportEmailLink
+                  className="underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65"
+                  style={{ color: OXBLOOD }}
+                >
+                  Email support
+                </SupportEmailLink>
               </p>
             </div>
           </div>

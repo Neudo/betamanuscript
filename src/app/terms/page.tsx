@@ -1,4 +1,5 @@
 import { createPublicMetadata } from "@/shared/config/seo";
+import { SupportEmailLink } from "@/shared/ui/SupportEmailLink";
 import { LegalList, LegalPage, LegalSection } from "@/views/legal/LegalPage";
 
 export const metadata = createPublicMetadata({
@@ -63,7 +64,13 @@ export default function TermsPage() {
 
       <LegalSection title="9. Changes and contact">
         <p>We may update these terms when the service, our business, or applicable law changes. Material changes will be posted on this page with an updated date. Continuing to use BetaManuscript after an update means you accept the updated terms, where permitted by law.</p>
-        <p>Questions about these terms can be sent to <a className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]" href="mailto:support@betamanuscript.com">support@betamanuscript.com</a>.</p>
+        <p>
+          Questions about these terms can be sent to{" "}
+          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]">
+            support
+          </SupportEmailLink>
+          .
+        </p>
       </LegalSection>
     </LegalPage>
   );
