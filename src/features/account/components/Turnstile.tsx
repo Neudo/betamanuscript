@@ -1,12 +1,11 @@
 "use client";
 
-import Script from "next/script";
 import { useCallback, useEffect, useRef } from "react";
+import { loadTurnstileScript } from "./TurnstileScript";
 
 type TurnstileWidgetId = string | number;
 
 type TurnstileApi = {
-  ready: (callback: () => void) => void;
   render: (
     container: HTMLElement,
     options: {
@@ -57,15 +56,8 @@ export function Turnstile({
       return;
     }
 
-    turnstile.ready(() => {
-      const currentContainer = containerRef.current;
-      const currentTurnstile = window.turnstile;
-
-      if (!currentContainer || !currentTurnstile || widgetIdRef.current !== null) {
-        return;
-      }
-
-      widgetIdRef.current = currentTurnstile.render(currentContainer, {
+    try {
+      widgetIdRef.current = turnstile.render(container, {
         action: "turnstile-spin-v2",
         callback: (token) => onTokenChangeRef.current(token),
         "error-callback": () => onTokenChangeRef.current(null),
@@ -74,13 +66,29 @@ export function Turnstile({
         size: "flexible",
         theme: "auto",
       });
-    });
+    } catch {
+      onTokenChangeRef.current(null);
+    }
   }, [siteKey]);
 
   useEffect(() => {
-    renderWidget();
+    let isMounted = true;
+
+    void loadTurnstileScript()
+      .then(() => {
+        if (isMounted) {
+          renderWidget();
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          onTokenChangeRef.current(null);
+        }
+      });
 
     return () => {
+      isMounted = false;
+
       const widgetId = widgetIdRef.current;
 
       if (widgetId !== null) {
@@ -104,18 +112,10 @@ export function Turnstile({
   }, [refreshKey]);
 
   return (
-    <>
-      <Script
-        id="cloudflare-turnstile"
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
-        strategy="afterInteractive"
-        onLoad={renderWidget}
-      />
-      <div
-        ref={containerRef}
-        className="cf-turnstile min-h-[65px]"
-        data-action="turnstile-spin-v2"
-      />
-    </>
+    <div
+      ref={containerRef}
+      className="cf-turnstile min-h-[65px]"
+      data-action="turnstile-spin-v2"
+    />
   );
 }
