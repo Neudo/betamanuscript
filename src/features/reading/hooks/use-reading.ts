@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   completeReaderChapter,
   createReaderAnnotation,
+  deleteReaderChapterGeneralComment,
   deleteReaderAnnotation,
   getReaderAnnotationTags,
   getReaderDueSurveys,
@@ -12,6 +13,7 @@ import {
   getReaderManuscripts,
   getReaderSubmittedSurveys,
   submitReaderSurvey,
+  upsertReaderChapterGeneralComment,
   updateReaderAnnotation,
   updateReaderSurveyResponse,
 } from "@/features/reading/api/reading";
@@ -145,6 +147,34 @@ export function useDeleteReaderAnnotation() {
 
   return useMutation({
     mutationFn: deleteReaderAnnotation,
+    async onSuccess() {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
+    },
+  });
+}
+
+export function useUpsertReaderChapterGeneralComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: upsertReaderChapterGeneralComment,
+    async onSuccess() {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
+    },
+  });
+}
+
+export function useDeleteReaderChapterGeneralComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteReaderChapterGeneralComment,
     async onSuccess() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),

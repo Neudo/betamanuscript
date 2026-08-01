@@ -31,6 +31,7 @@ import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block
 import {
   useUpdateAnnotationSeenMutation,
   useUpdateChapterStatusMutation,
+  useUpdateGeneralCommentSeenMutation,
 } from "@/features/manuscript/hooks/use-manuscript-mutations";
 import {
   useManuscript,
@@ -47,6 +48,7 @@ import type {
   ChapterEditorialStatus,
   ManuscriptWorkspaceAnnotation,
   ManuscriptWorkspaceBlock,
+  ManuscriptWorkspaceGeneralComment,
 } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
@@ -76,6 +78,7 @@ export function ManuscriptWorkspace() {
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const selectedVersionIdFromUrl = searchParams.get("versionId");
   const focusedAnnotationIdFromUrl = searchParams.get("annotationId");
+  const focusedGeneralCommentIdFromUrl = searchParams.get("generalCommentId");
   const selectedChapterIdFromUrl = searchParams.get("chapterId");
   const manuscriptsQuery = useManuscripts();
   const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
@@ -83,6 +86,7 @@ export function ManuscriptWorkspace() {
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const updateChapterStatus = useUpdateChapterStatusMutation();
   const updateAnnotationSeen = useUpdateAnnotationSeenMutation();
+  const updateGeneralCommentSeen = useUpdateGeneralCommentSeenMutation();
 
   useEffect(() => {
     const loadedVersionId = manuscriptQuery.data?.version?.id;
@@ -99,6 +103,7 @@ export function ManuscriptWorkspace() {
     nextSearchParams.delete("versionId");
     nextSearchParams.delete("chapterId");
     nextSearchParams.delete("annotationId");
+    nextSearchParams.delete("generalCommentId");
     const queryString = nextSearchParams.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
       scroll: false,
@@ -170,6 +175,9 @@ export function ManuscriptWorkspace() {
   const focusedAnnotationId = selectedChapter.annotations.some(
     (annotation) => annotation.id === focusedAnnotationIdFromUrl,
   ) ? focusedAnnotationIdFromUrl : null;
+  const focusedGeneralCommentId = selectedChapter.generalComments.some(
+    (generalComment) => generalComment.id === focusedGeneralCommentIdFromUrl,
+  ) ? focusedGeneralCommentIdFromUrl : null;
 
   function handleStatusChange(status: ChapterEditorialStatus) {
     updateChapterStatus.mutate({
@@ -189,21 +197,32 @@ export function ManuscriptWorkspace() {
     });
   }
 
+  function handleGeneralCommentSeen(generalComment: ManuscriptWorkspaceGeneralComment) {
+    updateGeneralCommentSeen.mutate({
+      generalCommentId: generalComment.id,
+      isSeen: !generalComment.isSeenByAuthor,
+      manuscriptId: workspace.id,
+      manuscriptVersionId: workspace.version?.id ?? "",
+    });
+  }
+
   function handleVersionChange(versionId: string) {
     setSelectedChapterId(null);
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.set("versionId", versionId);
     nextSearchParams.delete("chapterId");
     nextSearchParams.delete("annotationId");
+    nextSearchParams.delete("generalCommentId");
     router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
   }
 
   function handleChapterSelect(chapterId: string) {
     setSelectedChapterId(chapterId);
-    if (!focusedAnnotationIdFromUrl) return;
+    if (!focusedAnnotationIdFromUrl && !focusedGeneralCommentIdFromUrl) return;
 
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("annotationId");
+    nextSearchParams.delete("generalCommentId");
     nextSearchParams.set("chapterId", chapterId);
     router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
   }
@@ -213,6 +232,15 @@ export function ManuscriptWorkspace() {
 
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("annotationId");
+    const queryString = nextSearchParams.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+  }
+
+  function handleGeneralCommentFocusDismiss() {
+    if (!focusedGeneralCommentIdFromUrl) return;
+
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("generalCommentId");
     const queryString = nextSearchParams.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   }
@@ -270,7 +298,7 @@ export function ManuscriptWorkspace() {
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-medium">{chapter.title}</span>
                   <span className="mt-1 block font-mono text-[9px] text-muted-foreground">
-                    {wordCountFormat.format(chapter.wordCount)} words · <MessageSquareText className="inline h-2.5 w-2.5" /> {chapter.annotations.length}
+                    {wordCountFormat.format(chapter.wordCount)} words · <MessageSquareText className="inline h-2.5 w-2.5" /> {chapter.annotations.length + chapter.generalComments.length}
                   </span>
                 </span>
                 <Badge
@@ -296,18 +324,25 @@ export function ManuscriptWorkspace() {
             </span>
             <Heading level={1} size="small" className="truncate">{selectedChapter.title}</Heading>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="mr-2 font-mono text-[9px] text-muted-foreground">
+          <div className="grid w-full grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+            <span className="col-span-2 font-mono text-[9px] text-muted-foreground sm:mr-2 sm:col-auto">
               {wordCountFormat.format(selectedChapter.wordCount)} words
             </span>
-            <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
+            <div className="min-w-0 [&_button]:w-full sm:[&_button]:w-auto">
+              <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
+            </div>
             <AnnotationSheet
               annotations={selectedChapter.annotations}
               chapterPosition={selectedChapter.position}
               focusedAnnotationId={focusedAnnotationId}
-              isUpdating={updateAnnotationSeen.isPending}
+              focusedGeneralCommentId={focusedGeneralCommentId}
+              generalComments={selectedChapter.generalComments}
+              isUpdating={updateAnnotationSeen.isPending || updateGeneralCommentSeen.isPending}
               onFocusedAnnotationDismiss={handleAnnotationFocusDismiss}
+              onFocusedGeneralCommentDismiss={handleGeneralCommentFocusDismiss}
+              onToggleGeneralCommentSeen={handleGeneralCommentSeen}
               onToggleSeen={handleAnnotationSeen}
+              triggerClassName="w-full sm:w-auto"
             />
             <Select
               value={selectedChapter.editorialStatus}
@@ -316,7 +351,7 @@ export function ManuscriptWorkspace() {
             >
               <SelectTrigger
                 className={cn(
-                  "h-9 w-[138px] rounded-none border-foreground/15 font-mono text-[10px]",
+                  "col-span-2 h-9 w-full rounded-none border-foreground/15 font-mono text-[10px] sm:w-[138px]",
                   statusStyles[selectedChapter.editorialStatus],
                 )}
               >
@@ -333,9 +368,9 @@ export function ManuscriptWorkspace() {
           </div>
         </div>
 
-        {(updateChapterStatus.isError || updateAnnotationSeen.isError) ? (
+        {(updateChapterStatus.isError || updateAnnotationSeen.isError || updateGeneralCommentSeen.isError) ? (
           <p className="border-b border-destructive/20 bg-destructive/5 px-5 py-3 text-xs text-destructive">
-            {(updateChapterStatus.error ?? updateAnnotationSeen.error)?.message}
+            {(updateChapterStatus.error ?? updateAnnotationSeen.error ?? updateGeneralCommentSeen.error)?.message}
           </p>
         ) : null}
 
@@ -447,43 +482,128 @@ function AnnotationSheet({
   annotations,
   chapterPosition,
   focusedAnnotationId,
+  focusedGeneralCommentId,
+  generalComments,
   isUpdating,
   onFocusedAnnotationDismiss,
+  onFocusedGeneralCommentDismiss,
+  onToggleGeneralCommentSeen,
   onToggleSeen,
+  triggerClassName,
 }: {
   annotations: ManuscriptWorkspaceAnnotation[];
   chapterPosition: number;
   focusedAnnotationId: string | null;
+  focusedGeneralCommentId: string | null;
+  generalComments: ManuscriptWorkspaceGeneralComment[];
   isUpdating: boolean;
   onFocusedAnnotationDismiss: () => void;
+  onFocusedGeneralCommentDismiss: () => void;
+  onToggleGeneralCommentSeen: (generalComment: ManuscriptWorkspaceGeneralComment) => void;
   onToggleSeen: (annotation: ManuscriptWorkspaceAnnotation) => void;
+  triggerClassName?: string;
 }) {
-  const seenCount = annotations.filter((annotation) => annotation.isSeenByAuthor).length;
+  const feedbackCount = annotations.length + generalComments.length;
+  const seenCount = annotations.filter((annotation) => annotation.isSeenByAuthor).length
+    + generalComments.filter((generalComment) => generalComment.isSeenByAuthor).length;
   const focusedAnnotation = annotations.find((annotation) => annotation.id === focusedAnnotationId) ?? null;
+  const focusedGeneralComment = generalComments.find(
+    (generalComment) => generalComment.id === focusedGeneralCommentId,
+  ) ?? null;
   const [isOpen, setIsOpen] = useState(false);
 
   function handleOpenChange(open: boolean) {
     if (!open && focusedAnnotation) onFocusedAnnotationDismiss();
+    if (!open && focusedGeneralComment) onFocusedGeneralCommentDismiss();
     setIsOpen(open);
   }
 
   return (
-    <Sheet open={isOpen || Boolean(focusedAnnotation)} onOpenChange={handleOpenChange}>
+    <Sheet open={isOpen || Boolean(focusedAnnotation) || Boolean(focusedGeneralComment)} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className={triggerClassName}>
           <MessageSquareText className="h-3.5 w-3.5" />
-          {annotations.length} annotations
+          {feedbackCount} feedback
           {seenCount > 0 ? <span className="text-success">· {seenCount} read</span> : null}
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle className="text-[28px] font-medium">Chapter annotations</SheetTitle>
+          <SheetTitle className="text-[28px] font-medium">Chapter feedback</SheetTitle>
           <SheetDescription>
-            Comments tied to passages in chapter {chapterPosition}.
+            General annotations and passage annotations for chapter {chapterPosition}.
           </SheetDescription>
         </SheetHeader>
         <div className="mt-6 space-y-3">
+          {generalComments.length > 0 ? (
+            <>
+              <p className="pt-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+                General annotations
+              </p>
+              {generalComments.map((generalComment) => {
+                const isSeen = generalComment.isSeenByAuthor;
+
+                return (
+                  <article
+                    key={generalComment.id}
+                    ref={generalComment.id === focusedGeneralCommentId ? (node) => {
+                      if (!node) return;
+                      requestAnimationFrame(() => node.scrollIntoView({ behavior: "smooth", block: "center" }));
+                    } : undefined}
+                    className={cn(
+                      "border border-foreground/10 p-4",
+                      isSeen && "bg-muted/55 text-muted-foreground",
+                      generalComment.id === focusedGeneralCommentId && "ring-2 ring-primary ring-offset-2",
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "grid h-8 w-8 place-items-center rounded-full bg-primary text-xs text-primary-foreground",
+                          isSeen && "grayscale",
+                        )}
+                      >
+                        {getInitials(generalComment.readerName)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium">{generalComment.readerName}</p>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "mt-1 rounded-none font-mono text-[9px] uppercase",
+                            isSeen && "grayscale opacity-60",
+                          )}
+                        >
+                          General annotation
+                        </Badge>
+                      </div>
+                      <span className="font-mono text-[9px] text-muted-foreground">
+                        {annotationDateFormat.format(new Date(generalComment.createdAt))}
+                      </span>
+                    </div>
+                    <p className={cn("mt-4 whitespace-pre-wrap text-sm leading-6", isSeen && "line-through")}>
+                      {generalComment.comment}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isUpdating}
+                      className={cn("mt-3 px-0", isSeen && "text-success")}
+                      onClick={() => onToggleGeneralCommentSeen(generalComment)}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      {isSeen ? "Read — undo" : "Mark as read"}
+                    </Button>
+                  </article>
+                );
+              })}
+            </>
+          ) : null}
+          {annotations.length > 0 && generalComments.length > 0 ? (
+            <p className="pt-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+              Passage annotations
+            </p>
+          ) : null}
           {annotations.length > 0 ? annotations.map((annotation) => {
             const isSeen = annotation.isSeenByAuthor;
 
@@ -548,11 +668,12 @@ function AnnotationSheet({
                 </Button>
               </article>
             );
-          }) : (
+          }) : null}
+          {feedbackCount === 0 ? (
             <div className="border border-dashed border-foreground/15 p-8 text-center text-sm text-muted-foreground">
-              No annotations in this chapter yet.
+              No feedback in this chapter yet.
             </div>
-          )}
+          ) : null}
         </div>
       </SheetContent>
     </Sheet>

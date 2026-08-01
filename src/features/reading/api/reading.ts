@@ -56,6 +56,11 @@ export type ReaderAnnotationDraft = {
   selectionStart: number;
 };
 
+export type ReaderChapterGeneralComment = {
+  comment: string;
+  id: string;
+};
+
 export type ReaderSurveyOption = {
   id: string;
   label: string;
@@ -273,6 +278,7 @@ export type ReaderManuscript = ReaderManuscriptListItem & {
       id: string;
       position: number;
     }>;
+    generalComment: ReaderChapterGeneralComment | null;
     id: string;
     position: number;
     title: string;
@@ -333,6 +339,16 @@ export async function getReaderManuscript(
 
   if (annotationsError) throw new Error(annotationsError.message);
 
+  const { data: generalCommentRows, error: generalCommentsError } = chapterIds.length > 0
+    ? await supabase
+      .from("chapter_general_comments")
+      .select("id, chapter_id, comment")
+      .eq("reader_assignment_id", manuscript.assignmentId)
+      .in("chapter_id", chapterIds)
+    : { data: [], error: null };
+
+  if (generalCommentsError) throw new Error(generalCommentsError.message);
+
   const annotationTagIds = [...new Set((annotationRows ?? []).map((annotation) => annotation.tag_id))];
   const { data: annotationTagRows, error: annotationTagsError } = annotationTagIds.length > 0
     ? await supabase
@@ -347,6 +363,14 @@ export async function getReaderManuscript(
     (annotationTagRows ?? []).map((tag) => [tag.id, tag]),
   );
   const annotationsByChapter = new Map<string, ReaderAnnotation[]>();
+  const generalCommentsByChapter = new Map<string, ReaderChapterGeneralComment>();
+
+  for (const generalComment of generalCommentRows ?? []) {
+    generalCommentsByChapter.set(generalComment.chapter_id, {
+      comment: generalComment.comment,
+      id: generalComment.id,
+    });
+  }
 
   for (const annotation of annotationRows ?? []) {
     const tag = annotationTagsById.get(annotation.tag_id);
@@ -396,6 +420,7 @@ export async function getReaderManuscript(
           ...block,
           annotations: getBlockAnnotationRanges(chapterBlocks, block, chapterAnnotations),
         })),
+        generalComment: generalCommentsByChapter.get(chapter.id) ?? null,
         id: chapter.id,
         position: chapter.position,
         title: chapter.title,
@@ -932,4 +957,53 @@ export async function deleteReaderAnnotation(annotationId: string) {
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error("This annotation is no longer available.");
+}
+
+export type UpsertReaderChapterGeneralCommentInput = {
+  chapterId: string;
+  comment: string;
+  readerAssignmentId: string;
+};
+
+export async function upsertReaderChapterGeneralComment({
+  chapterId,
+  comment,
+  readerAssignmentId,
+}: UpsertReaderChapterGeneralCommentInput): Promise<ReaderChapterGeneralComment> {
+  const normalizedComment = comment.trim();
+  if (!normalizedComment || normalizedComment.length > 4000) {
+    throw new Error("A general annotation must contain between 1 and 4,000 characters.");
+  }
+
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("chapter_general_comments")
+    .upsert(
+      {
+        chapter_id: chapterId,
+        comment: normalizedComment,
+        reader_assignment_id: readerAssignmentId,
+      },
+      { onConflict: "reader_assignment_id,chapter_id" },
+    )
+    .select("id, comment")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("This general annotation is no longer available.");
+
+  return data;
+}
+
+export async function deleteReaderChapterGeneralComment(generalCommentId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
+    .from("chapter_general_comments")
+    .delete()
+    .eq("id", generalCommentId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("This general annotation is no longer available.");
 }

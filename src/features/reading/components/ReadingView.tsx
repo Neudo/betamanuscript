@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, CircleHelp, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, CircleHelp, MessageSquare, MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
@@ -28,6 +28,7 @@ import type {
 } from "@/features/reading/api/reading";
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
 import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnotationGuide";
+import { ReaderChapterGeneralCommentSheet } from "@/features/reading/components/ReaderChapterGeneralCommentSheet";
 import { ReaderEndScreen } from "@/features/reading/components/ReaderEndScreen";
 import { ReaderSurveyDialog } from "@/features/reading/components/ReaderSurveyDialog";
 import {
@@ -74,6 +75,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const submitSurveyMutation = useSubmitReaderSurvey();
   const [chapterIndex, setChapterIndex] = useState<number | null>(null);
   const [annotationPanel, setAnnotationPanel] = useState<AnnotationPanel | null>(null);
+  const [isGeneralCommentOpen, setIsGeneralCommentOpen] = useState(false);
   const [isAnnotationGuideDismissed, setIsAnnotationGuideDismissed] = useState(false);
   const [isAnnotationGuideManuallyOpen, setIsAnnotationGuideManuallyOpen] = useState(false);
   const hasSeenAnnotationGuide = useSyncExternalStore(
@@ -240,6 +242,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
 
   function changeChapter(nextChapterIndex: number) {
     setAnnotationPanel(null);
+    setIsGeneralCommentOpen(false);
     setChapterIndex(nextChapterIndex);
   }
 
@@ -247,6 +250,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     if (nextVersionId === manuscriptVersionId) return;
 
     setAnnotationPanel(null);
+    setIsGeneralCommentOpen(false);
     setChapterIndex(null);
     setIsSurveyPromptOpen(false);
     setSurveyQueue([]);
@@ -454,7 +458,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
             router.replace(`${readerUrl}&reread=1`, { scroll: false });
           }}
         />
-      ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 sm:px-10 sm:py-16" onMouseUp={manuscript.feedbackEnabled ? handleTextSelection : undefined}>
+      ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 pb-28 sm:px-10 sm:py-16 sm:pb-32" onMouseUp={manuscript.feedbackEnabled ? handleTextSelection : undefined}>
         <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground">Chapter {chapter.position}</p>
         <Heading level={1} size="section" className="mt-4">{chapter.title}</Heading>
         {!manuscript.feedbackEnabled ? (
@@ -496,6 +500,18 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
       </article>
       }
 
+      {manuscript.feedbackEnabled && !showEndScreen ? (
+        <Button
+          type="button"
+          size="sm"
+          className="fixed bottom-5 right-5 z-30 h-11 rounded-none px-4 sm:bottom-7 sm:right-7"
+          onClick={() => setIsGeneralCommentOpen(true)}
+        >
+          <MessageSquarePlus className="h-4 w-4" />
+          {chapter.generalComment ? "Edit general annotation" : "General annotation"}
+        </Button>
+      ) : null}
+
       {annotationPanel ? (
         <ReaderAnnotationSheet
           key={annotationPanel.kind === "edit" ? annotationPanel.annotation.id : `${annotationPanel.draft.chapterBlockId}:${annotationPanel.draft.selectionStart}:${annotationPanel.draft.selectionEndChapterBlockId ?? ""}:${annotationPanel.draft.selectionEndOffset ?? annotationPanel.draft.selectionEnd}`}
@@ -503,6 +519,18 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
           draft={annotationPanel.kind === "create" ? annotationPanel.draft : undefined}
           readerAssignmentId={readerAssignmentId}
           onClose={() => setAnnotationPanel(null)}
+        />
+      ) : null}
+
+      {isGeneralCommentOpen ? (
+        <ReaderChapterGeneralCommentSheet
+          key={chapter.id}
+          chapterId={chapter.id}
+          chapterPosition={chapter.position}
+          chapterTitle={chapter.title}
+          generalComment={chapter.generalComment}
+          readerAssignmentId={readerAssignmentId}
+          onClose={() => setIsGeneralCommentOpen(false)}
         />
       ) : null}
 

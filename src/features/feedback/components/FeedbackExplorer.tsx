@@ -104,7 +104,7 @@ function FeedbackExplorerContent({
   const isLoading = feedbackQuery.isPending || isResolvingManuscript;
   const queryError = feedbackQuery.error ?? manuscriptError;
   const emptyMessage = manuscriptId
-    ? "No annotations on this manuscript yet."
+    ? "No feedback on this manuscript yet."
     : "Create a manuscript to collect reader feedback.";
 
   return (
@@ -173,14 +173,14 @@ function FeedbackExplorerContent({
         <div className="flex flex-col gap-3 border-b border-foreground/10 px-5 py-4 sm:flex-row sm:items-center sm:px-7">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search annotations…" className="h-10 border-foreground/15 bg-card pl-9 text-xs" />
+            <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search feedback…" className="h-10 border-foreground/15 bg-card pl-9 text-xs" />
           </div>
           <TabsList className="h-10 shrink-0 rounded-none bg-transparent p-0">
             <TabsTrigger value="recent" className="h-10 rounded-none border border-foreground/15 px-5 font-mono text-[10px] data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background">Most recent</TabsTrigger>
             <TabsTrigger value="chapter" className="h-10 rounded-none border border-l-0 border-foreground/15 px-5 font-mono text-[10px] data-[state=active]:border-foreground data-[state=active]:bg-foreground data-[state=active]:text-background">By chapter</TabsTrigger>
           </TabsList>
           <span className="w-28 shrink-0 text-right font-mono text-[10px] text-muted-foreground">
-            {isLoading ? "Loading…" : `${filtered.length} annotations`}
+            {isLoading ? "Loading…" : `${filtered.length} feedback`}
           </span>
         </div>
 
@@ -192,7 +192,7 @@ function FeedbackExplorerContent({
             manuscriptVersionId={manuscriptVersionId}
             error={queryError}
             emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
-              ? "No annotations match these filters."
+              ? "No feedback matches these filters."
               : emptyMessage}
           />
         </TabsContent>
@@ -206,7 +206,7 @@ function FeedbackExplorerContent({
               manuscriptVersionId={manuscriptVersionId}
               error={queryError}
               emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
-                ? "No annotations match these filters."
+                ? "No feedback matches these filters."
                 : emptyMessage}
             />
           ) : (
@@ -362,7 +362,9 @@ function AnnotationRow({
   manuscriptVersionId: string | null;
 }) {
   const href = manuscriptId ? `/dashboard/manuscript?${new URLSearchParams({
-    annotationId: annotation.id,
+    ...(annotation.kind === "annotation"
+      ? { annotationId: annotation.id }
+      : { generalCommentId: annotation.id }),
     chapterId: annotation.chapter.id,
     manuscriptId,
     ...(manuscriptVersionId ? { versionId: manuscriptVersionId } : {}),
@@ -378,14 +380,16 @@ function AnnotationRow({
           <span className="font-mono text-[9px] text-muted-foreground">Ch {annotation.chapter.position} — {annotation.chapter.title}</span>
           <span className="ml-auto font-mono text-[9px] text-muted-foreground">{formatAnnotationDate(annotation.createdAt)}</span>
           {href ? (
-            <Button asChild variant="ghost" size="icon-sm" className="-mr-2" title="Open passage and comment">
+            <Button asChild variant="ghost" size="icon-sm" className="-mr-2" title="Open feedback in manuscript">
               <Link href={href} aria-label={`Open feedback from ${annotation.reader.name} in the manuscript`}>
                 <Eye className="h-3.5 w-3.5" />
               </Link>
             </Button>
           ) : null}
         </div>
-        <blockquote className="whitespace-pre-wrap border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
+        {annotation.quote ? (
+          <blockquote className="whitespace-pre-wrap border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
+        ) : null}
         {annotation.comment ? <p className="mt-2.5 text-sm leading-6 text-foreground/85">{annotation.comment}</p> : null}
       </div>
     </article>

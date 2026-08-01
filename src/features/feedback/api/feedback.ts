@@ -22,6 +22,14 @@ type AnnotationRow = {
   tag_id: string;
 };
 
+type GeneralCommentRow = {
+  chapter_id: string;
+  comment: string;
+  created_at: string;
+  id: string;
+  reader_assignment_id: string;
+};
+
 type ReaderAssignmentRow = {
   id: string;
   reader_display_name: string | null;
@@ -36,6 +44,12 @@ type AnnotationTagRow = {
 };
 
 const readerColors = ["#7B1D1D", "#3B4A8A", "#1E5C2E", "#7A4800", "#1A5C50"];
+const generalCommentTag = {
+  color: "#6B7280",
+  label: "General annotation",
+  slug: "general-comment",
+  sortOrder: 0,
+} as const;
 
 /**
  * Reads only the annotations attached to one selected draft of a manuscript.
@@ -75,19 +89,31 @@ export async function getManuscriptFeedback(
   const chapterIds = chapters.map((chapter) => chapter.id);
   if (chapterIds.length === 0) return [];
 
-  const { data: annotationRows, error: annotationError } = await supabase
-    .from("annotations")
-    .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, comment, created_at")
-    .in("chapter_id", chapterIds)
-    .order("created_at", { ascending: false });
+  const [annotationsResult, generalCommentsResult] = await Promise.all([
+    supabase
+      .from("annotations")
+      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, comment, created_at")
+      .in("chapter_id", chapterIds)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("chapter_general_comments")
+      .select("id, chapter_id, reader_assignment_id, comment, created_at")
+      .in("chapter_id", chapterIds)
+      .order("created_at", { ascending: false }),
+  ]);
 
-  if (annotationError) throw new Error(annotationError.message);
+  if (annotationsResult.error) throw new Error(annotationsResult.error.message);
+  if (generalCommentsResult.error) throw new Error(generalCommentsResult.error.message);
 
-  const annotations = (annotationRows ?? []) as AnnotationRow[];
-  if (annotations.length === 0) return [];
+  const annotations = (annotationsResult.data ?? []) as AnnotationRow[];
+  const generalComments = (generalCommentsResult.data ?? []) as GeneralCommentRow[];
+  if (annotations.length === 0 && generalComments.length === 0) return [];
 
   const readerAssignmentIds = [...new Set(
-    annotations.map((annotation) => annotation.reader_assignment_id),
+    [
+      ...annotations.map((annotation) => annotation.reader_assignment_id),
+      ...generalComments.map((generalComment) => generalComment.reader_assignment_id),
+    ],
   )];
   const tagIds = [...new Set(annotations.map((annotation) => annotation.tag_id))];
 
@@ -96,10 +122,12 @@ export async function getManuscriptFeedback(
       .from("reader_assignments")
       .select("id, reader_display_name, reader_email")
       .in("id", readerAssignmentIds),
-    supabase
-      .from("manuscript_annotation_tags")
-      .select("id, slug, label, color, sort_order")
-      .in("id", tagIds),
+    tagIds.length > 0
+      ? supabase
+        .from("manuscript_annotation_tags")
+        .select("id, slug, label, color, sort_order")
+        .in("id", tagIds)
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (readerAssignmentsResult.error) {
@@ -123,7 +151,7 @@ export async function getManuscriptFeedback(
     ]),
   );
 
-  return annotations.flatMap((annotation) => {
+  const passageAnnotations = annotations.flatMap((annotation) => {
     const chapter = chaptersById.get(annotation.chapter_id);
     if (!chapter) return [];
 
@@ -139,6 +167,7 @@ export async function getManuscriptFeedback(
       comment: annotation.comment,
       createdAt: annotation.created_at,
       id: annotation.id,
+      kind: "annotation",
       quote: annotation.quote,
       reader: {
         color: colorForReader(annotation.reader_assignment_id),
@@ -154,6 +183,36 @@ export async function getManuscriptFeedback(
       },
     } satisfies FeedbackAnnotation];
   });
+
+  const chapterGeneralComments = generalComments.flatMap((generalComment) => {
+    const chapter = chaptersById.get(generalComment.chapter_id);
+    if (!chapter) return [];
+
+    const assignment = readerAssignmentsById.get(generalComment.reader_assignment_id);
+    const readerName = assignment?.reader_display_name
+      ?? assignment?.reader_email
+      ?? "Reader";
+
+    return [{
+      chapter,
+      chapterBlockId: null,
+      comment: generalComment.comment,
+      createdAt: generalComment.created_at,
+      id: generalComment.id,
+      kind: "general-comment",
+      quote: null,
+      reader: {
+        color: colorForReader(generalComment.reader_assignment_id),
+        id: generalComment.reader_assignment_id,
+        initials: initialsFor(readerName),
+        name: readerName,
+      },
+      tag: generalCommentTag,
+    } satisfies FeedbackAnnotation];
+  });
+
+  return [...passageAnnotations, ...chapterGeneralComments]
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
 
 function initialsFor(name: string): string {

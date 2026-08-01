@@ -95,10 +95,20 @@ export type ManuscriptWorkspaceAnnotation = {
   };
 };
 
+export type ManuscriptWorkspaceGeneralComment = {
+  chapterId: string;
+  comment: string;
+  createdAt: string;
+  id: string;
+  isSeenByAuthor: boolean;
+  readerName: string;
+};
+
 export type ManuscriptWorkspaceChapter = {
   annotations: ManuscriptWorkspaceAnnotation[];
   blocks: ManuscriptWorkspaceBlock[];
   editorialStatus: ChapterEditorialStatus;
+  generalComments: ManuscriptWorkspaceGeneralComment[];
   id: string;
   position: number;
   title: string;

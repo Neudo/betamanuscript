@@ -15,6 +15,7 @@ import type {
   ManuscriptWorkspaceAnnotation,
   ManuscriptWorkspaceBlock,
   ManuscriptWorkspaceData,
+  ManuscriptWorkspaceGeneralComment,
   ManuscriptWorkspaceVersion,
 } from "@/features/manuscript/types";
 
@@ -77,6 +78,15 @@ type AnnotationRow = {
   selection_end_offset: number | null;
   selection_start: number;
   tag_id: string;
+};
+
+type GeneralCommentRow = {
+  author_seen_at: string | null;
+  chapter_id: string;
+  comment: string;
+  created_at: string;
+  id: string;
+  reader_assignment_id: string;
 };
 
 type ReaderAssignmentRow = {
@@ -256,7 +266,7 @@ export async function getManuscript(
     };
   }
 
-  const [blocksResult, annotationsResult] = await Promise.all([
+  const [blocksResult, annotationsResult, generalCommentsResult] = await Promise.all([
     supabase
       .from("chapter_blocks")
       .select("id, chapter_id, position, kind, content")
@@ -267,14 +277,24 @@ export async function getManuscript(
       .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, selection_start, selection_end, selection_end_chapter_block_id, selection_end_offset, comment, created_at, author_seen_at")
       .in("chapter_id", chapterIds)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("chapter_general_comments")
+      .select("id, chapter_id, reader_assignment_id, comment, created_at, author_seen_at")
+      .in("chapter_id", chapterIds)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (blocksResult.error) throw new Error(blocksResult.error.message);
   if (annotationsResult.error) throw new Error(annotationsResult.error.message);
+  if (generalCommentsResult.error) throw new Error(generalCommentsResult.error.message);
 
   const blocks = (blocksResult.data ?? []) as ChapterBlockRow[];
   const annotations = (annotationsResult.data ?? []) as AnnotationRow[];
-  const readerAssignmentIds = [...new Set(annotations.map((annotation) => annotation.reader_assignment_id))];
+  const generalComments = (generalCommentsResult.data ?? []) as GeneralCommentRow[];
+  const readerAssignmentIds = [...new Set([
+    ...annotations.map((annotation) => annotation.reader_assignment_id),
+    ...generalComments.map((generalComment) => generalComment.reader_assignment_id),
+  ])];
   const tagIds = [...new Set(annotations.map((annotation) => annotation.tag_id))];
 
   const [readerAssignmentsResult, annotationTagsResult] = await Promise.all([
@@ -310,6 +330,7 @@ export async function getManuscript(
   );
   const blocksByChapterId = new Map<string, ManuscriptWorkspaceBlock[]>();
   const annotationsByChapterId = new Map<string, ManuscriptWorkspaceAnnotation[]>();
+  const generalCommentsByChapterId = new Map<string, ManuscriptWorkspaceGeneralComment[]>();
 
   for (const block of blocks) {
     const chapterBlocks = blocksByChapterId.get(block.chapter_id) ?? [];
@@ -348,6 +369,20 @@ export async function getManuscript(
     annotationsByChapterId.set(annotation.chapter_id, chapterAnnotations);
   }
 
+  for (const generalComment of generalComments) {
+    const assignment = readerAssignmentsById.get(generalComment.reader_assignment_id);
+    const chapterGeneralComments = generalCommentsByChapterId.get(generalComment.chapter_id) ?? [];
+    chapterGeneralComments.push({
+      chapterId: generalComment.chapter_id,
+      comment: generalComment.comment,
+      createdAt: generalComment.created_at,
+      id: generalComment.id,
+      isSeenByAuthor: generalComment.author_seen_at !== null,
+      readerName: assignment?.reader_display_name ?? assignment?.reader_email ?? "Reader",
+    });
+    generalCommentsByChapterId.set(generalComment.chapter_id, chapterGeneralComments);
+  }
+
   const workspaceChapters = chapters.map((chapter) => {
     const chapterBlocks = blocksByChapterId.get(chapter.id) ?? [];
 
@@ -355,6 +390,7 @@ export async function getManuscript(
       annotations: annotationsByChapterId.get(chapter.id) ?? [],
       blocks: chapterBlocks,
       editorialStatus: chapter.editorial_status,
+      generalComments: generalCommentsByChapterId.get(chapter.id) ?? [],
       id: chapter.id,
       position: chapter.position,
       title: chapter.title,
@@ -607,6 +643,22 @@ export async function updateAnnotationSeenStatus({
     .from("annotations")
     .update({ author_seen_at: isSeen ? new Date().toISOString() : null })
     .eq("id", annotationId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function updateGeneralCommentSeenStatus({
+  generalCommentId,
+  isSeen,
+}: {
+  generalCommentId: string;
+  isSeen: boolean;
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("chapter_general_comments")
+    .update({ author_seen_at: isSeen ? new Date().toISOString() : null })
+    .eq("id", generalCommentId);
 
   if (error) throw new Error(error.message);
 }

@@ -18,6 +18,7 @@ import {
   updateManuscriptSettings,
   updateAnnotationSeenStatus,
   updateChapterEditorialStatus,
+  updateGeneralCommentSeenStatus,
   updateManuscriptDraftVersionTitle,
   type CreateManuscriptChapterInput,
   type UpdateManuscriptChapterInput,
@@ -275,6 +276,64 @@ export function useUpdateAnnotationSeenMutation() {
                 annotation.id === variables.annotationId
                   ? { ...annotation, isSeenByAuthor: variables.isSeen }
                   : annotation,
+              ),
+            })),
+          }
+          : current,
+      );
+
+      return { previous };
+    },
+    onError: (_error, variables, context) => {
+      queryClient.setQueryData(
+        manuscriptKeys.detail(variables.manuscriptId, variables.manuscriptVersionId),
+        context?.previous,
+      );
+    },
+    onSettled: async (_data, _error, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: manuscriptKeys.detail(variables.manuscriptId),
+      });
+    },
+  });
+}
+
+type UpdateGeneralCommentSeenVariables = {
+  generalCommentId: string;
+  isSeen: boolean;
+  manuscriptId: string;
+  manuscriptVersionId: string;
+};
+
+export function useUpdateGeneralCommentSeenMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    Error,
+    UpdateGeneralCommentSeenVariables,
+    MutationContext
+  >({
+    mutationFn: ({ generalCommentId, isSeen }) =>
+      updateGeneralCommentSeenStatus({ generalCommentId, isSeen }),
+    onMutate: async (variables) => {
+      const queryKey = manuscriptKeys.detail(
+        variables.manuscriptId,
+        variables.manuscriptVersionId,
+      );
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ManuscriptWorkspaceData>(queryKey);
+
+      queryClient.setQueryData<ManuscriptWorkspaceData>(queryKey, (current) =>
+        current
+          ? {
+            ...current,
+            chapters: current.chapters.map((chapter) => ({
+              ...chapter,
+              generalComments: chapter.generalComments.map((generalComment) =>
+                generalComment.id === variables.generalCommentId
+                  ? { ...generalComment, isSeenByAuthor: variables.isSeen }
+                  : generalComment,
               ),
             })),
           }

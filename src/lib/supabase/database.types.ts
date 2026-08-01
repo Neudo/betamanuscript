@@ -248,6 +248,51 @@ export type Database = {
           },
         ]
       }
+      chapter_general_comments: {
+        Row: {
+          author_seen_at: string | null
+          chapter_id: string
+          comment: string
+          created_at: string
+          id: string
+          reader_assignment_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_seen_at?: string | null
+          chapter_id: string
+          comment: string
+          created_at?: string
+          id?: string
+          reader_assignment_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_seen_at?: string | null
+          chapter_id?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          reader_assignment_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_general_comments_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "manuscript_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_general_comments_reader_assignment_id_fkey"
+            columns: ["reader_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "reader_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chapter_reading_progress: {
         Row: {
           chapter_id: string
