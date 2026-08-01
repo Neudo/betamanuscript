@@ -1,7 +1,7 @@
 import { ProductMockup, TAGS, TagBadge, type TagKey } from "../../../features/product-preview";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
-import { BODY, CARD, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF } from "../../../shared/config/design-tokens";
+import { BODY, CARD, INK, INVERSE_FOREGROUND, MONO, MUTED, OXBLOOD, SANS, SERIF } from "../../../shared/config/design-tokens";
 import Link from "next/link";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -11,14 +11,11 @@ export function ProductPreviewSection() {
       {/* ── Product preview ───────────────────────────────────────────────────── */}
     <section
       className="relative z-10 border-t"
-      style={{ borderColor: "rgba(28,24,18,0.1)" }}
+      style={{ borderColor: "hsl(var(--ink) / 0.1)" }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
           <SectionLabel>Product preview</SectionLabel>
-          <p className="mt-2 text-[10px]" style={{ color: MUTED, fontFamily: MONO }}>
-            Fictional manuscript and reader notes, shown to illustrate the workflow.
-          </p>
         </Reveal>
         <Reveal delay={0.08} className="grid md:grid-cols-[280px_1fr] gap-12 items-start mb-8">
           <div>
@@ -37,7 +34,7 @@ export function ProductPreviewSection() {
               <br />
               <em>Clearer revisions.</em>
             </Heading>
-            <p className="text-sm leading-relaxed mb-5" style={{ color: "#6B6456" }}>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: "hsl(var(--body))" }}>
               Readers annotate directly in the text. You see which passages repeated across
               readers, what landed, and what needs work — all in one place.
             </p>
@@ -59,7 +56,7 @@ export function ProductPreviewSection() {
             {/* Annotation examples — styled as real marked-up text */}
             <Lift
               className="p-6 border"
-              style={{ borderColor: "rgba(28,24,18,0.12)", background: CARD }}
+              style={{ borderColor: "hsl(var(--ink) / 0.12)", background: CARD }}
             >
               <div className="text-[9px] uppercase tracking-widest mb-4" style={{ fontFamily: MONO, color: MUTED }}>
                 What readers see when they read
@@ -93,7 +90,7 @@ export function ProductPreviewSection() {
             {/* Revision priority summary */}
             <Lift
               className="p-6 border"
-              style={{ borderColor: "rgba(28,24,18,0.12)", background: CARD }}
+              style={{ borderColor: "hsl(var(--ink) / 0.12)", background: CARD }}
             >
               <div className="text-[9px] uppercase tracking-widest mb-4" style={{ fontFamily: MONO, color: MUTED }}>
                 What you see in the revision dashboard
@@ -112,7 +109,7 @@ export function ProductPreviewSection() {
                       </div>
                       <span className="text-[10px] font-medium" style={{ fontFamily: MONO, color: INK }}>{row.count}</span>
                     </div>
-                    <div className="h-0.5" style={{ background: "rgba(28,24,18,0.08)" }}>
+                    <div className="h-0.5" style={{ background: "hsl(var(--ink) / 0.08)" }}>
                       <div style={{ width: `${(row.count / 18) * 100}%`, height: "100%", background: TAGS[row.tag].bar, opacity: 0.65 }} />
                     </div>
                   </div>
@@ -123,11 +120,11 @@ export function ProductPreviewSection() {
         </Reveal>
         <ProductMockup />
         <Reveal delay={0.16} className="mt-10">
-          <div className="flex flex-col items-center border-t pt-8 text-center" style={{ borderColor: "rgba(28,24,18,0.12)" }}>
+          <div className="flex flex-col items-center border-t pt-8 text-center" style={{ borderColor: "hsl(var(--ink) / 0.12)" }}>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b1a1a]"
-              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER, fontFamily: SANS }}
+              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND, fontFamily: SANS }}
             >
               Get started for free
             </Link>

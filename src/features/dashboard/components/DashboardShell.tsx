@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { PropsWithChildren, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { AuthenticatedAccount } from "@/features/account/types";
@@ -25,6 +26,7 @@ export function DashboardShell({
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
         <BrandLogo href="/dashboard" ariaLabel="BetaManuscript dashboard" imageClassName="h-7" />
         <div className="flex items-center gap-1">
+          <ThemeToggle />
           <NotificationCenter profileId={account.id} />
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>

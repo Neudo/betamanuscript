@@ -1,17 +1,9 @@
 "use client";
 
-import { BookOpenText, Feather, Repeat2 } from "lucide-react";
-
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { roleOptions, type WorkspaceRole } from "../domain/user-role";
-
-const roleIcons = {
-  writer: Feather,
-  reader: BookOpenText,
-  both: Repeat2,
-};
 
 type RolePickerProps = {
   value: WorkspaceRole;
@@ -27,8 +19,6 @@ export function RolePicker({ value, onChange, compact = false }: RolePickerProps
       className={cn("grid gap-3", compact ? "md:grid-cols-3" : "")}
     >
       {roleOptions.map((option) => {
-        const Icon = roleIcons[option.value];
-
         return (
           <Label
             key={option.value}
@@ -43,7 +33,6 @@ export function RolePicker({ value, onChange, compact = false }: RolePickerProps
               value={option.value}
               className="mt-0.5"
             />
-            <Icon className="mt-0.5 h-4 w-4 text-primary" aria-hidden="true" />
             <span className="min-w-0 space-y-1">
               <span className="block text-sm font-medium text-foreground">
                 {option.label}

@@ -44,7 +44,7 @@ export function NoManuscriptState({
     <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center bg-background px-5 py-8 sm:px-8">
       <section className="w-full max-w-3xl border border-foreground/10 bg-card" aria-labelledby="writer-onboarding-title">
         <div className="border-b border-foreground/10 bg-sidebar/55 px-5 py-6 sm:px-8 sm:py-7">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-primary">Get started</p>
+          <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">Get started</p>
           <Heading id="writer-onboarding-title" level={1} size="workspace" className="mt-2">
             Set up your first reading round
           </Heading>
@@ -100,7 +100,7 @@ export function NoManuscriptState({
         </ol>
 
         <div className="flex items-center gap-2 border-t border-foreground/10 bg-muted/[0.16] px-5 py-3 font-mono text-[9px] uppercase tracking-widest text-muted-foreground sm:px-8">
-          <BookOpen className="h-3.5 w-3.5 text-primary" />
+          <BookOpen className="h-3.5 w-3.5 text-primary-text" />
           Your manuscript remains the source of truth for every draft.
         </div>
       </section>

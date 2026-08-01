@@ -169,6 +169,12 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     .flatMap((access) => access.reader_assignments ? [access.reader_assignments] : [])
     .filter((assignment) => assignment.reader_assignment_chapter_access.length > 0);
   const versionIds = rows.flatMap((row) => row.reading_rounds?.manuscript_versions?.id ?? []);
+  const manuscriptIdByVersionId = new Map(
+    rows.flatMap((row) => {
+      const version = row.reading_rounds?.manuscript_versions;
+      return version ? [[version.id, version.manuscript_id] as const] : [];
+    }),
+  );
   const assignmentIds = rows.map((row) => row.id);
 
   const [progressResult, coversResult] = await Promise.all([
@@ -192,6 +198,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
   if (coversResult.error) throw new Error(coversResult.error.message);
 
   const coverUrlByVersionId = new Map<string, string>();
+  const fallbackCoverUrlByManuscriptId = new Map<string, string>();
   await Promise.all(
     ((coversResult.data ?? []) as ManuscriptCoverRow[]).map(async (cover) => {
       const { data } = await supabase.storage
@@ -200,6 +207,10 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
 
       if (data?.signedUrl) {
         coverUrlByVersionId.set(cover.manuscript_version_id, data.signedUrl);
+        const manuscriptId = manuscriptIdByVersionId.get(cover.manuscript_version_id);
+        if (manuscriptId && !fallbackCoverUrlByManuscriptId.has(manuscriptId)) {
+          fallbackCoverUrlByManuscriptId.set(manuscriptId, data.signedUrl);
+        }
       }
     }),
   );
@@ -253,7 +264,9 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       closingNote: readingRound.reader_closing_note,
       completedChapterIds: completedChapterIdsByAssignment.get(assignment.id) ?? [],
       completedChapters,
-      coverUrl: coverUrlByVersionId.get(version.id) ?? null,
+      coverUrl: coverUrlByVersionId.get(version.id)
+        ?? fallbackCoverUrlByManuscriptId.get(version.manuscript_id)
+        ?? null,
       deadline: readingRound.reading_deadline,
       feedbackEnabled: readingRound.status !== "archived",
       id: version.manuscript_id,

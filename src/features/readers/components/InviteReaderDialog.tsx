@@ -111,7 +111,7 @@ export function InviteReaderDialog({
         <Button
           size="sm"
           variant={triggerVariant}
-          className={triggerVariant === "outline" ? "border-primary text-primary" : undefined}
+          className={triggerVariant === "outline" ? "border-primary text-primary-text" : undefined}
         >
           <UserPlus className="h-3.5 w-3.5" />
           Invite reader
@@ -213,7 +213,7 @@ export function InviteReaderDialog({
                             setHasCustomChapterSelection(true);
                             setSelectedChapterIds(new Set(chapterIds));
                           }}
-                          className="text-[10px] font-medium text-primary underline-offset-4 hover:underline"
+                          className="text-[10px] font-medium text-primary-text underline-offset-4 hover:underline"
                         >
                           Select all
                         </button>

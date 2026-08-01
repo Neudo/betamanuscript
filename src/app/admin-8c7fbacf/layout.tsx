@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8 lg:px-12">
           <div className="flex items-center gap-3">
             <BrandLogo href={adminConsolePath} ariaLabel="BetaManuscript administration" priority imageClassName="h-7" />
-            <span className="border border-primary/35 bg-primary/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-primary">
+            <span className="border border-primary/35 bg-primary/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-primary-text">
               Admin
             </span>
           </div>

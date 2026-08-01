@@ -14,9 +14,12 @@ import {
   CARD,
   FOREST,
   INK,
+  INVERSE_BACKGROUND,
+  INVERSE_FOREGROUND,
   MONO,
   MUTED,
   OXBLOOD,
+  OXBLOOD_TEXT,
   PAPER,
   SANS,
   SERIF,
@@ -108,7 +111,7 @@ export function PricingPage() {
             </p>
 
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-              <div className="inline-flex border" style={{ borderColor: "rgba(28,24,18,0.2)" }} role="group" aria-label="Billing cycle">
+              <div className="inline-flex border" style={{ borderColor: "hsl(var(--ink) / 0.2)" }} role="group" aria-label="Billing cycle">
                 {(["monthly", "yearly"] as const).map((cycle) => {
                   const active = billingCycle === cycle;
                   return (
@@ -117,7 +120,7 @@ export function PricingPage() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setBillingCycle(cycle)}
-                      className="px-5 py-2.5 text-[10px] uppercase tracking-[0.08em] transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7b1d1d]"
+                      className="px-5 py-2.5 text-[10px] uppercase tracking-[0.08em] transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       style={{ background: active ? INK : "transparent", color: active ? PAPER : MUTED, fontFamily: MONO }}
                     >
                       {cycle}
@@ -125,7 +128,7 @@ export function PricingPage() {
                   );
                 })}
               </div>
-              <span className="border px-2.5 py-1.5 text-[9px] uppercase tracking-[0.08em]" style={{ borderColor: "rgba(44,62,45,0.16)", background: "rgba(44,62,45,0.08)", color: FOREST, fontFamily: MONO }}>
+              <span className="border px-2.5 py-1.5 text-[9px] uppercase tracking-[0.08em]" style={{ borderColor: "hsl(var(--forest) / 0.16)", background: "hsl(var(--forest) / 0.08)", color: FOREST, fontFamily: MONO }}>
                 Save {authorPricing.yearly.savingsPercentage}% yearly
               </span>
             </div>
@@ -134,14 +137,14 @@ export function PricingPage() {
 
         <section id="plans" className="scroll-mt-24 px-6 pb-24 md:px-12">
           <div className="mx-auto max-w-6xl">
-            <p className="mb-6 flex items-center gap-3 border px-5 py-3 text-left text-[11px] leading-5 sm:text-xs" style={{ borderColor: "rgba(44,62,45,0.2)", color: FOREST, fontFamily: MONO }}>
+            <p className="mb-6 flex items-center gap-3 border px-5 py-3 text-left text-[11px] leading-5 sm:text-xs" style={{ borderColor: "hsl(var(--forest) / 0.2)", color: FOREST, fontFamily: MONO }}>
               <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: FOREST }} />
               {isYearly
                 ? `Yearly plan active — ${authorPricing.yearly.monthlyEquivalent}/month equivalent, billed ${authorPricing.yearly.price}/year`
                 : `Monthly plan active — switch to yearly and save ${authorPricing.yearly.savings} each year`}
             </p>
 
-            <div className="grid border sm:grid-cols-2" style={{ borderColor: "rgba(28,24,18,0.18)" }}>
+            <div className="grid border sm:grid-cols-2" style={{ borderColor: "hsl(var(--ink) / 0.18)" }}>
               <article className="flex min-w-0 flex-col px-6 py-8 sm:px-9 sm:py-10" style={{ background: CARD }}>
                 <PlanEyebrow>Free</PlanEyebrow>
                 <div className="mt-4 flex items-end gap-2">
@@ -152,27 +155,27 @@ export function PricingPage() {
                 </p>
                 <Link
                   href="/signup"
-                  className="mt-8 inline-flex min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7b1d1d]"
-                  style={{ borderColor: "rgba(28,24,18,0.26)", color: INK }}
+                  className="mt-8 inline-flex min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  style={{ borderColor: "hsl(var(--ink) / 0.26)", color: INK }}
                 >
                   Start for free
                 </Link>
                 <FeatureList features={freeFeatures} color={INK} />
-                <p className="mt-auto border-t pt-5 text-xs leading-5" style={{ borderColor: "rgba(28,24,18,0.12)", color: MUTED }}>
+                <p className="mt-auto border-t pt-5 text-xs leading-5" style={{ borderColor: "hsl(var(--ink) / 0.12)", color: MUTED }}>
                   Free plan is permanent — we don&apos;t downgrade you after a trial period.
                 </p>
               </article>
 
-              <article className="relative flex min-w-0 flex-col border-t px-6 py-8 sm:border-l sm:border-t-0 sm:px-9 sm:py-10" style={{ borderColor: "rgba(245,240,232,0.18)", background: INK }}>
-                <span className="absolute right-0 top-0 px-3 py-1.5 text-[9px] uppercase tracking-[0.15em]" style={{ background: OXBLOOD, color: PAPER, fontFamily: MONO }}>
+              <article className="relative flex min-w-0 flex-col border-t px-6 py-8 sm:border-l sm:border-t-0 sm:px-9 sm:py-10" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", background: INVERSE_BACKGROUND }}>
+                <span className="absolute right-0 top-0 px-3 py-1.5 text-[9px] uppercase tracking-[0.15em]" style={{ background: OXBLOOD, color: INVERSE_FOREGROUND, fontFamily: MONO }}>
                   Most popular
                 </span>
-                <PlanEyebrow color={PAPER}>Author</PlanEyebrow>
+                <PlanEyebrow color={INVERSE_FOREGROUND}>Author</PlanEyebrow>
                 <div className="mt-4 flex items-end gap-2">
-                  <span className="leading-none tracking-[-0.04em]" style={{ color: PAPER, fontFamily: SERIF, fontSize: "4.5rem" }}>{authorPrice}</span>
-                  <span className="mb-1.5 text-sm" style={{ color: PAPER }}>/ month</span>
+                  <span className="leading-none tracking-[-0.04em]" style={{ color: INVERSE_FOREGROUND, fontFamily: SERIF, fontSize: "4.5rem" }}>{authorPrice}</span>
+                  <span className="mb-1.5 text-sm" style={{ color: INVERSE_FOREGROUND }}>/ month</span>
                 </div>
-                <p className="mt-2 text-[10px] uppercase tracking-[0.11em]" style={{ color: PAPER, fontFamily: MONO }}>
+                <p className="mt-2 text-[10px] uppercase tracking-[0.11em]" style={{ color: INVERSE_FOREGROUND, fontFamily: MONO }}>
                   {isYearly
                     ? `Billed ${authorPricing.yearly.price}/year · save ${authorPricing.yearly.savings} vs monthly`
                     : "Billed monthly · switch anytime"}
@@ -180,12 +183,12 @@ export function PricingPage() {
                 <Link
                   href={authorSignupHref}
                   className="mt-8 inline-flex min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f0e8]"
-                  style={{ borderColor: OXBLOOD, background: OXBLOOD, color: PAPER }}
+                  style={{ borderColor: OXBLOOD, background: OXBLOOD, color: INVERSE_FOREGROUND }}
                 >
                   {authorCta}
                 </Link>
-                <FeatureList features={authorFeatures} color={PAPER} dark />
-                <p className="mt-auto border-t pt-5 text-xs leading-5" style={{ borderColor: "rgba(245,240,232,0.18)", color: PAPER }}>
+                <FeatureList features={authorFeatures} color={INVERSE_FOREGROUND} dark />
+                <p className="mt-auto border-t pt-5 text-xs leading-5" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", color: INVERSE_FOREGROUND }}>
                   Cancel anytime from your plan settings.
                 </p>
               </article>
@@ -193,10 +196,10 @@ export function PricingPage() {
 
             <section className="mt-20">
               <div className="mb-7 flex items-center gap-3">
-                <span className="h-px w-7" style={{ background: "rgba(28,24,18,0.2)" }} />
+                <span className="h-px w-7" style={{ background: "hsl(var(--ink) / 0.2)" }} />
                 <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: MUTED, fontFamily: MONO }}>Compare plans</p>
               </div>
-              <div className="overflow-x-auto border" style={{ borderColor: "rgba(28,24,18,0.16)" }}>
+              <div className="overflow-x-auto border" style={{ borderColor: "hsl(var(--ink) / 0.16)" }}>
                 <table className="w-full min-w-[620px] border-collapse text-left">
                   <thead>
                     <tr style={{ background: WARM_BACKGROUND }}>
@@ -207,10 +210,10 @@ export function PricingPage() {
                   </thead>
                   <tbody>
                     {comparisonRows.map((row, index) => (
-                      <tr key={row.feature} style={{ background: index % 2 === 0 ? "rgba(237,232,220,0.38)" : "transparent" }}>
-                        <th scope="row" className="border-t px-5 py-4 text-sm font-normal" style={{ borderColor: "rgba(28,24,18,0.09)", color: BODY }}>{row.feature}</th>
-                        <td className="border-t px-5 py-4 text-sm" style={{ borderColor: "rgba(28,24,18,0.09)" }}><FeatureValue value={row.free} /></td>
-                        <td className="border-t px-5 py-4 text-sm" style={{ borderColor: "rgba(28,24,18,0.09)" }}><FeatureValue value={row.author} /></td>
+                      <tr key={row.feature} style={{ background: index % 2 === 0 ? "hsl(var(--warm) / 0.38)" : "transparent" }}>
+                        <th scope="row" className="border-t px-5 py-4 text-sm font-normal" style={{ borderColor: "hsl(var(--ink) / 0.09)", color: BODY }}>{row.feature}</th>
+                        <td className="border-t px-5 py-4 text-sm" style={{ borderColor: "hsl(var(--ink) / 0.09)" }}><FeatureValue value={row.free} /></td>
+                        <td className="border-t px-5 py-4 text-sm" style={{ borderColor: "hsl(var(--ink) / 0.09)" }}><FeatureValue value={row.author} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -220,11 +223,11 @@ export function PricingPage() {
           </div>
         </section>
 
-        <section className="border-y px-6 py-20 md:px-12" style={{ borderColor: "rgba(28,24,18,0.1)", background: CARD }}>
+        <section className="border-y px-6 py-20 md:px-12" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: CARD }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
               <div className="mb-7 flex items-center gap-3">
-                <span className="h-px w-7" style={{ background: "rgba(28,24,18,0.2)" }} />
+                <span className="h-px w-7" style={{ background: "hsl(var(--ink) / 0.2)" }} />
                 <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: MUTED, fontFamily: MONO }}>Frequently asked</p>
               </div>
               <Heading level={2} size="display" className="max-w-md text-balance">
@@ -232,12 +235,12 @@ export function PricingPage() {
               </Heading>
             </div>
 
-            <div className="border-t" style={{ borderColor: "rgba(28,24,18,0.16)" }}>
+            <div className="border-t" style={{ borderColor: "hsl(var(--ink) / 0.16)" }}>
               {faqs.map((faq, index) => {
                 const isOpen = openFaq === index;
                 const answerId = `pricing-faq-${index}`;
                 return (
-                  <div key={faq.question} className="border-b" style={{ borderColor: "rgba(28,24,18,0.13)" }}>
+                  <div key={faq.question} className="border-b" style={{ borderColor: "hsl(var(--ink) / 0.13)" }}>
                     <button
                       type="button"
                       className="flex w-full items-center justify-between gap-5 py-5 text-left text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#7b1d1d]"
@@ -258,7 +261,7 @@ export function PricingPage() {
                 Still have questions?{" "}
                 <SupportEmailLink
                   className="underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65"
-                  style={{ color: OXBLOOD }}
+                  style={{ color: OXBLOOD_TEXT }}
                 >
                   Email support
                 </SupportEmailLink>
@@ -276,10 +279,10 @@ export function PricingPage() {
               No credit card required to start. Cancel anytime.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href="/signup" className="inline-flex min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:opacity-92 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7b1d1d]" style={{ borderColor: OXBLOOD, background: OXBLOOD, color: PAPER }}>
+              <Link href="/signup" className="inline-flex min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:opacity-92 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ borderColor: OXBLOOD, background: OXBLOOD, color: INVERSE_FOREGROUND }}>
                 Start for free
               </Link>
-              <a href="#plans" className="inline-flex min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:bg-black/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7b1d1d]" style={{ borderColor: "rgba(28,24,18,0.22)", color: INK }}>
+              <a href="#plans" className="inline-flex min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ borderColor: "hsl(var(--ink) / 0.22)", color: INK }}>
                 View Author plan
               </a>
             </div>
@@ -292,7 +295,7 @@ export function PricingPage() {
   );
 }
 
-const WARM_BACKGROUND = "rgba(237,232,220,0.65)";
+const WARM_BACKGROUND = "hsl(var(--warm) / 0.65)";
 
 function PlanEyebrow({ children, color = MUTED }: { children: ReactNode; color?: string }) {
   return (
@@ -306,7 +309,7 @@ function FeatureList({ features, color, dark = false }: { features: string[]; co
   return (
     <ul className="my-9 space-y-3.5">
       {features.map((feature) => (
-        <li key={feature} className="flex items-start gap-3 text-sm leading-5" style={{ color: dark ? PAPER : BODY }}>
+        <li key={feature} className="flex items-start gap-3 text-sm leading-5" style={{ color: dark ? INVERSE_FOREGROUND : BODY }}>
           <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} style={{ color }} aria-hidden="true" />
           {feature}
         </li>
@@ -324,5 +327,5 @@ function FeatureValue({ value }: { value: FeatureValue }) {
     return <Check className="h-4 w-4" style={{ color: FOREST }} strokeWidth={2} aria-label="Included" />;
   }
 
-  return <Minus className="h-4 w-4" style={{ color: "rgba(139,115,85,0.58)" }} strokeWidth={1.5} aria-label="Not included" />;
+  return <Minus className="h-4 w-4" style={{ color: "hsl(var(--muted-foreground) / 0.86)" }} strokeWidth={1.5} aria-label="Not included" />;
 }

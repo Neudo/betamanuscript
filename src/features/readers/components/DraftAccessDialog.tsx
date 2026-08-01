@@ -205,7 +205,7 @@ export function DraftAccessDialog({
                           <TableCell colSpan={2} className="p-0">
                             <div className="flex flex-wrap items-center justify-between gap-3 border-y border-foreground/10 px-4 py-2.5">
                               <span className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-                                <ListChecks className="h-3.5 w-3.5 text-primary" />
+                                <ListChecks className="h-3.5 w-3.5 text-primary-text" />
                                 {selectedChapterIds.size} / {draft.chapters.length} chapters
                               </span>
                               <div className="flex items-center gap-3">
@@ -216,7 +216,7 @@ export function DraftAccessDialog({
                                     draft,
                                     () => new Set(draft.chapters.map((chapter) => chapter.id)),
                                   )}
-                                  className="text-[10px] font-medium text-primary underline-offset-4 hover:underline disabled:pointer-events-none disabled:opacity-50"
+                                  className="text-[10px] font-medium text-primary-text underline-offset-4 hover:underline disabled:pointer-events-none disabled:opacity-50"
                                 >
                                   Select all
                                 </button>

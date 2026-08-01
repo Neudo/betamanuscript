@@ -73,8 +73,20 @@ export default function RootLayout({
       lang="en"
       data-scroll-behavior="smooth"
       className={`${inter.variable} ${ebGaramond.variable} ${dmMono.variable}`}
+      suppressHydrationWarning
     >
       <body>
+        <Script id="theme-preference" strategy="beforeInteractive">
+          {`(() => {
+            try {
+              const theme = window.localStorage.getItem("betaquill.theme") === "dark" ? "dark" : "light";
+              document.documentElement.classList.toggle("dark", theme === "dark");
+              document.documentElement.dataset.theme = theme;
+            } catch {
+              document.documentElement.dataset.theme = "light";
+            }
+          })();`}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: structuredData }}

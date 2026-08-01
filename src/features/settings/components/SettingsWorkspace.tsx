@@ -1,17 +1,19 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Bell, BookOpen, Check, CreditCard, Download, Shield, Trash2, Upload, UserRound } from "lucide-react";
+import { Bell, BookOpen, Check, CreditCard, Download, LockKeyhole, Shield, Trash2, Upload, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { updateProfileSettings, uploadProfileAvatar } from "@/features/account/api/profile-settings";
 import { RolePicker } from "@/features/account/components/RolePicker";
 import { updateRole } from "@/features/account/api/update-role";
 import type { WorkspaceRole } from "@/features/account/domain/user-role";
@@ -20,15 +22,6 @@ import type { AuthenticatedAccount } from "@/features/account/types";
 import { NotificationPreferencesForm } from "@/features/notifications/components/NotificationPreferencesForm";
 import { authorPricing } from "@/shared/config/pricing";
 import { Heading } from "@/shared/ui/Heading";
-
-const socialFields = [
-  ["Substack", "substack.com/"],
-  ["Goodreads", "goodreads.com/author/"],
-  ["Bluesky", "bsky.app/profile/"],
-  ["X / Twitter", "x.com/"],
-  ["Instagram", "instagram.com/"],
-  ["TikTok", "tiktok.com/@"],
-];
 
 const settingsTabs = [
   ["profile", "Profile", UserRound],
@@ -131,7 +124,7 @@ export function SettingsWorkspace({
           <SettingsPage title="Plan">
             <SettingsRow label="Current plan" hint="Your BetaManuscript workspace limits.">
               <div>
-                <p className="font-mono text-[9px] uppercase tracking-widest text-primary">{hasProPlan ? "Paid plan" : "Free plan"}</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">{hasProPlan ? "Paid plan" : "Free plan"}</p>
                 <p className="mt-2 text-xl font-medium">{hasProPlan ? "Pro" : "Free"}</p>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                   {hasProPlan
@@ -159,7 +152,7 @@ export function SettingsWorkspace({
                   {paidPlanOptions.map((option) => (
                     <section key={option.interval} className="relative flex min-h-64 flex-col border-t border-foreground/10 p-5 first:border-t-0 sm:border-l sm:border-t-0 sm:first:border-l-0">
                       {option.badge ? <span className="absolute right-0 top-0 bg-primary px-2.5 py-1 font-mono text-[8px] uppercase tracking-widest text-primary-foreground">{option.badge}</span> : null}
-                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary">{option.label}</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">{option.label}</p>
                       <p className="mt-5 font-display text-4xl leading-none tracking-tight">
                         {option.price} <span className="font-sans text-sm text-muted-foreground">{option.cadence}</span>
                       </p>
@@ -183,16 +176,109 @@ export function SettingsWorkspace({
 }
 
 function ProfileSettings({ account }: { account: AuthenticatedAccount }) {
+  const router = useRouter();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPath, setAvatarPath] = useState(account.avatarPath);
+  const [avatarUrl, setAvatarUrl] = useState(account.avatarUrl);
+  const [bio, setBio] = useState(account.bio);
+  const [displayName, setDisplayName] = useState(account.displayName);
+  const [website, setWebsite] = useState(account.website);
+  const profileMutation = useMutation({
+    mutationFn: updateProfileSettings,
+    onSuccess(profile) {
+      setBio(profile.bio);
+      setDisplayName(profile.displayName);
+      setWebsite(profile.website);
+      toast.success("Profile saved.");
+      router.refresh();
+    },
+  });
+  const avatarMutation = useMutation({
+    mutationFn: uploadProfileAvatar,
+    onSuccess(avatar) {
+      setAvatarPath(avatar.avatarPath);
+      setAvatarUrl(avatar.avatarUrl);
+      toast.success("Profile photo updated.");
+      router.refresh();
+    },
+  });
+  const hasProfileChanges = bio !== account.bio
+    || displayName !== account.displayName
+    || website !== account.website;
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "U";
+
+  function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    profileMutation.mutate({ bio, displayName, website });
+  }
+
   return (
-    <>
-      <SettingsRow label="Avatar" hint="Shown on the reader portal and in emails."><div className="flex items-center gap-5"><span className="grid h-16 w-16 place-items-center bg-primary text-xl font-semibold text-primary-foreground">{account.displayName.slice(0, 2).toUpperCase()}</span><div><Button variant="link" className="text-sm"><Upload className="h-3.5 w-3.5" />Upload photo</Button><p className="mt-1 font-mono text-[9px] text-muted-foreground">JPG or PNG, square recommended</p></div></div></SettingsRow>
-      <SettingsRow label="Display name" hint="Your public author name."><Input defaultValue={account.displayName} className="h-10 border-foreground/15 bg-transparent" /></SettingsRow>
-      <SettingsRow label="Email" hint="Used for login and notifications."><Input value={account.email} readOnly type="email" className="h-10 border-foreground/15 bg-transparent" /></SettingsRow>
-      <SettingsRow label="Author bio" hint="Shown to readers on the portal."><Textarea className="min-h-24 border-foreground/15 bg-transparent" defaultValue="Novelist working on my second manuscript. Interested in speculative literary fiction." /></SettingsRow>
-      <SettingsRow label="Website" hint="Optional link shown to readers."><Input defaultValue="joharper.com" className="h-10 border-foreground/15 bg-transparent" /></SettingsRow>
-      <SettingsRow label="Social media" hint="Enter only your handle or path."><div className="grid gap-2 sm:grid-cols-2">{socialFields.map(([label, prefix]) => <div key={label} className="flex h-9 border border-foreground/15"><span className="flex items-center border-r border-foreground/10 bg-sidebar/50 px-2 font-mono text-[8px] text-muted-foreground">{prefix}</span><input className="min-w-0 flex-1 bg-transparent px-2 text-xs outline-none" aria-label={label} /></div>)}</div></SettingsRow>
-      <SettingsFooter><Button size="sm">Save changes</Button></SettingsFooter>
-    </>
+    <form onSubmit={saveProfile} noValidate>
+      <SettingsRow label="Avatar" hint="Shown across your BetaManuscript workspace.">
+        <div className="flex items-center gap-5">
+          <Avatar className="h-16 w-16 rounded-none border border-foreground/15">
+            {avatarUrl ? <AvatarImage src={avatarUrl} alt="Your profile photo" className="object-cover" /> : null}
+            <AvatarFallback className="rounded-none bg-primary text-xl font-semibold text-primary-foreground">{initials}</AvatarFallback>
+          </Avatar>
+          <div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) avatarMutation.mutate({ file, previousPath: avatarPath });
+              }}
+            />
+            <Button
+              type="button"
+              variant="link"
+              className="text-sm"
+              disabled={avatarMutation.isPending}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {avatarMutation.isPending ? "Uploading photo..." : "Upload photo"}
+            </Button>
+            <p className="mt-1 font-mono text-[9px] text-muted-foreground">JPG, PNG, or WEBP · 2 MB maximum · square recommended</p>
+            {avatarMutation.isError ? <p className="mt-2 text-xs text-destructive">{avatarMutation.error.message}</p> : null}
+          </div>
+        </div>
+      </SettingsRow>
+      <SettingsRow label="Display name" hint="The name readers and writers see.">
+        <Input
+          value={displayName}
+          onChange={(event) => setDisplayName(event.target.value)}
+          autoComplete="name"
+          maxLength={80}
+          className="h-10 border-foreground/15 bg-transparent"
+        />
+      </SettingsRow>
+      <SettingsRow label="Email" hint="Used for login and notifications.">
+        <div>
+          <div className="relative">
+            <Input value={account.email} readOnly aria-readonly="true" type="email" className="h-10 border-foreground/15 bg-muted/40 pr-10 text-muted-foreground" />
+            <LockKeyhole aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"><LockKeyhole aria-hidden="true" className="h-3 w-3" />Managed by your sign-in method</p>
+        </div>
+      </SettingsRow>
+      <SettingsRow label="Author bio" hint="Optional context for your author profile.">
+        <Textarea value={bio} onChange={(event) => setBio(event.target.value)} maxLength={2_000} className="min-h-24 border-foreground/15 bg-transparent" />
+      </SettingsRow>
+      <SettingsRow label="Website" hint="Optional link associated with your profile.">
+        <Input value={website} onChange={(event) => setWebsite(event.target.value)} inputMode="url" maxLength={2_048} className="h-10 border-foreground/15 bg-transparent" />
+      </SettingsRow>
+      {profileMutation.isError ? <p className="mt-4 text-xs text-destructive">{profileMutation.error.message}</p> : null}
+      <SettingsFooter><Button size="sm" type="submit" disabled={!hasProfileChanges || profileMutation.isPending}>{profileMutation.isPending ? "Saving..." : "Save profile"}</Button></SettingsFooter>
+    </form>
   );
 }
 

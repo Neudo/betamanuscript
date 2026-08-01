@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { CARD, INK, MONO, MUTED, PAPER, SERIF, WARM, premiumEase } from "../../../shared/config/design-tokens";
+import { CARD, INK, INVERSE_BACKGROUND, INVERSE_FOREGROUND, MONO, MUTED, PAPER, SERIF, WARM, premiumEase } from "../../../shared/config/design-tokens";
 import { PrioritiesPanel } from "./PrioritiesPanel";
 import { ReaderPanel } from "./ReaderPanel";
 
@@ -16,9 +16,9 @@ function ProductMockup() {
     <motion.div
       className="overflow-hidden"
       style={{
-        border: "1px solid rgba(28,24,18,0.14)",
+        border: "1px solid hsl(var(--ink) / 0.14)",
         background: CARD,
-        boxShadow: "0 16px 56px rgba(28,24,18,0.12), 0 2px 8px rgba(28,24,18,0.06)",
+        boxShadow: "0 16px 56px hsl(var(--ink) / 0.12), 0 2px 8px hsl(var(--ink) / 0.06)",
       }}
       initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.992 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
@@ -28,16 +28,16 @@ function ProductMockup() {
       {/* Browser chrome */}
       <div
         className="px-4 py-2.5 flex items-center gap-3 border-b"
-        style={{ background: WARM, borderColor: "rgba(28,24,18,0.1)" }}
+        style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}
       >
         <div className="flex gap-1.5">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: "rgba(28,24,18,0.18)" }} />
+            <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(var(--ink) / 0.18)" }} />
           ))}
         </div>
         <div
           className="flex-1 px-3 py-0.5 text-[11px]"
-          style={{ background: PAPER, border: "1px solid rgba(28,24,18,0.1)", color: MUTED, fontFamily: MONO }}
+          style={{ background: PAPER, border: "1px solid hsl(var(--ink) / 0.1)", color: MUTED, fontFamily: MONO }}
         >
           betamanuscript.com / manuscripts / the-last-cartographer / feedback
         </div>
@@ -46,7 +46,7 @@ function ProductMockup() {
       {/* App toolbar */}
       <div
         className="px-5 py-2 flex items-center justify-between border-b"
-        style={{ borderColor: "rgba(28,24,18,0.08)" }}
+        style={{ borderColor: "hsl(var(--ink) / 0.08)" }}
       >
         <div className="flex items-baseline gap-3">
           <span className="text-sm font-semibold" style={{ fontFamily: SERIF, color: INK }}>
@@ -67,9 +67,9 @@ function ProductMockup() {
               transition={{ duration: 0.24, ease: premiumEase }}
               style={{
                 fontFamily: MONO,
-                background: tab === t ? INK : "transparent",
-                color: tab === t ? PAPER : MUTED,
-                border: `1px solid ${tab === t ? INK : "rgba(28,24,18,0.15)"}`,
+                background: tab === t ? INVERSE_BACKGROUND : "transparent",
+                color: tab === t ? INVERSE_FOREGROUND : MUTED,
+                border: `1px solid ${tab === t ? INVERSE_BACKGROUND : "hsl(var(--ink) / 0.15)"}`,
               }}
             >
               {t === "reader" ? "Reader view" : "Revision priorities"}

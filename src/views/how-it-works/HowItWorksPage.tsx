@@ -21,9 +21,13 @@ import {
   CARD,
   FOREST,
   INK,
+  INVERSE_BACKGROUND,
+  INVERSE_FOREGROUND,
+  INVERSE_MUTED,
   MONO,
   MUTED,
   OXBLOOD,
+  OXBLOOD_TEXT,
   PAPER,
   SANS,
   SERIF,
@@ -95,12 +99,12 @@ export function HowItWorksPage() {
       <Nav />
 
       <main>
-        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div
             className="pointer-events-none absolute inset-0 -z-10 opacity-80"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 87% 5%, rgba(123,29,29,0.12), transparent 23rem), radial-gradient(circle at 5% 90%, rgba(44,62,45,0.1), transparent 25rem)",
+                "radial-gradient(circle at 87% 5%, hsl(var(--oxblood) / 0.12), transparent 23rem), radial-gradient(circle at 5% 90%, hsl(var(--forest) / 0.1), transparent 25rem)",
             }}
           />
           <div className="mx-auto max-w-6xl">
@@ -118,8 +122,8 @@ export function HowItWorksPage() {
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
                   href="/signup"
-                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
-                  style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER }}
+                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                  style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
                 >
                   Start for free
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -148,7 +152,7 @@ export function HowItWorksPage() {
           slider={presentationSlider}
         />
 
-        <section id="flow" className="scroll-mt-20 border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "rgba(28,24,18,0.1)" }}>
+        <section id="flow" className="scroll-mt-20 border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-8 md:grid-cols-[0.72fr_1.28fr] md:items-end">
               <div>
@@ -166,7 +170,7 @@ export function HowItWorksPage() {
                 <motion.li
                   key={step.number}
                   className="grid items-center gap-9 border-t pt-7 md:grid-cols-[minmax(0,0.86fr)_minmax(320px,0.8fr)] md:gap-16 md:pt-9 odd:md:grid-cols-[minmax(320px,0.8fr)_minmax(0,0.86fr)]"
-                  style={{ borderColor: "rgba(28,24,18,0.16)" }}
+                  style={{ borderColor: "hsl(var(--ink) / 0.16)" }}
                   initial={reduceMotion ? false : { opacity: 0, y: 16 }}
                   whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.25 }}
@@ -175,10 +179,10 @@ export function HowItWorksPage() {
                   <div className={index % 2 === 1 ? "md:order-2" : undefined}>
                     <div className="flex items-center gap-4">
                       <span className="text-[10px] tracking-[0.18em]" style={{ color: MUTED, fontFamily: MONO }}>{step.number}</span>
-                      <span className="h-px w-8" style={{ background: "rgba(28,24,18,0.2)" }} />
+                      <span className="h-px w-8" style={{ background: "hsl(var(--ink) / 0.2)" }} />
                       <span className="text-[10px] uppercase tracking-[0.18em]" style={{ color: MUTED, fontFamily: MONO }}>{step.label}</span>
                     </div>
-                    <div className="mt-7 flex h-10 w-10 items-center justify-center border" style={{ borderColor: "rgba(28,24,18,0.15)", background: CARD, color: OXBLOOD }}>
+                    <div className="mt-7 flex h-10 w-10 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.15)", background: CARD, color: OXBLOOD_TEXT }}>
                       <step.Icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
                     </div>
                     <Heading level={3} size="section" className="mt-7 max-w-xl text-balance">
@@ -195,14 +199,14 @@ export function HowItWorksPage() {
           </div>
         </section>
 
-        <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: INK, borderColor: "rgba(245,240,232,0.16)", color: PAPER }}>
+        <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: INVERSE_BACKGROUND, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20">
             <div>
               <Eyebrow inverse>From reaction to decision</Eyebrow>
               <Heading level={2} tone="inverse" className="max-w-md text-balance">
                 Review the original passage before deciding what to revise.
               </Heading>
-              <p className="mt-6 max-w-lg text-base leading-7" style={{ color: "#DED7CA" }}>
+              <p className="mt-6 max-w-lg text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
                 Reader reactions remain tied to the chapter, the passage, and the theme behind them. You can move from a pattern to the original feedback without rebuilding the trail.
               </p>
             </div>
@@ -211,7 +215,7 @@ export function HowItWorksPage() {
         </section>
 
         <section className="px-6 py-20 md:px-12 md:py-28" style={{ background: CARD }}>
-          <div className="mx-auto max-w-4xl border px-6 py-12 text-center sm:px-12 sm:py-16" style={{ borderColor: "rgba(28,24,18,0.16)", background: PAPER }}>
+          <div className="mx-auto max-w-4xl border px-6 py-12 text-center sm:px-12 sm:py-16" style={{ borderColor: "hsl(var(--ink) / 0.16)", background: PAPER }}>
             <Eyebrow centered>Ready for a clearer beta round?</Eyebrow>
             <Heading level={2} className="mx-auto max-w-2xl text-balance">
               Let every reader reaction find its way into your <em>revision.</em>
@@ -221,8 +225,8 @@ export function HowItWorksPage() {
             </p>
             <Link
               href="/signup"
-              className="mt-9 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
-              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER }}
+              className="mt-9 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
             >
               Start for free
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -237,8 +241,8 @@ export function HowItWorksPage() {
 }
 
 function Eyebrow({ children, centered = false, inverse = false }: { children: React.ReactNode; centered?: boolean; inverse?: boolean }) {
-  const color = inverse ? "#C8C2B6" : MUTED;
-  const lineColor = inverse ? "rgba(245,240,232,0.24)" : "rgba(28,24,18,0.24)";
+  const color = inverse ? INVERSE_MUTED : MUTED;
+  const lineColor = inverse ? "hsl(var(--inverse-foreground) / 0.24)" : "hsl(var(--ink) / 0.24)";
 
   return (
     <p className={`mb-6 flex items-center gap-3 text-[10px] uppercase tracking-[0.24em] ${centered ? "justify-center" : ""}`} style={{ color, fontFamily: MONO }}>
@@ -263,12 +267,12 @@ function ProductPresentationSlider({
   slider: SwiperInstance | null;
 }) {
   return (
-    <section className="border-b px-6 py-10 md:px-12 md:py-14" style={{ borderColor: "rgba(28,24,18,0.1)", background: CARD }} aria-label="BetaManuscript product presentation">
+    <section className="border-b px-6 py-10 md:px-12 md:py-14" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: CARD }} aria-label="BetaManuscript product presentation">
       <div className="mx-auto max-w-6xl">
         <Heading level={2} size="page" className="mb-8 text-balance">
           Everything you need for a structured beta round.
         </Heading>
-        <div className="relative overflow-hidden border paper-shadow" style={{ borderColor: "rgba(28,24,18,0.16)", background: PAPER }}>
+        <div className="relative overflow-hidden border paper-shadow" style={{ borderColor: "hsl(var(--ink) / 0.16)", background: PAPER }}>
           <Swiper
             modules={[A11y, Autoplay]}
             onSwiper={onSliderReady}
@@ -297,7 +301,7 @@ function ProductPresentationSlider({
           </Swiper>
 
           <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-3 pb-3 sm:px-5 sm:pb-5">
-            <div className="flex max-w-full gap-2 overflow-x-auto bg-black p-4">
+            <div className="flex max-w-full gap-2 overflow-x-auto bg-[hsl(var(--inverse-background))] p-4">
               {presentationSlides.map((slide, index) => {
                 const isActive = index === activeSlide;
 
@@ -307,11 +311,11 @@ function ProductPresentationSlider({
                     type="button"
                     aria-pressed={isActive}
                     onClick={() => slider?.slideToLoop(index)}
-                    className="inline-flex min-h-10 shrink-0 items-center border px-3 text-left text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#7b1d1d]"
+                    className="inline-flex min-h-10 shrink-0 items-center border px-3 text-left text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
                     style={{
-                      borderColor: isActive ? OXBLOOD : "rgba(28,24,18,0.18)",
-                      background: isActive ? OXBLOOD : "rgba(245,240,232,0.94)",
-                      color: isActive ? PAPER : INK,
+                      borderColor: isActive ? OXBLOOD : "hsl(var(--ink) / 0.18)",
+                      background: isActive ? OXBLOOD : "hsl(var(--paper) / 0.94)",
+                      color: isActive ? INVERSE_FOREGROUND : INK,
                     }}
                   >
                     <span>{slide.label}</span>
@@ -329,17 +333,17 @@ function ProductPresentationSlider({
 function StepPreview({ kind }: { kind: StepPreviewKind }) {
   if (kind === "draft") {
     return (
-      <div className="border p-4 sm:p-5" style={{ borderColor: "rgba(28,24,18,0.15)", background: CARD }}>
-        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+      <div className="border p-4 sm:p-5" style={{ borderColor: "hsl(var(--ink) / 0.15)", background: CARD }}>
+        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <span className="text-[9px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Manuscript setup</span>
           <span className="text-[9px]" style={{ color: FOREST, fontFamily: MONO }}>Saved</span>
         </div>
-        <div className="mt-5 border p-4" style={{ borderColor: "rgba(28,24,18,0.1)", background: PAPER }}>
+        <div className="mt-5 border p-4" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: PAPER }}>
           <p className="text-[9px] uppercase tracking-[0.14em]" style={{ color: MUTED, fontFamily: MONO }}>Draft 02</p>
           <p className="mt-2" style={{ color: INK, fontFamily: SERIF, fontSize: "1.3rem" }}>The Salt Orchard</p>
           <div className="mt-5 grid grid-cols-3 gap-2">
             {[["12", "chapters"], ["82k", "words"], ["8", "readers"]].map(([value, label]) => (
-              <div key={label} className="border px-2 py-3" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+              <div key={label} className="border px-2 py-3" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
                 <p className="text-sm" style={{ color: INK, fontFamily: SERIF }}>{value}</p>
                 <p className="mt-1 text-[8px] uppercase tracking-[0.1em]" style={{ color: MUTED, fontFamily: MONO }}>{label}</p>
               </div>
@@ -352,19 +356,19 @@ function StepPreview({ kind }: { kind: StepPreviewKind }) {
 
   if (kind === "readers") {
     return (
-      <div className="border p-4 sm:p-5" style={{ borderColor: "rgba(28,24,18,0.15)", background: CARD }}>
-        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+      <div className="border p-4 sm:p-5" style={{ borderColor: "hsl(var(--ink) / 0.15)", background: CARD }}>
+        <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <span className="text-[9px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Reader invitations</span>
           <span className="text-[9px]" style={{ color: MUTED, fontFamily: MONO }}>8 total</span>
         </div>
-        <div className="mt-3 divide-y" style={{ borderColor: "rgba(28,24,18,0.09)" }}>
+        <div className="mt-3 divide-y" style={{ borderColor: "hsl(var(--ink) / 0.09)" }}>
           {[
             ["Marin", "Reading chapter 04", FOREST],
             ["Sasha", "Left 3 notes", OXBLOOD],
             ["Toni", "Invitation sent", "#B3844F"],
           ].map(([name, status, color]) => (
             <div key={name} className="flex items-center gap-3 py-3">
-              <span className="grid h-7 w-7 place-items-center rounded-full text-[10px]" style={{ color: PAPER, background: color, fontFamily: MONO }}>{name.slice(0, 1)}</span>
+              <span className="grid h-7 w-7 place-items-center rounded-full text-[10px]" style={{ color: INVERSE_FOREGROUND, background: color, fontFamily: MONO }}>{name.slice(0, 1)}</span>
               <span className="min-w-0 flex-1 text-xs" style={{ color: INK }}>{name}</span>
               <span className="text-[9px]" style={{ color: MUTED, fontFamily: MONO }}>{status}</span>
             </div>
@@ -375,10 +379,10 @@ function StepPreview({ kind }: { kind: StepPreviewKind }) {
   }
 
   return (
-    <div className="border p-4 sm:p-5" style={{ borderColor: "rgba(28,24,18,0.15)", background: CARD }}>
-      <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+    <div className="border p-4 sm:p-5" style={{ borderColor: "hsl(var(--ink) / 0.15)", background: CARD }}>
+      <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
         <span className="text-[9px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Feedback overview</span>
-        <span className="text-[9px]" style={{ color: OXBLOOD, fontFamily: MONO }}>24 notes</span>
+        <span className="text-[9px]" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>24 notes</span>
       </div>
       <div className="mt-5 space-y-3">
         {[
@@ -391,8 +395,8 @@ function StepPreview({ kind }: { kind: StepPreviewKind }) {
           </div>
         ))}
       </div>
-      <div className="mt-5 border p-3" style={{ borderColor: "rgba(123,29,29,0.16)", background: "rgba(123,29,29,0.05)" }}>
-        <p className="text-[9px] uppercase tracking-[0.14em]" style={{ color: OXBLOOD, fontFamily: MONO }}>Revision priority</p>
+      <div className="mt-5 border p-3" style={{ borderColor: "hsl(var(--oxblood) / 0.16)", background: "hsl(var(--oxblood) / 0.05)" }}>
+        <p className="text-[9px] uppercase tracking-[0.14em]" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>Revision priority</p>
         <p className="mt-2 text-[12px] leading-5" style={{ color: BODY }}>Pacing feedback in Chapter 04.</p>
       </div>
     </div>
@@ -401,14 +405,14 @@ function StepPreview({ kind }: { kind: StepPreviewKind }) {
 
 function RevisionPathPreview() {
   return (
-    <div className="border p-5 sm:p-6" style={{ borderColor: "rgba(245,240,232,0.17)", background: "rgba(245,240,232,0.045)" }}>
-      <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "rgba(245,240,232,0.15)" }}>
-        <span className="text-[9px] uppercase tracking-[0.18em]" style={{ color: "#C8C2B6", fontFamily: MONO }}>A revision thread</span>
-        <span className="text-[9px]" style={{ color: "#C8C2B6", fontFamily: MONO }}>Chapter 04</span>
+    <div className="border p-5 sm:p-6" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.17)", background: "hsl(var(--inverse-foreground) / 0.045)" }}>
+      <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.15)" }}>
+        <span className="text-[9px] uppercase tracking-[0.18em]" style={{ color: INVERSE_MUTED, fontFamily: MONO }}>A revision thread</span>
+        <span className="text-[9px]" style={{ color: INVERSE_MUTED, fontFamily: MONO }}>Chapter 04</span>
       </div>
       <div className="mt-5 space-y-3">
         <DarkPathCard label="Reader pattern" title="Three annotations flagged pacing in Chapter 04." meta="Pacing · 3 annotations" accent="#D69C9C" />
-        <div className="ml-5 border-l pl-5" style={{ borderColor: "rgba(245,240,232,0.25)" }}>
+        <div className="ml-5 border-l pl-5" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.25)" }}>
           <DarkPathCard label="Source feedback" title="“I understood it once the reveal happened, but felt lost for a page before.”" meta="Sasha · selected passage" accent="#9EB39E" compact />
         </div>
         <DarkPathCard label="Revision priority" title="Pacing feedback in Chapter 04." meta="3 annotations" accent="#E7C789" />
@@ -419,10 +423,10 @@ function RevisionPathPreview() {
 
 function DarkPathCard({ accent, compact = false, label, meta, title }: { accent: string; compact?: boolean; label: string; meta: string; title: string }) {
   return (
-    <div className="border p-4" style={{ borderColor: "rgba(245,240,232,0.14)", background: "rgba(245,240,232,0.04)" }}>
+    <div className="border p-4" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.14)", background: "hsl(var(--inverse-foreground) / 0.04)" }}>
       <p className="text-[9px] uppercase tracking-[0.15em]" style={{ color: accent, fontFamily: MONO }}>{label}</p>
-      <p className={`mt-2 leading-5 ${compact ? "text-[12px] italic" : "text-sm"}`} style={{ color: PAPER, fontFamily: SANS }}>{title}</p>
-      <p className="mt-3 text-[9px]" style={{ color: "#C8C2B6", fontFamily: MONO }}>{meta}</p>
+      <p className={`mt-2 leading-5 ${compact ? "text-[12px] italic" : "text-sm"}`} style={{ color: INVERSE_FOREGROUND, fontFamily: SANS }}>{title}</p>
+      <p className="mt-3 text-[9px]" style={{ color: INVERSE_MUTED, fontFamily: MONO }}>{meta}</p>
     </div>
   );
 }

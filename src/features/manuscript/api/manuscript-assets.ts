@@ -64,38 +64,57 @@ export async function uploadManuscriptCover({
   const storagePath = `${user.id}/${manuscriptVersionId}/cover.${coverFileExtensions[mimeType]}`;
   const { data: existingAsset, error: existingAssetError } = await supabase
     .from("manuscript_assets")
-    .select("id")
+    .select("id, storage_path")
     .eq("manuscript_version_id", manuscriptVersionId)
     .eq("asset_kind", "cover")
     .maybeSingle();
 
   if (existingAssetError) throw new Error(existingAssetError.message);
-  if (existingAsset) return;
 
   const { data: uploadedObject, error: uploadError } = await supabase.storage
     .from(MANUSCRIPT_COVERS_BUCKET)
     .upload(storagePath, file, {
       cacheControl: "31536000",
       contentType: mimeType,
-      upsert: false,
+      upsert: Boolean(existingAsset),
     });
 
   if (uploadError) throw new Error(uploadError.message);
 
-  const { error: assetError } = await supabase
-    .from("manuscript_assets")
-    .insert({
-      asset_kind: "cover",
-      byte_size: file.size,
-      manuscript_version_id: manuscriptVersionId,
-      mime_type: mimeType,
-      original_filename: file.name.trim(),
-      processing_status: "available",
-      storage_bucket: MANUSCRIPT_COVERS_BUCKET,
-      storage_path: uploadedObject.path,
-    });
+  const asset = {
+    byte_size: file.size,
+    mime_type: mimeType,
+    original_filename: file.name.trim(),
+    processing_status: "available" as const,
+    storage_bucket: MANUSCRIPT_COVERS_BUCKET,
+    storage_path: uploadedObject.path,
+  };
+  const { error: assetError } = existingAsset
+    ? await supabase
+      .from("manuscript_assets")
+      .update(asset)
+      .eq("id", existingAsset.id)
+    : await supabase
+      .from("manuscript_assets")
+      .insert({
+        asset_kind: "cover",
+        manuscript_version_id: manuscriptVersionId,
+        ...asset,
+      });
 
-  if (!assetError) return;
+  if (!assetError) {
+    if (existingAsset && existingAsset.storage_path !== uploadedObject.path) {
+      const { error: cleanupError } = await supabase.storage
+        .from(MANUSCRIPT_COVERS_BUCKET)
+        .remove([existingAsset.storage_path]);
+
+      if (cleanupError) {
+        throw new Error(`The cover was updated, but the previous image could not be removed. ${cleanupError.message}`);
+      }
+    }
+
+    return;
+  }
 
   const { error: cleanupError } = await supabase.storage
     .from(MANUSCRIPT_COVERS_BUCKET)

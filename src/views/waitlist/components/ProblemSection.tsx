@@ -1,6 +1,6 @@
 import { Lift, Reveal } from "../../../shared/ui/motion";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
-import { INK, OXBLOOD, SERIF, WARM } from "../../../shared/config/design-tokens";
+import { INK, OXBLOOD_TEXT, SERIF, WARM } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function ProblemSection() {
@@ -9,7 +9,7 @@ export function ProblemSection() {
       {/* ── Problem ──────────────────────────────────────────────────────────── */}
     <section
       className="relative z-10 border-t"
-      style={{ borderColor: "rgba(28,24,18,0.1)", background: WARM }}
+      style={{ borderColor: "hsl(var(--ink) / 0.1)", background: WARM }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
@@ -29,11 +29,11 @@ export function ProblemSection() {
             <br />
             <em>not clarity.</em>
           </Heading>
-          <p className="mb-12 max-w-xl text-sm leading-6 md:text-base" style={{ color: "#6B6456" }}>
+          <p className="mb-12 max-w-xl text-sm leading-6 md:text-base" style={{ color: "hsl(var(--body))" }}>
             No AI-generated ideas or rewrites. Just human reader reactions, with you in control of every creative decision.
           </p>
         </Reveal>
-        <div className="grid md:grid-cols-3 gap-px" style={{ background: "rgba(28,24,18,0.1)" }}>
+        <div className="grid md:grid-cols-3 gap-px" style={{ background: "hsl(var(--ink) / 0.1)" }}>
           {[
             {
               glyph: "§",
@@ -57,7 +57,7 @@ export function ProblemSection() {
             <Lift key={i} className="p-8" style={{ background: WARM }}>
               <div
                 className="text-2xl mb-5"
-                style={{ fontFamily: SERIF, color: OXBLOOD, opacity: 0.55 }}
+                style={{ fontFamily: SERIF, color: OXBLOOD_TEXT, opacity: 0.75 }}
               >
                 {card.glyph}
               </div>
@@ -68,7 +68,7 @@ export function ProblemSection() {
               >
                 {card.title}
               </Heading>
-              <p className="text-sm leading-relaxed" style={{ color: "#6B6456" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--body))" }}>
                 {card.detail}
               </p>
             </Lift>

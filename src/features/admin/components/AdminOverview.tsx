@@ -55,7 +55,7 @@ export function AdminOverview({
     <div className="mx-auto w-full max-w-7xl px-5 py-5 sm:px-8 sm:py-7 lg:px-12">
       <header className="flex items-end justify-between gap-5 border-b border-foreground/15 pb-4">
         <div>
-          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">
+          <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary-text">
             Product operations
           </p>
           <Heading level={1} size="page" className="mt-1.5">
@@ -108,7 +108,7 @@ function MetricCell({ metric }: { metric: Metric }) {
   const Icon = metric.icon;
   const toneClass =
     metric.tone === "accent"
-      ? "text-primary"
+      ? "text-primary-text"
       : metric.tone === "success"
         ? "text-success"
         : "text-muted-foreground";

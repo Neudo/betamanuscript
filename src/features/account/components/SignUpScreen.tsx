@@ -18,7 +18,7 @@ export function SignUpScreen({
       footer={
         <p>
           Already have an account?{" "}
-          <Link href={loginHref} className="font-medium text-primary hover:underline">
+          <Link href={loginHref} className="font-medium text-primary-text hover:underline">
             Log in
           </Link>
         </p>

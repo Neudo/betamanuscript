@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/features/account/api/sign-out";
 import type { AuthenticatedAccount } from "@/features/account/types";
@@ -38,9 +39,12 @@ export function WorkspaceAccountMenu({
   return (
     <div>
       <div className="mb-2.5 flex items-center gap-2 px-3">
-        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary font-mono text-[9px] font-semibold text-primary-foreground">
-          {getInitials(account.displayName)}
-        </span>
+        <Avatar className="h-6 w-6 shrink-0">
+          {account.avatarUrl ? <AvatarImage src={account.avatarUrl} alt="" className="object-cover" /> : null}
+          <AvatarFallback className="bg-primary font-mono text-[9px] font-semibold text-primary-foreground">
+            {getInitials(account.displayName)}
+          </AvatarFallback>
+        </Avatar>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[11px] font-medium">
             {account.displayName}

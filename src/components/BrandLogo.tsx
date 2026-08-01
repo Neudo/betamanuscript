@@ -19,14 +19,16 @@ export function BrandLogo({
   priority = false,
 }: BrandLogoProps) {
   const logo = (
-    <Image
-      src="/logo-full.svg"
-      alt="BetaManuscript"
-      width={303}
-      height={90}
-      priority={priority}
-      className={cn("h-8 w-auto", imageClassName)}
-    />
+    <span className="brand-logo inline-flex shrink-0 bg-[#F6F1EA] p-1">
+      <Image
+        src="/logo-full.svg"
+        alt="BetaManuscript"
+        width={303}
+        height={90}
+        priority={priority}
+        className={cn("h-8 w-auto", imageClassName)}
+      />
+    </span>
   );
 
   if (!href) {

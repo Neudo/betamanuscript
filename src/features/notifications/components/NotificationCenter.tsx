@@ -114,7 +114,7 @@ export function NotificationCenter({ profileId }: { profileId: string }) {
                   if (!notification.readAt) markRead.mutate([notification.id]);
                 }}
               >
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center border border-foreground/10 bg-sidebar text-primary">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center border border-foreground/10 bg-sidebar text-primary-text">
                   <Icon className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">

@@ -593,7 +593,7 @@ function SurveyEditor({
               <div className="flex flex-col gap-4 border-t border-foreground/10 bg-sidebar/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div aria-live="polite">
                   {showValidation && editor.validationError ? (
-                    <p className="font-mono text-[10px] text-primary">{editor.validationError}</p>
+                    <p className="font-mono text-[10px] text-primary-text">{editor.validationError}</p>
                   ) : editor.lastSavedAt && !editor.isDirty ? (
                     <p className="flex items-center gap-2 font-mono text-[10px] text-emerald-900"><Check className="h-3.5 w-3.5" />Changes saved</p>
                   ) : (

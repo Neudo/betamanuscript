@@ -12,7 +12,7 @@ export function Footer() {
   return (
     <footer
       className="relative z-10 border-t px-6 py-10 md:px-12 md:py-12"
-      style={{ borderColor: "rgba(28,24,18,0.1)", background: PAPER }}
+      style={{ borderColor: "hsl(var(--ink) / 0.1)", background: PAPER }}
     >
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.7fr)_repeat(3,minmax(0,0.65fr))]">
@@ -34,7 +34,7 @@ export function Footer() {
           <FooterGroup title="Account">
             <FooterLink href="/login">Log in</FooterLink>
             <FooterLink href="/signup">Create account</FooterLink>
-            <SupportEmailLink className="block text-xs leading-6 text-[#4A4035] transition-colors hover:text-[#7B1D1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7B1D1D]">
+            <SupportEmailLink className="block text-xs leading-6 text-[hsl(var(--body))] transition-colors hover:text-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
               Contact
             </SupportEmailLink>
           </FooterGroup>
@@ -45,7 +45,7 @@ export function Footer() {
           </FooterGroup>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t pt-5 text-[10px] sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "rgba(28,24,18,0.1)", fontFamily: MONO, color: MUTED }}>
+        <div className="mt-10 flex flex-col gap-2 border-t pt-5 text-[10px] sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "hsl(var(--ink) / 0.1)", fontFamily: MONO, color: MUTED }}>
           <p>© 2026 BetaManuscript. All rights reserved.</p>
           <p>Built for considered, human feedback.</p>
         </div>
@@ -67,7 +67,7 @@ function FooterGroup({ children, title }: { children: React.ReactNode; title: st
 function FooterLink({ children, href }: { children: React.ReactNode; href: string }) {
   return (
     <Link
-      className="block text-xs leading-6 text-[#4A4035] transition-colors hover:text-[#7B1D1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7B1D1D]"
+      className="block text-xs leading-6 text-[hsl(var(--body))] transition-colors hover:text-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
       href={href}
     >
       {children}

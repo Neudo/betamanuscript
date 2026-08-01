@@ -239,7 +239,7 @@ export function ChapterManagerDialog({
                   <legend className="sr-only">Reader access</legend>
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b border-foreground/10 px-4 py-3">
                     <div className="flex min-w-0 gap-3">
-                      <UsersRound className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={1.5} />
+                      <UsersRound className="mt-0.5 h-4 w-4 shrink-0 text-primary-text" strokeWidth={1.5} />
                       <div>
                         <p className="text-sm font-medium">Reader access</p>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -256,7 +256,7 @@ export function ChapterManagerDialog({
                           type="button"
                           disabled={isSaving}
                           onClick={() => setReaderAssignmentIds(new Set(chapterReaders.map((reader) => reader.id)))}
-                          className="text-[10px] font-medium text-primary underline-offset-4 hover:underline disabled:pointer-events-none disabled:opacity-50"
+                          className="text-[10px] font-medium text-primary-text underline-offset-4 hover:underline disabled:pointer-events-none disabled:opacity-50"
                         >
                           Select all
                         </button>

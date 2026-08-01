@@ -26,7 +26,7 @@ export const getAuthenticatedAccount = cache(
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("display_name, role, plan, last_active_at")
+      .select("avatar_path, bio, display_name, role, plan, last_active_at, website")
       .eq("id", user.id)
       .single();
 
@@ -36,12 +36,20 @@ export const getAuthenticatedAccount = cache(
 
     await refreshAccountActivity(user.id, profile.last_active_at);
 
+    const avatarUrl = profile.avatar_path
+      ? (await supabase.storage.from("profile-avatars").createSignedUrl(profile.avatar_path, 60 * 60)).data?.signedUrl ?? null
+      : null;
+
     return {
+      avatarPath: profile.avatar_path,
+      avatarUrl,
+      bio: profile.bio ?? "",
       id: user.id,
       email: user.email ?? "",
       displayName: profile.display_name,
       role: profile.role as UserRole,
       plan: profile.plan as AccountPlan,
+      website: profile.website ?? "",
     };
   },
 );

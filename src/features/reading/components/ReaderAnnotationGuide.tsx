@@ -22,7 +22,7 @@ export function ReaderAnnotationGuide({ onDismiss }: ReaderAnnotationGuideProps)
             <MousePointer2 className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">A quick note before you begin</p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary-text">A quick note before you begin</p>
             <Heading level={2} size="subsection" id="reader-annotation-guide-title" className="mt-1">
               Leave feedback as you read
             </Heading>
@@ -48,11 +48,11 @@ export function ReaderAnnotationGuide({ onDismiss }: ReaderAnnotationGuideProps)
 
         <ol className="space-y-3 text-sm leading-5 text-foreground/80">
           <li className="flex gap-3">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary/35 font-mono text-[9px] text-primary">1</span>
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary/35 font-mono text-[9px] text-primary-text">1</span>
             <span><strong className="font-medium text-foreground">Select a passage</strong> that sparked a reaction — even across paragraphs.</span>
           </li>
           <li className="flex gap-3">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary/35 font-mono text-[9px] text-primary">2</span>
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-primary/35 font-mono text-[9px] text-primary-text">2</span>
             <span><strong className="font-medium text-foreground">Choose a tag</strong> and add a comment in the panel that opens.</span>
           </li>
         </ol>
@@ -62,7 +62,7 @@ export function ReaderAnnotationGuide({ onDismiss }: ReaderAnnotationGuideProps)
         <p className="text-xs leading-5 text-muted-foreground">
           On a phone, press and hold the text, then adjust the selection handles.
         </p>
-        <Button type="button" variant="ghost" size="sm" className="-mr-2 text-primary" onClick={onDismiss}>
+        <Button type="button" variant="ghost" size="sm" className="-mr-2 text-primary-text" onClick={onDismiss}>
           <Check className="h-3.5 w-3.5" aria-hidden="true" />
           I&apos;m ready
         </Button>

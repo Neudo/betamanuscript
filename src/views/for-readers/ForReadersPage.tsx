@@ -21,9 +21,13 @@ import {
   CARD,
   FOREST,
   INK,
+  INVERSE_BACKGROUND,
+  INVERSE_FOREGROUND,
+  INVERSE_MUTED,
   MONO,
   MUTED,
   OXBLOOD,
+  OXBLOOD_TEXT,
   PAPER,
   SANS,
   SERIF,
@@ -76,11 +80,11 @@ export function ForReadersPage() {
       <Nav />
 
       <main>
-        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div
             className="pointer-events-none absolute inset-0 -z-10 opacity-70"
             style={{
-              backgroundImage: "radial-gradient(circle at 13% 28%, rgba(123,29,29,0.1), transparent 24rem), radial-gradient(circle at 88% 3%, rgba(44,62,45,0.1), transparent 25rem)",
+              backgroundImage: "radial-gradient(circle at 13% 28%, hsl(var(--oxblood) / 0.1), transparent 24rem), radial-gradient(circle at 88% 3%, hsl(var(--forest) / 0.1), transparent 25rem)",
             }}
           />
           <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.82fr)] lg:gap-20">
@@ -98,8 +102,8 @@ export function ForReadersPage() {
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
                   href="/login"
-                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
-                  style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER }}
+                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                  style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
                 >
                   I have an invitation
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -128,14 +132,14 @@ export function ForReadersPage() {
           </div>
         </section>
 
-        <section className="border-b px-6 py-16 md:px-12 md:py-24" style={{ background: WARM, borderColor: "rgba(28,24,18,0.1)" }}>
+        <section className="border-b px-6 py-16 md:px-12 md:py-24" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.76fr_1.24fr] lg:gap-20">
             <div>
               <Heading level={2} className="mt-5 max-w-md">
                 React honestly. <em>Not perfectly.</em>
               </Heading>
             </div>
-            <div className="grid gap-px border border-black/10 sm:grid-cols-2" style={{ background: "rgba(28,24,18,0.1)" }}>
+            <div className="grid gap-px border border-black/10 sm:grid-cols-2" style={{ background: "hsl(var(--ink) / 0.1)" }}>
               <ReaderPrinciple
                 eyebrow="Read"
                 title="Stay with the story"
@@ -160,7 +164,7 @@ export function ForReadersPage() {
           </div>
         </section>
 
-        <section id="how-it-works" className="scroll-mt-20 border-b px-6 py-20 md:px-12 md:py-28" style={{ borderColor: "rgba(28,24,18,0.1)" }}>
+        <section id="how-it-works" className="scroll-mt-20 border-b px-6 py-20 md:px-12 md:py-28" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
               <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: MUTED }}>The reading flow</p>
@@ -174,7 +178,7 @@ export function ForReadersPage() {
                 <motion.li
                   key={step.number}
                   className="group relative border-t pt-5"
-                  style={{ borderColor: "rgba(28,24,18,0.18)" }}
+                  style={{ borderColor: "hsl(var(--ink) / 0.18)" }}
                   initial={reduceMotion ? false : { opacity: 0, y: 12 }}
                   whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.35 }}
@@ -182,7 +186,7 @@ export function ForReadersPage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.16em]" style={{ fontFamily: MONO, color: MUTED }}>{step.number}</span>
-                    <step.Icon className="h-4 w-4" style={{ color: OXBLOOD }} strokeWidth={1.5} aria-hidden="true" />
+                    <step.Icon className="h-4 w-4" style={{ color: OXBLOOD_TEXT }} strokeWidth={1.5} aria-hidden="true" />
                   </div>
                   <Heading level={3} className="mt-7">{step.title}</Heading>
                   <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>{step.detail}</p>
@@ -192,14 +196,14 @@ export function ForReadersPage() {
           </div>
         </section>
 
-        <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: INK, borderColor: "rgba(245,240,232,0.16)", color: PAPER }}>
+        <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: INVERSE_BACKGROUND, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: "#C8C2B6" }}>A useful reaction is enough</p>
+              <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: INVERSE_MUTED }}>A useful reaction is enough</p>
               <Heading level={2} tone="inverse" className="mt-5 max-w-md">
                 You don&apos;t need to be an editor to give excellent feedback.
               </Heading>
-              <p className="mt-6 max-w-lg text-base leading-7" style={{ color: "#DED7CA" }}>
+              <p className="mt-6 max-w-lg text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
                 Your job is not to rewrite the manuscript. Tell the author where you felt engaged, confused, unconvinced, or eager to continue—and point to the passage that caused that reaction.
               </p>
             </div>
@@ -208,13 +212,13 @@ export function ForReadersPage() {
                 <motion.div
                   key={prompt}
                   className="flex min-h-20 items-center gap-5 border px-5 py-4 sm:px-6"
-                  style={{ background: index === 1 ? "rgba(123,29,29,0.42)" : "rgba(245,240,232,0.055)", borderColor: "rgba(245,240,232,0.16)" }}
+                  style={{ background: index === 1 ? "hsl(var(--oxblood) / 0.42)" : "hsl(var(--inverse-foreground) / 0.055)", borderColor: "hsl(var(--inverse-foreground) / 0.16)" }}
                   initial={reduceMotion ? false : { opacity: 0, x: 12 }}
                   whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.4 }}
                   transition={{ duration: 0.46, delay: index * 0.07, ease: premiumEase }}
                 >
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[10px]" style={{ borderColor: "rgba(245,240,232,0.36)", color: "#E8E1D4", fontFamily: MONO }}>{String(index + 1).padStart(2, "0")}</span>
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[10px]" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.36)", color: INVERSE_FOREGROUND, fontFamily: MONO }}>{String(index + 1).padStart(2, "0")}</span>
                   <p className="text-lg leading-6" style={{ fontFamily: SERIF }}>{prompt}</p>
                 </motion.div>
               ))}
@@ -228,7 +232,7 @@ export function ForReadersPage() {
               What beta readers need to know.
             </Heading>
 
-            <div className="mt-12 border-y text-left" style={{ borderColor: "rgba(28,24,18,0.14)" }}>
+            <div className="mt-12 border-y text-left" style={{ borderColor: "hsl(var(--ink) / 0.14)" }}>
               <ReaderQuestion
                 question="Is BetaManuscript free for beta readers?"
                 answer="Yes. Authors pay for the workspace. You can read manuscripts and leave feedback without purchasing a subscription or entering payment details."
@@ -253,7 +257,7 @@ export function ForReadersPage() {
           </div>
         </section>
 
-        <section className="border-t px-6 py-16 text-center md:px-12 md:py-20" style={{ borderColor: "rgba(28,24,18,0.1)", background: PAPER }}>
+        <section className="border-t px-6 py-16 text-center md:px-12 md:py-20" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: PAPER }}>
           <CircleHelp className="mx-auto h-5 w-5" style={{ color: FOREST }} strokeWidth={1.5} aria-hidden="true" />
           <Heading level={2} className="mx-auto mt-5 max-w-xl text-balance">
             Already invited to read?
@@ -264,7 +268,7 @@ export function ForReadersPage() {
           <Link
             href="/login"
             className="mt-8 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
-            style={{ borderColor: "rgba(28,24,18,0.24)", color: INK }}
+            style={{ borderColor: "hsl(var(--ink) / 0.24)", color: INK }}
           >
             Log in to read
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -279,8 +283,8 @@ export function ForReadersPage() {
 
 function ReaderPreview() {
   return (
-    <div className="relative border p-3 shadow-[0_20px_55px_rgba(28,24,18,0.16)] sm:p-4" style={{ background: CARD, borderColor: "rgba(28,24,18,0.18)" }}>
-      <div className="flex items-center justify-between border-b px-3 pb-3 text-[9px] uppercase tracking-[0.16em]" style={{ borderColor: "rgba(28,24,18,0.1)", color: MUTED, fontFamily: MONO }}>
+    <div className="relative border p-3 shadow-[0_20px_55px_hsl(var(--inverse-background)/0.16)] sm:p-4" style={{ background: CARD, borderColor: "hsl(var(--ink) / 0.18)" }}>
+      <div className="flex items-center justify-between border-b px-3 pb-3 text-[9px] uppercase tracking-[0.16em]" style={{ borderColor: "hsl(var(--ink) / 0.1)", color: MUTED, fontFamily: MONO }}>
         <span>Reader workspace</span>
         <span>Chapter 04 / 08</span>
       </div>
@@ -291,21 +295,21 @@ function ReaderPreview() {
             By the time the bell rang, she had already decided to leave. The letter in her pocket made every corridor feel narrower.
           </p>
           <p className="mt-5 text-[18px] leading-8 sm:text-[20px]" style={{ color: BODY, fontFamily: SERIF }}>
-            <span className="px-0.5" style={{ background: "rgba(123,29,29,0.18)" }}>Then she saw the door at the end of the hall standing open.</span> Nobody had mentioned a door.
+            <span className="px-0.5" style={{ background: "hsl(var(--oxblood) / 0.18)" }}>Then she saw the door at the end of the hall standing open.</span> Nobody had mentioned a door.
           </p>
           <p className="mt-5 text-[18px] leading-8 sm:text-[20px]" style={{ color: BODY, fontFamily: SERIF }}>
             The room beyond it was dark, except for the thin line of light beneath the desk.
           </p>
         </article>
-        <aside className="border p-3 sm:mt-12" style={{ borderColor: "rgba(123,29,29,0.26)", background: "rgba(123,29,29,0.045)" }}>
-          <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.14em]" style={{ color: OXBLOOD, fontFamily: MONO }}>
+        <aside className="border p-3 sm:mt-12" style={{ borderColor: "hsl(var(--oxblood) / 0.26)", background: "hsl(var(--oxblood) / 0.045)" }}>
+          <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.14em]" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>
             <MousePointer2 className="h-3 w-3" aria-hidden="true" />
             Your note
           </div>
           <p className="mt-4 text-sm leading-5" style={{ color: INK, fontFamily: SERIF }}>
             I wanted to know why nobody had mentioned this before.
           </p>
-          <div className="mt-5 border-t pt-3" style={{ borderColor: "rgba(123,29,29,0.16)" }}>
+          <div className="mt-5 border-t pt-3" style={{ borderColor: "hsl(var(--oxblood) / 0.16)" }}>
             <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.1em]" style={{ color: FOREST, fontFamily: MONO }}>
               <Check className="h-3 w-3" aria-hidden="true" />
               Feedback saved
@@ -313,7 +317,7 @@ function ReaderPreview() {
           </div>
         </aside>
       </div>
-      <div className="mx-3 flex items-center gap-2 border-t px-3 py-3 text-[9px] uppercase tracking-[0.15em] sm:mx-5" style={{ borderColor: "rgba(28,24,18,0.1)", color: MUTED, fontFamily: MONO }}>
+      <div className="mx-3 flex items-center gap-2 border-t px-3 py-3 text-[9px] uppercase tracking-[0.15em] sm:mx-5" style={{ borderColor: "hsl(var(--ink) / 0.1)", color: MUTED, fontFamily: MONO }}>
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: FOREST }} />
         Your place is saved
       </div>
@@ -333,7 +337,7 @@ function ReaderPrinciple({ eyebrow, title, detail }: { eyebrow: string; title: s
 
 function ReaderQuestion({ answer, question }: { answer: string; question: string }) {
   return (
-    <article className="border-b px-1 py-6 last:border-b-0 sm:px-3" style={{ borderColor: "rgba(28,24,18,0.12)" }}>
+    <article className="border-b px-1 py-6 last:border-b-0 sm:px-3" style={{ borderColor: "hsl(var(--ink) / 0.12)" }}>
       <Heading level={3}>{question}</Heading>
       <p className="mt-2 max-w-2xl text-sm leading-6" style={{ color: BODY }}>{answer}</p>
     </article>

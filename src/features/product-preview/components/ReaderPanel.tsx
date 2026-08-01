@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BODY, INK, MONO, MUTED, PAPER, SERIF, SANS } from "../../../shared/config/design-tokens";
+import { BODY, INK, INVERSE_BACKGROUND, INVERSE_FOREGROUND, MONO, MUTED, SERIF, SANS } from "../../../shared/config/design-tokens";
 import { annotations, TAGS } from "../data/mockup-data";
 import type { TagKey } from "../types";
 import { AnnotationMarker } from "./AnnotationMarker";
@@ -26,10 +26,10 @@ function ReaderPanel() {
     <div className="grid" style={{ gridTemplateColumns: "1fr", minHeight: "380px" }}>
       <div className="grid md:grid-cols-[1fr_260px]" style={{ minHeight: "380px" }}>
         {/* Manuscript text */}
-        <div className="p-6 overflow-y-auto" style={{ borderRight: "1px solid rgba(28,24,18,0.08)" }}>
+        <div className="p-6 overflow-y-auto" style={{ borderRight: "1px solid hsl(var(--ink) / 0.08)" }}>
           <div className="flex items-center gap-3 mb-5">
             <span className="text-[9px] uppercase tracking-widest" style={{ fontFamily: MONO, color: MUTED }}>Chapter 3</span>
-            <div className="h-px flex-1" style={{ background: "rgba(28,24,18,0.1)" }} />
+            <div className="h-px flex-1" style={{ background: "hsl(var(--ink) / 0.1)" }} />
             <div className="flex gap-1.5">
               {(Object.keys(TAGS) as TagKey[]).map((k) => (
                 <TagBadge key={k} tag={k} />
@@ -65,7 +65,7 @@ function ReaderPanel() {
         </div>
 
         {/* Annotation panel */}
-        <div className="p-4" style={{ background: "rgba(245,240,232,0.4)" }}>
+        <div className="p-4" style={{ background: "hsl(var(--paper) / 0.4)" }}>
           {active ? (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -76,7 +76,7 @@ function ReaderPanel() {
               </div>
               <p
                 className="text-[11px] italic mb-4 pb-3"
-                style={{ fontFamily: SERIF, color: BODY, borderBottom: "1px solid rgba(28,24,18,0.1)" }}
+                style={{ fontFamily: SERIF, color: BODY, borderBottom: "1px solid hsl(var(--ink) / 0.1)" }}
               >
                 &ldquo;{active.phrase}&rdquo;
               </p>
@@ -86,7 +86,7 @@ function ReaderPanel() {
                     <div className="flex items-center gap-1.5 mb-1">
                       <div
                         className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-semibold"
-                        style={{ background: INK, color: PAPER }}
+                        style={{ background: INVERSE_BACKGROUND, color: INVERSE_FOREGROUND }}
                       >
                         {c.reader[0]}
                       </div>

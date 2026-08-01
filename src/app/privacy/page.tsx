@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         </p>
         <p>
           For privacy questions or to exercise your rights, contact us at{" "}
-          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]">
+          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-primary-text">
             Email support
           </SupportEmailLink>
           .
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
         <p>Depending on where you live, you may have rights to access, correct, delete, restrict, or port your personal data; object to certain processing; and withdraw consent where processing is based on consent. You may also lodge a complaint with your local data-protection authority.</p>
         <p>
           To make a request, email{" "}
-          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-[#7b1d1d]">
+          <SupportEmailLink className="underline decoration-1 underline-offset-4 hover:text-primary-text">
             support
           </SupportEmailLink>
           . We may need to verify your identity before responding.

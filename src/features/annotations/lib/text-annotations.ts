@@ -118,3 +118,20 @@ export function getTextAnnotationSegments<T extends TextAnnotationRange>(
 export function annotationBackgroundColor(color: string) {
   return /^#[0-9a-f]{6}$/i.test(color) ? `${color}2E` : "hsl(var(--primary) / 0.16)";
 }
+
+export function annotationFocusedBackgroundColor(color: string, theme: "light" | "dark") {
+  if (!/^#[0-9a-f]{6}$/i.test(color)) {
+    return theme === "dark" ? "hsl(var(--primary) / 0.34)" : "hsl(var(--primary) / 0.32)";
+  }
+
+  const channels = [color.slice(1, 3), color.slice(3, 5), color.slice(5, 7)].map(
+    (channel) => Number.parseInt(channel, 16),
+  );
+  const adjustedChannels = channels.map((channel) => (
+    theme === "dark"
+      ? Math.round(channel + ((255 - channel) * 0.1))
+      : Math.round(channel * 0.9)
+  ));
+
+  return `rgb(${adjustedChannels.join(" ")} / 0.36)`;
+}

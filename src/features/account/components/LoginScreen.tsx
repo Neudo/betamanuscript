@@ -23,7 +23,7 @@ export function LoginScreen({
       footer={
         <p>
           New to BetaManuscript?{" "}
-          <Link href={signUpHref} className="font-medium text-primary hover:underline">
+          <Link href={signUpHref} className="font-medium text-primary-text hover:underline">
             Create an account
           </Link>
         </p>

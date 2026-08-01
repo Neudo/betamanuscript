@@ -136,7 +136,7 @@ export function DraftVersionSwitcher({
                   <span className="mt-0.5 block truncate font-mono text-[9px] text-muted-foreground">Draft {version.number}</span>
                 </span>
                 <Check
-                  className={cn("h-3.5 w-3.5 text-primary", !isActive && "invisible")}
+                  className={cn("h-3.5 w-3.5 text-primary-text", !isActive && "invisible")}
                   aria-hidden="true"
                 />
               </DropdownMenuItem>

@@ -33,7 +33,7 @@ export function PlanRequiredDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[440px] gap-0 border-foreground/10 bg-card p-0 shadow-[0_24px_64px_rgba(28,24,18,0.18)] sm:rounded-none">
         <DialogHeader className="border-b border-foreground/[0.08] px-7 pb-5 pt-7 text-left">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-primary">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">
             Pro plan
           </p>
           <DialogTitle className="pt-1 text-lg tracking-normal">

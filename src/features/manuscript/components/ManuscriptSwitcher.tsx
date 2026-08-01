@@ -130,7 +130,7 @@ export function ManuscriptSwitcher({
                 </span>
                 <Check
                   className={cn(
-                    "mt-0.5 h-3.5 w-3.5 text-primary",
+                    "mt-0.5 h-3.5 w-3.5 text-primary-text",
                     !isActive && "invisible",
                   )}
                   aria-hidden="true"

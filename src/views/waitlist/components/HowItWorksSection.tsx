@@ -1,7 +1,7 @@
 import { BarChart2, ChevronRight, Upload, Users } from "lucide-react";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
-import { INK, MONO, MUTED, OXBLOOD, PAPER, SERIF, WARM } from "../../../shared/config/design-tokens";
+import { INK, MONO, MUTED, OXBLOOD_TEXT, PAPER, SERIF, WARM } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function HowItWorksSection() {
@@ -10,7 +10,7 @@ export function HowItWorksSection() {
       {/* ── How it works ─────────────────────────────────────────────────────── */}
     <section
       className="relative z-10 border-t"
-      style={{ borderColor: "rgba(28,24,18,0.1)", background: WARM }}
+      style={{ borderColor: "hsl(var(--ink) / 0.1)", background: WARM }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
@@ -59,7 +59,7 @@ export function HowItWorksSection() {
               </div>
               <div
                 className="w-9 h-9 flex items-center justify-center mb-5 border"
-                style={{ borderColor: "rgba(28,24,18,0.15)", background: PAPER, color: OXBLOOD }}
+                style={{ borderColor: "hsl(var(--ink) / 0.15)", background: PAPER, color: OXBLOOD_TEXT }}
               >
                 <step.Icon size={16} strokeWidth={1.5} />
               </div>
@@ -70,13 +70,13 @@ export function HowItWorksSection() {
               >
                 {step.title}
               </Heading>
-              <p className="text-sm leading-relaxed" style={{ color: "#6B6456" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--body))" }}>
                 {step.detail}
               </p>
               {i < 2 && (
                 <div
                   className="hidden md:block absolute top-5 -right-7"
-                  style={{ color: "rgba(28,24,18,0.2)" }}
+                  style={{ color: "hsl(var(--ink) / 0.2)" }}
                 >
                   <ChevronRight size={13} />
                 </div>

@@ -94,7 +94,7 @@ export function ReaderChapterGeneralCommentSheet({
         <ScrollArea className="h-full">
           <div className="p-6">
             <SheetHeader>
-              <div className="flex items-center gap-2 text-primary">
+              <div className="flex items-center gap-2 text-primary-text">
                 {isEditing ? <Pencil className="h-4 w-4" /> : <MessageSquarePlus className="h-4 w-4" />}
                 <span className="font-mono text-[9px] uppercase tracking-[0.2em]">
                   {isEditing ? "Edit general annotation" : "General annotation"}

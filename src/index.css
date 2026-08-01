@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* The public site and the workspace share one warm, paper-led palette. */
     --background: 36 40% 94%;
     --foreground: 33 22% 9%;
     --card: 36 42% 97%;
@@ -12,13 +13,14 @@
     --popover-foreground: 33 22% 9%;
     --primary: 0 62% 30%;
     --primary-foreground: 36 42% 97%;
+    --primary-text: 0 62% 30%;
     --secondary: 112 17% 21%;
     --secondary-foreground: 36 42% 97%;
     --muted: 35 24% 87%;
     --muted-foreground: 30 10% 38%;
     --accent: 350 27% 91%;
     --accent-foreground: 0 62% 30%;
-    --destructive: 0 73% 51%;
+    --destructive: 0 73% 49%;
     --destructive-foreground: 38 55% 96%;
     --border: 34 19% 78%;
     --input: 34 19% 78%;
@@ -27,6 +29,19 @@
     --surface: 38 38% 96%;
     --success: 143 29% 40%;
     --warning: 31 55% 47%;
+    --ink: 33 22% 9%;
+    --paper: 36 40% 94%;
+    --warm: 35 24% 87%;
+    --body: 32 16% 25%;
+    --oxblood: 0 62% 30%;
+    --oxblood-text: 0 62% 30%;
+    --forest: 112 17% 21%;
+    --tag-pacing: 33 59% 30%;
+    --tag-missing: 235 29% 36%;
+    --tag-emotional: 133 35% 27%;
+    --inverse-background: 33 22% 9%;
+    --inverse-foreground: 36 42% 97%;
+    --inverse-muted: 35 17% 76%;
     --radius: 0.125rem;
     --layer-sheet-overlay: 80;
     --layer-sheet: 90;
@@ -36,6 +51,50 @@
     --layer-alert: 130;
     --layer-popover: 200;
     --layer-tooltip: 300;
+    color-scheme: light;
+  }
+
+  .dark {
+    /* A walnut-and-parchment night palette: deliberately warm, never blue-black. */
+    --background: 30 19% 16%;
+    --foreground: 38 31% 90%;
+    --card: 30 18% 22%;
+    --card-foreground: 38 31% 90%;
+    --popover: 30 19% 23%;
+    --popover-foreground: 38 31% 90%;
+    /* Deep oxblood gives primary actions weight; the separate text token stays readable on walnut surfaces. */
+    --primary: 0 68% 40%;
+    --primary-foreground: 36 42% 97%;
+    --primary-text: 3 88% 78%;
+    --secondary: 110 20% 59%;
+    --secondary-foreground: 28 22% 15%;
+    --muted: 30 15% 27%;
+    --muted-foreground: 35 19% 76%;
+    --accent: 1 24% 30%;
+    --accent-foreground: 5 55% 77%;
+    --destructive: 0 62% 73%;
+    --destructive-foreground: 30 19% 16%;
+    --border: 31 15% 37%;
+    --input: 31 15% 37%;
+    --ring: 3 88% 78%;
+    --sidebar: 30 19% 18%;
+    --surface: 30 17% 24%;
+    --success: 143 27% 60%;
+    --warning: 31 48% 64%;
+    --ink: 38 31% 90%;
+    --paper: 30 19% 16%;
+    --warm: 30 16% 25%;
+    --body: 36 19% 78%;
+    --oxblood: 0 68% 40%;
+    --oxblood-text: 3 88% 78%;
+    --forest: 111 20% 65%;
+    --tag-pacing: 35 67% 72%;
+    --tag-missing: 232 55% 76%;
+    --tag-emotional: 141 39% 68%;
+    --inverse-background: 27 23% 12%;
+    --inverse-foreground: 38 31% 90%;
+    --inverse-muted: 36 19% 72%;
+    color-scheme: dark;
   }
 
   * {
@@ -44,6 +103,7 @@
 
   html {
     scroll-behavior: smooth;
+    background: hsl(var(--background));
   }
 
   body {
@@ -61,6 +121,20 @@
   button,
   input {
     font: inherit;
+  }
+}
+
+@layer components {
+  .annotation-highlight {
+    background-color: var(--annotation-highlight-background);
+  }
+
+  .annotation-highlight--focused {
+    background-color: var(--annotation-highlight-focus-light);
+  }
+
+  .dark .annotation-highlight--focused {
+    background-color: var(--annotation-highlight-focus-dark);
   }
 }
 

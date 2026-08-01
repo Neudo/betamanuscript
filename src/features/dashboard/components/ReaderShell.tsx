@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { PropsWithChildren, useState } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { WorkspaceAccountMenu } from "@/features/account/components/WorkspaceAccountMenu";
@@ -52,6 +53,7 @@ function ReaderSidebar({
         </Link>
       </nav>
       <div className="space-y-0.5 border-t border-foreground/10 px-3 pb-4 pt-3">
+        <ThemeToggle label className="mb-2 h-8 w-full justify-start border-foreground/10 px-3 text-muted-foreground hover:text-foreground" />
         <Button
           asChild
           variant="ghost"
@@ -87,20 +89,23 @@ export function ReaderShell({
       </div>
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
         <BrandLogo href="/reader" ariaLabel="BetaManuscript reader workspace" imageClassName="h-7" />
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="Open navigation">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[220px] p-0">
-            <SheetTitle className="sr-only">Reader navigation</SheetTitle>
-            <ReaderSidebar
-              account={account}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label="Open navigation">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[220px] p-0">
+              <SheetTitle className="sr-only">Reader navigation</SheetTitle>
+              <ReaderSidebar
+                account={account}
+                onNavigate={() => setMobileOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
       <main className="min-w-0 md:h-screen md:overflow-y-auto">{children}</main>
     </div>

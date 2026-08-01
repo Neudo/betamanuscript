@@ -119,7 +119,7 @@ function FeedbackExplorerContent({
               onClick={() => setSelectedTagSlug(selectedTagSlug === tag.slug ? null : tag.slug)}
               className={cn(
                 "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-                selectedTagSlug === tag.slug && "bg-foreground/[0.06] text-primary",
+                selectedTagSlug === tag.slug && "bg-foreground/[0.06] text-primary-text",
               )}
             >
               <span>{tag.label}</span>
@@ -138,7 +138,7 @@ function FeedbackExplorerContent({
               onClick={() => setSelectedChapterId(selectedChapterId === chapter.id ? null : chapter.id)}
               className={cn(
                 "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-                selectedChapterId === chapter.id && "bg-foreground/[0.06] text-primary",
+                selectedChapterId === chapter.id && "bg-foreground/[0.06] text-primary-text",
               )}
             >
               <span>Ch {chapter.position}</span>
@@ -157,7 +157,7 @@ function FeedbackExplorerContent({
               onClick={() => setSelectedReaderId(selectedReaderId === reader.id ? null : reader.id)}
               className={cn(
                 "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-                selectedReaderId === reader.id && "bg-foreground/[0.06] text-primary",
+                selectedReaderId === reader.id && "bg-foreground/[0.06] text-primary-text",
               )}
             >
               <span className="grid h-5 w-5 place-items-center rounded-full font-mono text-[8px] font-semibold text-white" style={{ backgroundColor: reader.color }}>{reader.initials}</span>
@@ -397,7 +397,12 @@ function AnnotationRow({
 }
 
 function FeedbackTagBadge({ tag }: { tag: FeedbackTag }) {
-  return <Badge variant="outline" className="rounded-none font-mono text-[9px] uppercase" style={{ borderColor: tag.color, color: tag.color }}>{tag.label}</Badge>;
+  return (
+    <Badge variant="outline" className="gap-1.5 rounded-none font-mono text-[9px] uppercase" style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}>
+      <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tag.color }} aria-hidden />
+      {tag.label}
+    </Badge>
+  );
 }
 
 function formatAnnotationDate(createdAt: string) {

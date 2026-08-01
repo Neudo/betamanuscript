@@ -1,12 +1,12 @@
-import { FOREST, OXBLOOD } from "../../../shared/config/design-tokens";
+import { FOREST, OXBLOOD, OXBLOOD_TEXT } from "../../../shared/config/design-tokens";
 import type { Annotation, AttentionItem, ReaderProgress, RepeatedAnnotationIssue, StrongestMoment, TagKey } from "../types";
 
 const TAGS = {
-  confusing:  { label: "Confusing",        bg: "rgba(123,29,29,0.11)",  color: OXBLOOD,   bar: OXBLOOD },
-  strong:     { label: "Strong line",       bg: "rgba(44,62,45,0.11)",   color: FOREST,    bar: FOREST },
-  pacing:     { label: "Pacing issue",      bg: "rgba(139,100,40,0.12)", color: "#7A5020", bar: "#7A5020" },
-  missing:    { label: "Missing context",   bg: "rgba(70,80,140,0.1)",   color: "#424878", bar: "#424878" },
-  emotional:  { label: "Emotional impact",  bg: "rgba(60,100,70,0.11)",  color: "#2D5E3A", bar: "#2D5E3A" },
+  confusing:  { label: "Confusing",        bg: "hsl(var(--oxblood-text) / 0.05)",  color: OXBLOOD_TEXT,   bar: OXBLOOD },
+  strong:     { label: "Strong line",       bg: "hsl(var(--forest) / 0.05)",         color: FOREST,         bar: FOREST },
+  pacing:     { label: "Pacing issue",      bg: "hsl(var(--tag-pacing) / 0.05)",      color: "hsl(var(--tag-pacing))",   bar: "hsl(var(--tag-pacing))" },
+  missing:    { label: "Missing context",   bg: "hsl(var(--tag-missing) / 0.05)",     color: "hsl(var(--tag-missing))",  bar: "hsl(var(--tag-missing))" },
+  emotional:  { label: "Emotional impact",  bg: "hsl(var(--tag-emotional) / 0.05)",   color: "hsl(var(--tag-emotional))", bar: "hsl(var(--tag-emotional))" },
 } as const;
 
 

@@ -17,7 +17,7 @@ function AnnotationMarker({
       onClick={onClick}
       className="cursor-pointer relative inline"
       style={{
-        background: active ? t.bg.replace("0.11", "0.22").replace("0.12", "0.24").replace("0.1", "0.2") : t.bg,
+        background: active ? t.bg.replace("0.05", "0.14") : t.bg,
         borderBottom: `1.5px solid ${t.color}`,
         padding: "0 2px",
         transition: "background 0.15s",
@@ -26,7 +26,7 @@ function AnnotationMarker({
       {children}
       <span
         className="ml-1 text-[9px] align-super"
-        style={{ fontFamily: MONO, color: t.color, opacity: 0.8 }}
+        style={{ fontFamily: MONO, color: t.color }}
       >
         {count}
       </span>

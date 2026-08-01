@@ -1,7 +1,7 @@
 import { FileText, ListChecks, MessageSquare, Tag } from "lucide-react";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
-import { CARD, OXBLOOD, PAPER } from "../../../shared/config/design-tokens";
+import { CARD, OXBLOOD_TEXT, PAPER } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function FeaturesSection() {
@@ -10,7 +10,7 @@ export function FeaturesSection() {
       {/* ── Features ─────────────────────────────────────────────────────────── */}
     <section
       className="relative z-10 border-t"
-      style={{ borderColor: "rgba(28,24,18,0.1)" }}
+      style={{ borderColor: "hsl(var(--ink) / 0.1)" }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <Reveal>
@@ -20,7 +20,7 @@ export function FeaturesSection() {
             <em> not more noise.</em>
           </Heading>
         </Reveal>
-        <div className="grid sm:grid-cols-2 gap-px" style={{ background: "rgba(28,24,18,0.1)" }}>
+        <div className="grid sm:grid-cols-2 gap-px" style={{ background: "hsl(var(--ink) / 0.1)" }}>
           {[
             {
               Icon: MessageSquare,
@@ -51,7 +51,7 @@ export function FeaturesSection() {
               <div className="mb-5">
                 <div
                   className="w-9 h-9 flex items-center justify-center border"
-                  style={{ borderColor: "rgba(28,24,18,0.14)", background: CARD, color: OXBLOOD }}
+                  style={{ borderColor: "hsl(var(--ink) / 0.14)", background: CARD, color: OXBLOOD_TEXT }}
                 >
                   <card.Icon size={16} strokeWidth={1.5} />
                 </div>
@@ -59,7 +59,7 @@ export function FeaturesSection() {
               <Heading level={3} size="feature" className="mb-3">
                 {card.title}
               </Heading>
-              <p className="text-sm leading-relaxed" style={{ color: "#6B6456" }}>
+              <p className="text-sm leading-relaxed" style={{ color: "hsl(var(--body))" }}>
                 {card.detail}
               </p>
             </Lift>

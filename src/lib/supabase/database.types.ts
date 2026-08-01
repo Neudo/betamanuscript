@@ -652,6 +652,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           bio: string | null
           created_at: string
           display_name: string
@@ -663,6 +664,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          avatar_path?: string | null
           bio?: string | null
           created_at?: string
           display_name: string
@@ -674,6 +676,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          avatar_path?: string | null
           bio?: string | null
           created_at?: string
           display_name?: string
@@ -1532,9 +1535,14 @@ export type Database = {
       }
       update_manuscript_settings: {
         Args: {
+          p_estimated_word_count_band: string
+          p_genre_slugs: string[]
           p_logline: string
+          p_max_readers: number
           p_manuscript_id: string
           p_manuscript_version_id: string
+          p_reader_note: string
+          p_reading_deadline: string
           p_reader_closing_note: string
           p_title: string
         }

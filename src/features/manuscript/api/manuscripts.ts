@@ -17,6 +17,7 @@ import type {
   ManuscriptWorkspaceData,
   ManuscriptWorkspaceGeneralComment,
   ManuscriptWorkspaceVersion,
+  ManuscriptWordCountBand,
 } from "@/features/manuscript/types";
 
 type ManuscriptSummaryRow = {
@@ -34,6 +35,7 @@ type ManuscriptSummaryRow = {
 };
 
 type ManuscriptVersionRow = {
+  estimated_word_count_band: ManuscriptWordCountBand | null;
   id: string;
   logline: string | null;
   title: string;
@@ -41,12 +43,20 @@ type ManuscriptVersionRow = {
 };
 
 type ReadingRoundSettingsRow = {
+  max_readers: number;
+  reader_note: string | null;
   reader_closing_note: string | null;
+  reading_deadline: string | null;
 };
 
 type ManuscriptAssetStorageRow = {
   storage_bucket: string;
   storage_path: string;
+};
+
+type ManuscriptVersionGenreRow = {
+  genre_slug: string;
+  sort_order: number;
 };
 
 type ManuscriptChapterRow = {
@@ -206,7 +216,7 @@ export async function getManuscript(
 
   const { data: versions, error: versionsError } = await supabase
     .from("manuscript_versions")
-    .select("id, title, version_number, logline")
+    .select("id, title, version_number, logline, estimated_word_count_band")
     .eq("manuscript_id", manuscriptId)
     .is("archived_at", null)
     .order("version_number", { ascending: false });
@@ -220,8 +230,13 @@ export async function getManuscript(
   if (!version) {
     return {
       chapters: [],
+      coverUrl: null,
+      genreSlugs: [],
       id: manuscript.id,
+      maxReaders: 5,
+      readerDeadline: null,
       readerClosingNote: null,
+      readerNote: null,
       title: manuscript.internal_title,
       totalWordCount: 0,
       version: null,
@@ -229,34 +244,70 @@ export async function getManuscript(
     };
   }
 
-  const { data: readingRoundRows, error: readingRoundsError } = await supabase
-    .from("reading_rounds")
-    .select("reader_closing_note")
-    .eq("manuscript_version_id", version.id)
-    .neq("status", "archived")
-    .order("created_at", { ascending: false })
-    .limit(1);
+  const [readingRoundsResult, genreResult, coverResult, chaptersResult] = await Promise.all([
+    supabase
+      .from("reading_rounds")
+      .select("max_readers, reading_deadline, reader_note, reader_closing_note")
+      .eq("manuscript_version_id", version.id)
+      .neq("status", "archived")
+      .order("created_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("manuscript_version_genres")
+      .select("genre_slug, sort_order")
+      .eq("manuscript_version_id", version.id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("manuscript_assets")
+      .select("storage_bucket, storage_path")
+      .eq("manuscript_version_id", version.id)
+      .eq("asset_kind", "cover")
+      .eq("processing_status", "available")
+      .maybeSingle(),
+    supabase
+      .from("manuscript_chapters")
+      .select("id, position, title, editorial_status")
+      .eq("manuscript_version_id", version.id)
+      .order("position", { ascending: true }),
+  ]);
 
-  if (readingRoundsError) throw new Error(readingRoundsError.message);
+  if (readingRoundsResult.error) throw new Error(readingRoundsResult.error.message);
+  if (genreResult.error) throw new Error(genreResult.error.message);
+  if (coverResult.error) throw new Error(coverResult.error.message);
+  if (chaptersResult.error) throw new Error(chaptersResult.error.message);
 
-  const readerClosingNote = (readingRoundRows?.[0] as ReadingRoundSettingsRow | undefined)
-    ?.reader_closing_note ?? null;
+  const readingRound = readingRoundsResult.data?.[0] as ReadingRoundSettingsRow | undefined;
+  const readerClosingNote = readingRound?.reader_closing_note ?? null;
+  const readerDeadline = readingRound?.reading_deadline ?? null;
+  const readerNote = readingRound?.reader_note ?? null;
+  const maxReaders = readingRound?.max_readers ?? 5;
+  const genreSlugs = ((genreResult.data ?? []) as ManuscriptVersionGenreRow[]).map(
+    (genre) => genre.genre_slug,
+  );
+  const coverAsset = coverResult.data as ManuscriptAssetStorageRow | null;
+  let coverUrl: string | null = null;
 
-  const { data: chapterRows, error: chaptersError } = await supabase
-    .from("manuscript_chapters")
-    .select("id, position, title, editorial_status")
-    .eq("manuscript_version_id", version.id)
-    .order("position", { ascending: true });
+  if (coverAsset) {
+    const { data: signedCover, error: signedCoverError } = await supabase.storage
+      .from(coverAsset.storage_bucket)
+      .createSignedUrl(coverAsset.storage_path, 60 * 60);
 
-  if (chaptersError) throw new Error(chaptersError.message);
+    if (signedCoverError) throw new Error(signedCoverError.message);
+    coverUrl = signedCover.signedUrl;
+  }
 
-  const chapters = (chapterRows ?? []) as ManuscriptChapterRow[];
+  const chapters = (chaptersResult.data ?? []) as ManuscriptChapterRow[];
   const chapterIds = chapters.map((chapter) => chapter.id);
   if (chapterIds.length === 0) {
     return {
       chapters: [],
+      coverUrl,
+      genreSlugs,
       id: manuscript.id,
+      maxReaders,
+      readerDeadline,
       readerClosingNote,
+      readerNote,
       title: manuscript.internal_title,
       totalWordCount: 0,
       version: {
@@ -403,8 +454,13 @@ export async function getManuscript(
 
   return {
     chapters: workspaceChapters,
+    coverUrl,
+    genreSlugs,
     id: manuscript.id,
+    maxReaders,
+    readerDeadline,
     readerClosingNote,
+    readerNote,
     title: manuscript.internal_title,
     totalWordCount: workspaceChapters.reduce(
       (total, chapter) => total + chapter.wordCount,
@@ -419,6 +475,7 @@ export async function getManuscript(
 
 function toWorkspaceVersion(version: ManuscriptVersionRow): ManuscriptWorkspaceVersion {
   return {
+    estimatedWordCountBand: version.estimated_word_count_band,
     id: version.id,
     logline: version.logline,
     number: version.version_number,
@@ -664,25 +721,40 @@ export async function updateGeneralCommentSeenStatus({
 }
 
 export type UpdateManuscriptSettingsInput = {
+  estimatedWordCountBand: ManuscriptWordCountBand | null;
+  genreSlugs: string[];
   logline: string;
+  maxReaders: number;
   manuscriptId: string;
   manuscriptVersionId: string;
+  readerDeadline: string | null;
   readerClosingNote: string;
+  readerNote: string;
   title: string;
 };
 
 export async function updateManuscriptSettings({
+  estimatedWordCountBand,
+  genreSlugs,
   logline,
+  maxReaders,
   manuscriptId,
   manuscriptVersionId,
+  readerDeadline,
   readerClosingNote,
+  readerNote,
   title,
 }: UpdateManuscriptSettingsInput) {
   const supabase = createSupabaseBrowserClient();
   const { error } = await supabase.rpc("update_manuscript_settings", {
+    p_estimated_word_count_band: estimatedWordCountBand ?? "",
+    p_genre_slugs: genreSlugs,
     p_logline: logline,
+    p_max_readers: maxReaders,
     p_manuscript_id: manuscriptId,
     p_manuscript_version_id: manuscriptVersionId,
+    p_reader_note: readerNote,
+    p_reading_deadline: readerDeadline ?? "",
     p_reader_closing_note: readerClosingNote,
     p_title: title,
   });

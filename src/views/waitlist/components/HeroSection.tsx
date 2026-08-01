@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { TagBadge, type TagKey } from "../../../features/product-preview";
-import { BODY, CARD, INK, MONO, MUTED, OXBLOOD, PAPER, SANS, SERIF, premiumEase } from "../../../shared/config/design-tokens";
+import { BODY, CARD, INK, INVERSE_FOREGROUND, MONO, MUTED, OXBLOOD, SANS, SERIF, premiumEase } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function HeroSection() {
@@ -49,8 +49,8 @@ export function HeroSection() {
           <div className="mt-7">
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8b1a1a]"
-              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: PAPER, fontFamily: SANS }}
+              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND, fontFamily: SANS }}
             >
               Start for free
             </Link>
@@ -69,7 +69,7 @@ export function HeroSection() {
         >
           <div
             className="p-5 border"
-            style={{ borderColor: "rgba(28,24,18,0.12)", background: CARD }}
+            style={{ borderColor: "hsl(var(--ink) / 0.12)", background: CARD }}
           >
             <div className="text-[9px] uppercase tracking-widest mb-3" style={{ fontFamily: MONO, color: MUTED }}>
               Annotation summary — Chapter 3
@@ -90,7 +90,7 @@ export function HeroSection() {
             </div>
             <div
               className="pt-4 border-t"
-              style={{ borderColor: "rgba(28,24,18,0.08)" }}
+              style={{ borderColor: "hsl(var(--ink) / 0.08)" }}
             >
               <div className="text-[9px] uppercase tracking-widest mb-2" style={{ fontFamily: MONO, color: MUTED }}>
                 Feedback summary

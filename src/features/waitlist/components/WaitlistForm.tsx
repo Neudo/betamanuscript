@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { submitWaitlist } from "../api/submit-waitlist";
-import { CARD, INK, MONO, OXBLOOD, PAPER, SANS, premiumEase } from "../../../shared/config/design-tokens";
+import { CARD, INK, INVERSE_FOREGROUND, MONO, OXBLOOD, OXBLOOD_TEXT, PAPER, SANS, premiumEase } from "../../../shared/config/design-tokens";
 
 function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: string; dark?: boolean }) {
   const [email, setEmail] = useState("");
@@ -53,7 +53,7 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
 
   if (status === "success") {
     return (
-      <div className="flex items-center gap-2.5 py-3" style={{ color: dark ? PAPER : OXBLOOD }}>
+      <div className="flex items-center gap-2.5 py-3" style={{ color: dark ? OXBLOOD_TEXT : OXBLOOD }}>
         <Check size={14} strokeWidth={2.5} />
         <span className="text-sm" style={{ fontFamily: MONO }}>
           {message}
@@ -91,9 +91,9 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
         placeholder="your@email.com"
         className="flex-1 px-4 py-3 text-sm border-y border-l focus:outline-none transition-colors"
         style={{
-          background: dark ? "rgba(253,250,244,0.06)" : CARD,
-          borderColor: dark ? "rgba(245,240,232,0.18)" : "rgba(28,24,18,0.2)",
-          color: dark ? PAPER : INK,
+          background: dark ? "hsl(var(--inverse-foreground) / 0.06)" : CARD,
+          borderColor: dark ? "hsl(var(--inverse-foreground) / 0.18)" : "hsl(var(--ink) / 0.2)",
+          color: dark ? INVERSE_FOREGROUND : INK,
           fontFamily: SANS,
         }}
       />
@@ -105,16 +105,16 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
         whileTap={reduceMotion ? undefined : { scale: 0.985 }}
         transition={{ duration: 0.24, ease: premiumEase }}
         style={{
-          background: dark ? PAPER : OXBLOOD,
+          background: dark ? INVERSE_FOREGROUND : OXBLOOD,
           color: dark ? OXBLOOD : PAPER,
-          borderColor: dark ? PAPER : OXBLOOD,
+          borderColor: dark ? INVERSE_FOREGROUND : OXBLOOD,
           fontFamily: SANS,
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLButtonElement).style.background = dark ? "#EDE8DC" : "#691919";
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = dark ? PAPER : OXBLOOD;
+          (e.currentTarget as HTMLButtonElement).style.background = dark ? INVERSE_FOREGROUND : OXBLOOD;
         }}
       >
         {status === "loading" ? "Joining..." : label}
@@ -122,7 +122,7 @@ function WaitlistForm({ label = "Join the waitlist", dark = false }: { label?: s
       {status === "error" && (
         <p
           className="sm:col-span-2 mt-2 text-[11px]"
-          style={{ color: dark ? "#F5B7B1" : OXBLOOD, fontFamily: MONO }}
+          style={{ color: dark ? OXBLOOD_TEXT : OXBLOOD, fontFamily: MONO }}
           role="alert"
         >
           {message}

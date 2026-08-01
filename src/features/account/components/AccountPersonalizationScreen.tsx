@@ -28,7 +28,7 @@ export function AccountPersonalizationScreen({
 
       <section className="mx-auto flex w-full max-w-6xl flex-col px-5 py-12 sm:px-8 sm:py-16 lg:px-10 lg:py-20">
         <div className="max-w-2xl space-y-4">
-          <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary-text">
             Welcome to BetaManuscript
           </p>
           <Heading level={1}>

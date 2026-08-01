@@ -51,7 +51,7 @@ function Lift({
           : {
               y: -3,
               boxShadow:
-                "0 18px 48px rgba(28,24,18,0.10), 0 2px 8px rgba(28,24,18,0.05)",
+                "0 18px 48px hsl(var(--ink) / 0.10), 0 2px 8px hsl(var(--ink) / 0.05)",
             }
       }
       transition={{ duration: 0.32, ease: premiumEase }}

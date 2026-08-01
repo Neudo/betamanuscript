@@ -62,6 +62,7 @@ export type CreatedManuscriptDraftVersion = {
 };
 
 export type ManuscriptWorkspaceVersion = {
+  estimatedWordCountBand: ManuscriptWordCountBand | null;
   id: string;
   logline: string | null;
   number: number;
@@ -117,8 +118,13 @@ export type ManuscriptWorkspaceChapter = {
 
 export type ManuscriptWorkspaceData = {
   chapters: ManuscriptWorkspaceChapter[];
+  coverUrl: string | null;
+  genreSlugs: string[];
   id: string;
+  maxReaders: number;
+  readerDeadline: string | null;
   readerClosingNote: string | null;
+  readerNote: string | null;
   title: string;
   totalWordCount: number;
   version: ManuscriptWorkspaceVersion | null;

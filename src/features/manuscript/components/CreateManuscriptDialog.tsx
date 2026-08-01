@@ -965,7 +965,7 @@ function FieldLabel({
 }) {
   return (
     <Label htmlFor={htmlFor} className="mb-1.5 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-      {children}{required ? <span className="text-primary"> *</span> : null}
+      {children}{required ? <span className="text-primary-text"> *</span> : null}
     </Label>
   );
 }

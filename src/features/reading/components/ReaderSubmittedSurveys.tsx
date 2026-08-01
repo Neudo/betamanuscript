@@ -119,7 +119,7 @@ export function ReaderSubmittedSurveys() {
               {survey.questions.map((question, index) => (
                 <div key={question.id} className="grid gap-2 p-5 sm:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] sm:gap-8 sm:px-6">
                   <dt className="text-sm leading-6 text-muted-foreground">
-                    <span className="mr-2 font-mono text-[10px] text-muted-foreground/70">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="mr-2 font-mono text-[10px] text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
                     {question.prompt}
                   </dt>
                   <dd className="text-sm leading-6">{formatAnswer(survey, question.id)}</dd>

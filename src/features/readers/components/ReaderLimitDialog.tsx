@@ -83,7 +83,7 @@ export function ReaderLimitDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-medium">
-            <UsersRound className="h-4 w-4 text-primary" />
+            <UsersRound className="h-4 w-4 text-primary-text" />
             Reader limit
           </DialogTitle>
           <DialogDescription>

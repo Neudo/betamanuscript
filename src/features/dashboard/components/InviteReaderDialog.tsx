@@ -34,7 +34,7 @@ export function InviteReaderDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" variant={triggerVariant} className={triggerVariant === "outline" ? "border-primary text-primary" : undefined}>
+        <Button size="sm" variant={triggerVariant} className={triggerVariant === "outline" ? "border-primary text-primary-text" : undefined}>
           <UserPlus className="h-3.5 w-3.5" />
           Invite reader
         </Button>

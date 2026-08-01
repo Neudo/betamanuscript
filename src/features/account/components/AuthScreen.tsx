@@ -23,7 +23,7 @@ export function AuthScreen({
       <section className="dashboard-grid hidden border-r p-12 lg:flex lg:flex-col lg:justify-between">
         <BrandLogo href="/" priority imageClassName="h-9" />
         <div className="max-w-xl space-y-6">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary-text">
             One account, two workspaces
           </p>
           <Heading level={1}>
@@ -43,7 +43,7 @@ export function AuthScreen({
         <div className="w-full max-w-xl space-y-8">
           <div className="space-y-3">
             <BrandLogo href="/" priority className="lg:hidden" imageClassName="h-8" />
-            <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">
+            <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary-text">
               {eyebrow}
             </p>
             <Heading level={2} size="page">{title}</Heading>

@@ -1,6 +1,6 @@
 import { type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
 
-import { MONO, MUTED, PAPER, SANS, SERIF } from "@/shared/config/design-tokens";
+import { INVERSE_FOREGROUND, MONO, MUTED, SANS, SERIF } from "@/shared/config/design-tokens";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 type HeadingSize = "display" | "section" | "page" | "card" | "feature" | "workspace" | "subsection" | "small" | "label";
@@ -97,7 +97,7 @@ const headingStyles: Record<HeadingSize, CSSProperties> = {
 
 const headingTones: Record<HeadingTone, CSSProperties> = {
   default: {},
-  inverse: { color: PAPER },
+  inverse: { color: INVERSE_FOREGROUND },
   muted: { color: MUTED },
 };
 

@@ -9,13 +9,17 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { WorkspaceAccountMenu } from "@/features/account/components/WorkspaceAccountMenu";
 import type { AuthenticatedAccount } from "@/features/account/types";
 import { ManuscriptSwitcher } from "@/features/manuscript/components/ManuscriptSwitcher";
+import { DraftVersionSwitcher } from "@/features/manuscript/components/DraftVersionSwitcher";
+import { ManuscriptSettingsDialog } from "@/features/manuscript/components/ManuscriptSettingsDialog";
+import { useManuscript } from "@/features/manuscript/hooks/use-manuscripts";
 import { NotificationCenter } from "@/features/notifications/components/NotificationCenter";
 import { cn } from "@/lib/utils";
 
@@ -34,9 +38,16 @@ type WorkspaceSidebarProps = {
 
 export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
+  const isManuscriptWorkspace = pathname.startsWith("/dashboard/manuscript");
+  const manuscriptQuery = useManuscript(
+    isManuscriptWorkspace ? selectedManuscriptId : null,
+    selectedVersionId,
+  );
+  const manuscript = manuscriptQuery.data;
 
   function withSelectedManuscript(href: string) {
     if (!selectedManuscriptId) return href;
@@ -46,6 +57,28 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
     nextSearchParams.set("manuscriptId", selectedManuscriptId);
     if (selectedVersionId) nextSearchParams.set("versionId", selectedVersionId);
     return `${path}?${nextSearchParams.toString()}`;
+  }
+
+  function handleVersionChange(versionId: string) {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set("versionId", versionId);
+    nextSearchParams.delete("chapterId");
+    nextSearchParams.delete("annotationId");
+    nextSearchParams.delete("generalCommentId");
+    router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
+    onNavigate?.();
+  }
+
+  function handleManuscriptDeleted() {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("manuscriptId");
+    nextSearchParams.delete("versionId");
+    nextSearchParams.delete("chapterId");
+    nextSearchParams.delete("annotationId");
+    nextSearchParams.delete("generalCommentId");
+    const queryString = nextSearchParams.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    onNavigate?.();
   }
 
   return (
@@ -66,6 +99,27 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
         accountPlan={account.plan}
         onNavigate={onNavigate}
       />
+
+      {isManuscriptWorkspace && manuscript ? (
+        <div className="mx-3 mb-3 border-t border-foreground/10 pt-3">
+          <p className="mb-2 px-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+            Current draft
+          </p>
+          <DraftVersionSwitcher
+            activeVersionId={manuscript.version?.id ?? null}
+            className="w-full"
+            onVersionChange={handleVersionChange}
+            versions={manuscript.versions}
+          />
+          <ManuscriptSettingsDialog
+            accountPlan={account.plan}
+            manuscript={manuscript}
+            onDeleted={handleManuscriptDeleted}
+            triggerClassName="mt-2 w-full"
+            triggerLabel="Edit manuscript"
+          />
+        </div>
+      ) : null}
 
       <nav className="mt-2 flex-1 space-y-0.5 px-3" aria-label="Writer workspace">
         {navItems.map((item) => {
@@ -93,6 +147,7 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
       </nav>
 
       <div className="space-y-0.5 border-t border-foreground/10 px-3 pb-4 pt-3">
+        <ThemeToggle label className="mb-2 h-8 w-full justify-start border-foreground/10 px-3 text-muted-foreground hover:text-foreground" />
         <Button asChild variant="ghost" className={cn("h-auto w-full justify-start border-l-2 border-transparent px-3 py-2 text-[11px] text-muted-foreground", pathname.startsWith("/dashboard/settings") && "border-l-primary bg-foreground/[0.07] text-foreground")} size="sm">
           <Link href={withSelectedManuscript("/dashboard/settings")} onClick={onNavigate}>
             <Settings className="h-3 w-3" strokeWidth={1.5} />
