@@ -27,7 +27,7 @@ type ManuscriptSummaryRow = {
     archived_at: string | null;
     id: string;
     version_number: number;
-    manuscript_chapters: Array<{ id: string }>;
+    manuscript_chapters: Array<{ archived_at: string | null; id: string }>;
     reading_rounds: Array<{
       reader_assignments: Array<{ id: string; status: string }>;
     }>;
@@ -118,7 +118,7 @@ const manuscriptSummarySelect = `
     archived_at,
     id,
     version_number,
-    manuscript_chapters (id),
+    manuscript_chapters (id, archived_at),
     reading_rounds (
       reader_assignments (id, status)
     )
@@ -142,7 +142,7 @@ function toManuscriptSummary(row: ManuscriptSummaryRow): ManuscriptSummary {
     draft: currentVersion ? `Draft ${currentVersion.version_number}` : "No draft",
     versionId: currentVersion?.id ?? null,
     versionNumber: currentVersion?.version_number ?? null,
-    chapters: currentVersion?.manuscript_chapters.length ?? 0,
+    chapters: currentVersion?.manuscript_chapters.filter((chapter) => chapter.archived_at === null).length ?? 0,
     readers,
   };
 }
@@ -268,6 +268,7 @@ export async function getManuscript(
       .from("manuscript_chapters")
       .select("id, position, title, editorial_status")
       .eq("manuscript_version_id", version.id)
+      .is("archived_at", null)
       .order("position", { ascending: true }),
   ]);
 
@@ -322,16 +323,19 @@ export async function getManuscript(
       .from("chapter_blocks")
       .select("id, chapter_id, position, kind, content")
       .in("chapter_id", chapterIds)
+      .is("archived_at", null)
       .order("position", { ascending: true }),
     supabase
       .from("annotations")
       .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, selection_start, selection_end, selection_end_chapter_block_id, selection_end_offset, comment, created_at, author_seen_at")
       .in("chapter_id", chapterIds)
+      .is("archived_at", null)
       .order("created_at", { ascending: false }),
     supabase
       .from("chapter_general_comments")
       .select("id, chapter_id, reader_assignment_id, comment, created_at, author_seen_at")
       .in("chapter_id", chapterIds)
+      .is("archived_at", null)
       .order("created_at", { ascending: false }),
   ]);
 

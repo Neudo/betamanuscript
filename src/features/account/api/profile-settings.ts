@@ -102,6 +102,12 @@ export async function uploadProfileAvatar({
     throw new Error(profileError?.message ?? "Unable to save your profile photo.");
   }
 
+  const avatarPath = profile.avatar_path;
+  if (!avatarPath) {
+    await supabase.storage.from(PROFILE_AVATARS_BUCKET).remove([storagePath]);
+    throw new Error("Unable to save your profile photo.");
+  }
+
   if (previousPath) {
     const { error: deleteError } = await supabase.storage
       .from(PROFILE_AVATARS_BUCKET)
@@ -114,10 +120,10 @@ export async function uploadProfileAvatar({
 
   const { data: signedUrl } = await supabase.storage
     .from(PROFILE_AVATARS_BUCKET)
-    .createSignedUrl(profile.avatar_path, 60 * 60);
+    .createSignedUrl(avatarPath, 60 * 60);
 
   return {
-    avatarPath: profile.avatar_path,
+    avatarPath,
     avatarUrl: signedUrl?.signedUrl ?? null,
   };
 }

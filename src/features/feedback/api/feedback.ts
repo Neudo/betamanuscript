@@ -6,12 +6,16 @@ type ManuscriptVersionRow = {
 };
 
 type ChapterRow = {
+  archived_at: string | null;
   id: string;
   position: number;
   title: string;
 };
 
 type AnnotationRow = {
+  archived_at: string | null;
+  archived_reason: FeedbackAnnotation["archivedReason"];
+  author_seen_at: string | null;
   chapter_block_id: string;
   chapter_id: string;
   comment: string | null;
@@ -23,6 +27,9 @@ type AnnotationRow = {
 };
 
 type GeneralCommentRow = {
+  archived_at: string | null;
+  archived_reason: FeedbackAnnotation["archivedReason"];
+  author_seen_at: string | null;
   chapter_id: string;
   comment: string;
   created_at: string;
@@ -79,7 +86,7 @@ export async function getManuscriptFeedback(
 
   const { data: chapterRows, error: chapterError } = await supabase
     .from("manuscript_chapters")
-    .select("id, position, title")
+    .select("id, position, title, archived_at")
     .eq("manuscript_version_id", version.id)
     .order("position", { ascending: true });
 
@@ -92,12 +99,12 @@ export async function getManuscriptFeedback(
   const [annotationsResult, generalCommentsResult] = await Promise.all([
     supabase
       .from("annotations")
-      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, comment, created_at")
+      .select("id, chapter_id, chapter_block_id, reader_assignment_id, tag_id, quote, comment, created_at, author_seen_at, archived_at, archived_reason")
       .in("chapter_id", chapterIds)
       .order("created_at", { ascending: false }),
     supabase
       .from("chapter_general_comments")
-      .select("id, chapter_id, reader_assignment_id, comment, created_at")
+      .select("id, chapter_id, reader_assignment_id, comment, created_at, author_seen_at, archived_at, archived_reason")
       .in("chapter_id", chapterIds)
       .order("created_at", { ascending: false }),
   ]);
@@ -162,11 +169,14 @@ export async function getManuscriptFeedback(
     const tag = annotationTagsById.get(annotation.tag_id);
 
     return [{
+      archivedAt: annotation.archived_at,
+      archivedReason: annotation.archived_reason,
       chapter,
       chapterBlockId: annotation.chapter_block_id,
       comment: annotation.comment,
       createdAt: annotation.created_at,
       id: annotation.id,
+      isSeenByAuthor: annotation.author_seen_at !== null,
       kind: "annotation",
       quote: annotation.quote,
       reader: {
@@ -194,11 +204,14 @@ export async function getManuscriptFeedback(
       ?? "Reader";
 
     return [{
+      archivedAt: generalComment.archived_at,
+      archivedReason: generalComment.archived_reason,
       chapter,
       chapterBlockId: null,
       comment: generalComment.comment,
       createdAt: generalComment.created_at,
       id: generalComment.id,
+      isSeenByAuthor: generalComment.author_seen_at !== null,
       kind: "general-comment",
       quote: null,
       reader: {
@@ -213,6 +226,62 @@ export async function getManuscriptFeedback(
 
   return [...passageAnnotations, ...chapterGeneralComments]
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+}
+
+export async function updateFeedbackSeenStatus({
+  feedbackId,
+  isSeen,
+  kind,
+}: {
+  feedbackId: string;
+  isSeen: boolean;
+  kind: FeedbackAnnotation["kind"];
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const authorSeenAt = isSeen ? new Date().toISOString() : null;
+  const { error } = kind === "annotation"
+    ? await supabase
+      .from("annotations")
+      .update({ author_seen_at: authorSeenAt })
+      .eq("id", feedbackId)
+    : await supabase
+      .from("chapter_general_comments")
+      .update({ author_seen_at: authorSeenAt })
+      .eq("id", feedbackId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteArchivedFeedback({
+  feedbackId,
+  kind,
+}: {
+  feedbackId: string;
+  kind: FeedbackAnnotation["kind"];
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("delete_archived_feedback", {
+    p_feedback_id: feedbackId,
+    p_feedback_kind: kind,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function archiveFeedback({
+  feedbackId,
+  kind,
+}: {
+  feedbackId: string;
+  kind: FeedbackAnnotation["kind"];
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("archive_feedback", {
+    p_feedback_id: feedbackId,
+    p_feedback_kind: kind,
+  });
+
+  if (error) throw new Error(error.message);
 }
 
 function initialsFor(name: string): string {

@@ -116,6 +116,8 @@ export type Database = {
       }
       annotations: {
         Row: {
+          archived_at: string | null
+          archived_reason: string | null
           author_resolved_at: string | null
           author_seen_at: string | null
           chapter_block_id: string
@@ -135,6 +137,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_reason?: string | null
           author_resolved_at?: string | null
           author_seen_at?: string | null
           chapter_block_id: string
@@ -154,6 +158,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_reason?: string | null
           author_resolved_at?: string | null
           author_seen_at?: string | null
           chapter_block_id?: string
@@ -212,6 +218,7 @@ export type Database = {
       }
       chapter_blocks: {
         Row: {
+          archived_at: string | null
           chapter_id: string
           content: string
           created_at: string
@@ -221,6 +228,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           chapter_id: string
           content?: string
           created_at?: string
@@ -230,6 +238,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           chapter_id?: string
           content?: string
           created_at?: string
@@ -250,6 +259,8 @@ export type Database = {
       }
       chapter_general_comments: {
         Row: {
+          archived_at: string | null
+          archived_reason: string | null
           author_seen_at: string | null
           chapter_id: string
           comment: string
@@ -259,6 +270,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_reason?: string | null
           author_seen_at?: string | null
           chapter_id: string
           comment: string
@@ -268,6 +281,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_reason?: string | null
           author_seen_at?: string | null
           chapter_id?: string
           comment?: string
@@ -483,6 +498,7 @@ export type Database = {
       }
       manuscript_chapters: {
         Row: {
+          archived_at: string | null
           created_at: string
           editorial_status: Database["public"]["Enums"]["chapter_editorial_status"]
           id: string
@@ -492,6 +508,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           editorial_status?: Database["public"]["Enums"]["chapter_editorial_status"]
           id?: string
@@ -501,6 +518,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           editorial_status?: Database["public"]["Enums"]["chapter_editorial_status"]
           id?: string
@@ -1443,6 +1461,10 @@ export type Database = {
         }
         Returns: string
       }
+      archive_feedback: {
+        Args: { p_feedback_id: string; p_feedback_kind: string }
+        Returns: undefined
+      }
       create_reading_invitation: {
         Args: {
           p_personal_note: string
@@ -1457,6 +1479,10 @@ export type Database = {
       }
       delete_manuscript_chapter: {
         Args: { p_chapter_id: string }
+        Returns: undefined
+      }
+      delete_archived_feedback: {
+        Args: { p_feedback_id: string; p_feedback_kind: string }
         Returns: undefined
       }
       open_reader_surveys: {

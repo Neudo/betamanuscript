@@ -19,7 +19,7 @@ export function BrandLogo({
   priority = false,
 }: BrandLogoProps) {
   const logo = (
-    <span className="brand-logo inline-flex shrink-0 bg-[#F6F1EA] p-1">
+    <span className="brand-logo inline-flex shrink-0">
       <Image
         src="/logo-full.svg"
         alt="BetaManuscript"

@@ -19,11 +19,14 @@ export type FeedbackChapter = {
 };
 
 export type FeedbackAnnotation = {
+  archivedAt: string | null;
+  archivedReason: "text_changed" | "chapter_replaced" | "chapter_deleted" | "manually_archived" | null;
   chapter: FeedbackChapter;
   chapterBlockId: string | null;
   comment: string | null;
   createdAt: string;
   id: string;
+  isSeenByAuthor: boolean;
   kind: "annotation" | "general-comment";
   quote: string | null;
   reader: FeedbackReader;

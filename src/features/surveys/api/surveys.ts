@@ -118,6 +118,7 @@ export async function getManuscriptSurveys(
       .from("manuscript_chapters")
       .select("id, position, title")
       .eq("manuscript_version_id", version.id)
+      .is("archived_at", null)
       .order("position", { ascending: true }),
     supabase
       .from("reading_rounds")

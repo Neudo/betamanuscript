@@ -73,7 +73,7 @@ type ManuscriptReadersRow = {
   manuscript_versions: Array<{
     archived_at: string | null;
     id: string;
-    manuscript_chapters: InviteableChapter[];
+    manuscript_chapters: Array<InviteableChapter & { archived_at: string | null }>;
     title: string;
     version_number: number;
     reading_rounds: Array<{
@@ -157,7 +157,7 @@ export async function getManuscriptReaders(): Promise<ManuscriptReaders[]> {
         id,
         title,
         version_number,
-        manuscript_chapters (id, position, title),
+        manuscript_chapters (id, position, title, archived_at),
         reading_rounds (
           id,
           created_at,
@@ -193,7 +193,8 @@ export async function getManuscriptReaders(): Promise<ManuscriptReaders[]> {
           .sort((left, right) => right.created_at.localeCompare(left.created_at))[0] ?? null;
 
         return {
-          chapters: [...version.manuscript_chapters]
+          chapters: version.manuscript_chapters
+            .filter((chapter) => chapter.archived_at === null)
             .sort((left, right) => left.position - right.position),
           hasActiveReadingRound: readingRound !== null,
           id: version.id,
@@ -261,7 +262,7 @@ export async function getInviteableChapters(manuscriptId: string): Promise<Invit
   const supabase = createSupabaseBrowserClient();
   const { data, error } = await supabase
     .from("manuscript_versions")
-    .select("id, manuscript_chapters (id, position, title), reading_rounds!inner (id, created_at, status)")
+    .select("id, manuscript_chapters (id, position, title, archived_at), reading_rounds!inner (id, created_at, status)")
     .eq("manuscript_id", manuscriptId)
     .is("archived_at", null)
     .neq("reading_rounds.status", "archived")
@@ -271,7 +272,14 @@ export async function getInviteableChapters(manuscriptId: string): Promise<Invit
 
   if (error) throw new Error(error.message);
 
-  return [...(data?.manuscript_chapters ?? [])].sort((left, right) => left.position - right.position);
+  return [...(data?.manuscript_chapters ?? [])]
+    .filter((chapter) => chapter.archived_at === null)
+    .map((chapter) => ({
+      id: chapter.id,
+      position: chapter.position,
+      title: chapter.title,
+    }))
+    .sort((left, right) => left.position - right.position);
 }
 
 type ReaderInvitationInput = {

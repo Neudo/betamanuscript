@@ -51,6 +51,11 @@ type ChapterManagerDialogProps = {
 };
 
 type EditingChapter = ManuscriptWorkspaceChapter | "new" | null;
+type PendingChapterUpdate = {
+  chapter: ManuscriptWorkspaceChapter;
+  generalFeedbackCount: number;
+  inlineFeedbackCount: number;
+};
 
 const wordCountFormat = new Intl.NumberFormat("en-US");
 
@@ -61,6 +66,7 @@ export function ChapterManagerDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<EditingChapter>(null);
   const [chapterToDelete, setChapterToDelete] = useState<ManuscriptWorkspaceChapter | null>(null);
+  const [pendingChapterUpdate, setPendingChapterUpdate] = useState<PendingChapterUpdate | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [readerAssignmentIds, setReaderAssignmentIds] = useState<Set<string> | null>(null);
@@ -82,6 +88,7 @@ export function ChapterManagerDialog({
     setTitle("");
     setContent("");
     setReaderAssignmentIds(null);
+    setPendingChapterUpdate(null);
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -91,6 +98,7 @@ export function ChapterManagerDialog({
     if (!nextOpen) {
       resetEditor();
       setChapterToDelete(null);
+      setPendingChapterUpdate(null);
       createChapter.reset();
       updateChapter.reset();
       deleteChapter.reset();
@@ -141,15 +149,36 @@ export function ChapterManagerDialog({
         });
         if (typeof chapterId === "string") onChapterSelected(chapterId);
       } else {
-        await updateChapter.mutateAsync({
-          chapterId: editingChapter.id,
-          content,
-          manuscriptId: manuscript.id,
-          title,
-        });
-        onChapterSelected(editingChapter.id);
+        const impact = getChapterEditImpact(editingChapter, content);
+        if (impact.inlineFeedbackCount > 0 || impact.generalFeedbackCount > 0) {
+          setPendingChapterUpdate({ chapter: editingChapter, ...impact });
+          return;
+        }
+
+        await saveChapterUpdate(editingChapter);
       }
 
+      resetEditor();
+    } catch {
+      // The mutation state renders the database error beside the editor.
+    }
+  }
+
+  async function saveChapterUpdate(chapter: ManuscriptWorkspaceChapter) {
+    await updateChapter.mutateAsync({
+      chapterId: chapter.id,
+      content,
+      manuscriptId: manuscript.id,
+      title,
+    });
+    onChapterSelected(chapter.id);
+  }
+
+  async function handleConfirmedChapterUpdate() {
+    if (!pendingChapterUpdate) return;
+
+    try {
+      await saveChapterUpdate(pendingChapterUpdate.chapter);
       resetEditor();
     } catch {
       // The mutation state renders the database error beside the editor.
@@ -334,7 +363,7 @@ export function ChapterManagerDialog({
             <DialogHeader>
               <DialogTitle>Manage chapters</DialogTitle>
               <DialogDescription className="leading-6">
-                Add a new chapter and choose the readers who can receive it. Existing reader-visible chapters stay locked to protect feedback.
+                Edit chapter titles and text at any time. Feedback whose passage disappears is archived, never silently deleted.
               </DialogDescription>
             </DialogHeader>
 
@@ -401,8 +430,8 @@ export function ChapterManagerDialog({
           <AlertDialogContent className="rounded-none border-destructive/25 bg-card">
             <AlertDialogHeader>
               <AlertDialogTitle>Remove this chapter?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This removes “{chapterToDelete?.title}” and its text. You cannot undo this action.
+            <AlertDialogDescription>
+                This removes “{chapterToDelete?.title}” from the manuscript and reader view. Its feedback stays archived on the Feedback page, where it can be deleted permanently.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -420,7 +449,76 @@ export function ChapterManagerDialog({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={Boolean(pendingChapterUpdate)} onOpenChange={(open) => {
+          if (!updateChapter.isPending && !open) setPendingChapterUpdate(null);
+        }}>
+          <AlertDialogContent className="rounded-none border-foreground/15 bg-card">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive affected feedback?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {pendingChapterUpdate?.inlineFeedbackCount ? (
+                  <>
+                    {pendingChapterUpdate.inlineFeedbackCount} inline {pendingChapterUpdate.inlineFeedbackCount === 1 ? "feedback entry" : "feedback entries"} will be archived because {pendingChapterUpdate.inlineFeedbackCount === 1 ? "its selected passage no longer exists" : "their selected passages no longer exist"}.
+                  </>
+                ) : null}
+                {pendingChapterUpdate?.inlineFeedbackCount && pendingChapterUpdate.generalFeedbackCount ? " " : null}
+                {pendingChapterUpdate?.generalFeedbackCount ? (
+                  <>
+                    {pendingChapterUpdate.generalFeedbackCount} general {pendingChapterUpdate.generalFeedbackCount === 1 ? "annotation" : "annotations"} will also be archived because this chapter is being fully replaced.
+                  </>
+                ) : null}
+                {" "}Archived feedback remains available only on the Feedback page.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={updateChapter.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={updateChapter.isPending}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void handleConfirmedChapterUpdate();
+                }}
+                className="rounded-none"
+              >
+                {updateChapter.isPending ? "Saving…" : "Save and archive feedback"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
+}
+
+function getChapterEditImpact(chapter: ManuscriptWorkspaceChapter, nextContent: string) {
+  const currentContent = chapter.blocks.map((block) => block.content).join("\n\n");
+  const normalizedCurrentContent = normalizeChapterContent(currentContent);
+  const normalizedNextContent = normalizeChapterContent(nextContent);
+
+  if (normalizedCurrentContent === normalizedNextContent) {
+    return { generalFeedbackCount: 0, inlineFeedbackCount: 0 };
+  }
+
+  const inlineFeedbackCount = chapter.annotations.filter((annotation) => (
+    !normalizedNextContent.includes(annotation.quote)
+  )).length;
+  const currentBlocks = chapter.blocks.map((block) => block.content).filter(Boolean);
+  const isCompleteReplacement = currentBlocks.length > 0 && currentBlocks.every((block) => (
+    !normalizedNextContent.includes(block)
+  ));
+
+  return {
+    generalFeedbackCount: isCompleteReplacement ? chapter.generalComments.length : 0,
+    inlineFeedbackCount,
+  };
+}
+
+function normalizeChapterContent(content: string) {
+  return content
+    .replace(/\r\n?/g, "\n")
+    .split(/\n[\t ]*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .join("\n\n");
 }

@@ -1,17 +1,32 @@
 "use client";
 
-import { Eye, LoaderCircle, Search } from "lucide-react";
+import { Archive, Check, Eye, EyeOff, LoaderCircle, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AccountPlan } from "@/features/account/types";
 import { FeedbackTagManagerDialog } from "@/features/feedback/components/FeedbackTagManagerDialog";
-import { useManuscriptFeedback } from "@/features/feedback/hooks/use-feedback";
+import {
+  useArchiveFeedbackMutation,
+  useDeleteArchivedFeedbackMutation,
+  useManuscriptFeedback,
+  useUpdateFeedbackSeenMutation,
+} from "@/features/feedback/hooks/use-feedback";
 import type { FeedbackAnnotation, FeedbackTag } from "@/features/feedback/types";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
@@ -64,20 +79,31 @@ function FeedbackExplorerContent({
   manuscriptVersionId: string | null;
 }) {
   const feedbackQuery = useManuscriptFeedback(manuscriptId, manuscriptVersionId);
+  const updateFeedbackSeen = useUpdateFeedbackSeenMutation();
+  const archiveFeedback = useArchiveFeedbackMutation();
+  const deleteArchivedFeedback = useDeleteArchivedFeedbackMutation();
   const annotations = feedbackQuery.data ?? emptyAnnotations;
 
+  const [feedbackScope, setFeedbackScope] = useState<"active" | "archived">("active");
   const [selectedTagSlug, setSelectedTagSlug] = useState<string | null>(null);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [selectedReaderId, setSelectedReaderId] = useState<string | null>(null);
+  const [hideReadFeedback, setHideReadFeedback] = useState(false);
   const [query, setQuery] = useState("");
 
-  const tags = useMemo(() => collectTags(annotations), [annotations]);
-  const chapters = useMemo(() => collectChapters(annotations), [annotations]);
-  const readers = useMemo(() => collectReaders(annotations), [annotations]);
+  const scopedAnnotations = useMemo(
+    () => annotations.filter((annotation) => (
+      feedbackScope === "archived" ? annotation.archivedAt !== null : annotation.archivedAt === null
+    )),
+    [annotations, feedbackScope],
+  );
+  const tags = useMemo(() => collectTags(scopedAnnotations), [scopedAnnotations]);
+  const chapters = useMemo(() => collectChapters(scopedAnnotations), [scopedAnnotations]);
+  const readers = useMemo(() => collectReaders(scopedAnnotations), [scopedAnnotations]);
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return annotations.filter((annotation) => {
+    return scopedAnnotations.filter((annotation) => {
       const matchesTag = selectedTagSlug
         ? annotation.tag.slug === selectedTagSlug
         : true;
@@ -87,6 +113,7 @@ function FeedbackExplorerContent({
       const matchesReader = selectedReaderId
         ? annotation.reader.id === selectedReaderId
         : true;
+      const matchesReadStatus = !hideReadFeedback || !annotation.isSeenByAuthor;
       const matchesQuery = normalizedQuery
         ? [
           annotation.comment,
@@ -97,9 +124,9 @@ function FeedbackExplorerContent({
         ].filter(Boolean).join(" ").toLowerCase().includes(normalizedQuery)
         : true;
 
-      return matchesTag && matchesChapter && matchesReader && matchesQuery;
+      return matchesTag && matchesChapter && matchesReader && matchesReadStatus && matchesQuery;
     });
-  }, [annotations, query, selectedChapterId, selectedReaderId, selectedTagSlug]);
+  }, [hideReadFeedback, query, scopedAnnotations, selectedChapterId, selectedReaderId, selectedTagSlug]);
 
   const isLoading = feedbackQuery.isPending || isResolvingManuscript;
   const queryError = feedbackQuery.error ?? manuscriptError;
@@ -107,9 +134,70 @@ function FeedbackExplorerContent({
     ? "No feedback on this manuscript yet."
     : "Create a manuscript to collect reader feedback.";
 
+  function handleFeedbackSeen(annotation: FeedbackAnnotation) {
+    if (!manuscriptId) return;
+
+    updateFeedbackSeen.mutate({
+      feedbackId: annotation.id,
+      isSeen: !annotation.isSeenByAuthor,
+      kind: annotation.kind,
+      manuscriptId,
+      manuscriptVersionId,
+    });
+  }
+
+  function handleArchivedFeedbackDelete(annotation: FeedbackAnnotation) {
+    if (!manuscriptId) return;
+
+    deleteArchivedFeedback.mutate({
+      feedbackId: annotation.id,
+      kind: annotation.kind,
+      manuscriptId,
+      manuscriptVersionId,
+    });
+  }
+
+  function handleFeedbackArchive(annotation: FeedbackAnnotation) {
+    if (!manuscriptId) return;
+
+    archiveFeedback.mutate({
+      feedbackId: annotation.id,
+      kind: annotation.kind,
+      manuscriptId,
+      manuscriptVersionId,
+    });
+  }
+
   return (
     <div className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
       <aside className="border-b border-foreground/10 bg-sidebar px-5 py-7 md:overflow-y-auto md:border-b-0 md:border-r">
+        <FilterGroup label="Feedback">
+          <button
+            type="button"
+            aria-pressed={feedbackScope === "active"}
+            onClick={() => setFeedbackScope("active")}
+            className={cn(
+              "flex w-full cursor-pointer items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+              feedbackScope === "active" && "bg-foreground/[0.06] text-primary-text",
+            )}
+          >
+            <span>Active</span>
+            <span className="font-mono text-[9px] text-muted-foreground">{annotations.filter((annotation) => annotation.archivedAt === null).length}</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={feedbackScope === "archived"}
+            onClick={() => setFeedbackScope("archived")}
+            className={cn(
+              "flex w-full cursor-pointer items-center justify-between gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+              feedbackScope === "archived" && "bg-foreground/[0.06] text-primary-text",
+            )}
+          >
+            <span className="flex items-center gap-2"><Archive className="h-3.5 w-3.5" strokeWidth={1.5} />Archived</span>
+            <span className="font-mono text-[9px] text-muted-foreground">{annotations.filter((annotation) => annotation.archivedAt !== null).length}</span>
+          </button>
+        </FilterGroup>
+
         <FilterGroup label="Tag" action={<FeedbackTagManagerDialog accountPlan={accountPlan} manuscriptId={manuscriptId} />}>
           {tags.map((tag) => (
             <button
@@ -167,6 +255,21 @@ function FeedbackExplorerContent({
           ))}
           {readers.length === 0 ? <EmptyFilter /> : null}
         </FilterGroup>
+
+        <FilterGroup label="Read">
+          <button
+            type="button"
+            aria-pressed={hideReadFeedback}
+            onClick={() => setHideReadFeedback((hidden) => !hidden)}
+            className={cn(
+              "flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+              hideReadFeedback && "bg-foreground/[0.06] text-primary-text",
+            )}
+          >
+            <EyeOff className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
+            <span>{hideReadFeedback ? "Read hidden" : "Hide read"}</span>
+          </button>
+        </FilterGroup>
       </aside>
 
       <Tabs defaultValue="recent" className="min-w-0 md:flex md:h-full md:flex-col">
@@ -184,16 +287,28 @@ function FeedbackExplorerContent({
           </span>
         </div>
 
+        {updateFeedbackSeen.isError || archiveFeedback.isError || deleteArchivedFeedback.isError ? (
+          <p className="border-b border-destructive/20 bg-destructive/5 px-5 py-3 text-xs text-destructive sm:px-7" role="alert">
+            {(updateFeedbackSeen.error ?? archiveFeedback.error ?? deleteArchivedFeedback.error)?.message}
+          </p>
+        ) : null}
+
         <TabsContent value="recent" className="m-0 md:flex-1 md:overflow-y-auto">
           <FeedbackState
             annotations={filtered}
             isLoading={isLoading}
             manuscriptId={manuscriptId}
             manuscriptVersionId={manuscriptVersionId}
+            isUpdating={updateFeedbackSeen.isPending}
+            isArchiving={archiveFeedback.isPending}
+            isDeleting={deleteArchivedFeedback.isPending}
+            onArchive={handleFeedbackArchive}
+            onDelete={handleArchivedFeedbackDelete}
+            onToggleSeen={handleFeedbackSeen}
             error={queryError}
-            emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
+            emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId || hideReadFeedback
               ? "No feedback matches these filters."
-              : emptyMessage}
+              : feedbackScope === "archived" ? "No archived feedback on this manuscript." : emptyMessage}
           />
         </TabsContent>
 
@@ -204,10 +319,16 @@ function FeedbackExplorerContent({
               isLoading={isLoading}
               manuscriptId={manuscriptId}
               manuscriptVersionId={manuscriptVersionId}
+              isUpdating={updateFeedbackSeen.isPending}
+              isArchiving={archiveFeedback.isPending}
+              isDeleting={deleteArchivedFeedback.isPending}
+              onArchive={handleFeedbackArchive}
+              onDelete={handleArchivedFeedbackDelete}
+              onToggleSeen={handleFeedbackSeen}
               error={queryError}
-              emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId
+              emptyMessage={query.trim() || selectedTagSlug || selectedChapterId || selectedReaderId || hideReadFeedback
                 ? "No feedback matches these filters."
-                : emptyMessage}
+                : feedbackScope === "archived" ? "No archived feedback on this manuscript." : emptyMessage}
             />
           ) : (
             <div className="px-5 py-2 sm:px-7">
@@ -221,6 +342,12 @@ function FeedbackExplorerContent({
                       compact
                       manuscriptId={manuscriptId}
                       manuscriptVersionId={manuscriptVersionId}
+                      isUpdating={updateFeedbackSeen.isPending}
+                      isArchiving={archiveFeedback.isPending}
+                      isDeleting={deleteArchivedFeedback.isPending}
+                      onArchive={handleFeedbackArchive}
+                      onDelete={handleArchivedFeedbackDelete}
+                      onToggleSeen={handleFeedbackSeen}
                     />
                   ))}
                 </section>
@@ -316,6 +443,12 @@ function FeedbackState({
   isLoading,
   manuscriptId,
   manuscriptVersionId,
+  isArchiving,
+  isDeleting,
+  isUpdating,
+  onArchive,
+  onDelete,
+  onToggleSeen,
 }: {
   annotations: FeedbackAnnotation[];
   emptyMessage: string;
@@ -323,6 +456,12 @@ function FeedbackState({
   isLoading: boolean;
   manuscriptId: string | null;
   manuscriptVersionId: string | null;
+  isArchiving: boolean;
+  isDeleting: boolean;
+  isUpdating: boolean;
+  onArchive: (annotation: FeedbackAnnotation) => void;
+  onDelete: (annotation: FeedbackAnnotation) => void;
+  onToggleSeen: (annotation: FeedbackAnnotation) => void;
 }) {
   if (isLoading) {
     return <div className="grid min-h-52 place-items-center"><LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
@@ -344,6 +483,12 @@ function FeedbackState({
           annotation={annotation}
           manuscriptId={manuscriptId}
           manuscriptVersionId={manuscriptVersionId}
+          isArchiving={isArchiving}
+          isDeleting={isDeleting}
+          isUpdating={isUpdating}
+          onArchive={onArchive}
+          onDelete={onDelete}
+          onToggleSeen={onToggleSeen}
         />
       ))}
     </div>
@@ -355,13 +500,27 @@ function AnnotationRow({
   compact = false,
   manuscriptId,
   manuscriptVersionId,
+  isArchiving,
+  isDeleting,
+  isUpdating,
+  onArchive,
+  onDelete,
+  onToggleSeen,
 }: {
   annotation: FeedbackAnnotation;
   compact?: boolean;
   manuscriptId: string | null;
   manuscriptVersionId: string | null;
+  isArchiving: boolean;
+  isDeleting: boolean;
+  isUpdating: boolean;
+  onArchive: (annotation: FeedbackAnnotation) => void;
+  onDelete: (annotation: FeedbackAnnotation) => void;
+  onToggleSeen: (annotation: FeedbackAnnotation) => void;
 }) {
-  const href = manuscriptId ? `/dashboard/manuscript?${new URLSearchParams({
+  const isSeen = annotation.isSeenByAuthor;
+  const isArchived = annotation.archivedAt !== null;
+  const href = manuscriptId && !isArchived ? `/dashboard/manuscript?${new URLSearchParams({
     ...(annotation.kind === "annotation"
       ? { annotationId: annotation.id }
       : { generalCommentId: annotation.id }),
@@ -377,6 +536,7 @@ function AnnotationRow({
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">{annotation.reader.name}</span>
           <FeedbackTagBadge tag={annotation.tag} />
+          {isArchived ? <ArchivedFeedbackBadge reason={annotation.archivedReason} /> : null}
           <span className="font-mono text-[9px] text-muted-foreground">Ch {annotation.chapter.position} — {annotation.chapter.title}</span>
           <span className="ml-auto font-mono text-[9px] text-muted-foreground">{formatAnnotationDate(annotation.createdAt)}</span>
           {href ? (
@@ -391,6 +551,32 @@ function AnnotationRow({
           <blockquote className="whitespace-pre-wrap border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
         ) : null}
         {annotation.comment ? <p className="mt-2.5 text-sm leading-6 text-foreground/85">{annotation.comment}</p> : null}
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={isUpdating}
+          className={cn(
+            "mt-3 px-0",
+            isSeen ? "text-success" : "underline underline-offset-4",
+          )}
+          onClick={() => onToggleSeen(annotation)}
+        >
+          <Check className="h-3.5 w-3.5" />
+          {isSeen ? "Read — undo" : "Mark as read"}
+        </Button>
+        {isArchived ? (
+          <DeleteArchivedFeedbackButton
+            annotation={annotation}
+            disabled={isDeleting}
+            onDelete={onDelete}
+          />
+        ) : (
+          <ArchiveFeedbackButton
+            annotation={annotation}
+            disabled={isArchiving}
+            onArchive={onArchive}
+          />
+        )}
       </div>
     </article>
   );
@@ -402,6 +588,131 @@ function FeedbackTagBadge({ tag }: { tag: FeedbackTag }) {
       <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tag.color }} aria-hidden />
       {tag.label}
     </Badge>
+  );
+}
+
+function ArchivedFeedbackBadge({
+  reason,
+}: {
+  reason: FeedbackAnnotation["archivedReason"];
+}) {
+  const label = reason === "chapter_deleted"
+    ? "Chapter removed"
+    : reason === "chapter_replaced"
+      ? "Chapter replaced"
+      : reason === "manually_archived"
+        ? "Archived manually"
+      : "Passage changed";
+
+  return (
+    <Badge variant="outline" className="gap-1 rounded-none border-foreground/15 font-mono text-[9px] uppercase text-muted-foreground">
+      <Archive className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />
+      {label}
+    </Badge>
+  );
+}
+
+function ArchiveFeedbackButton({
+  annotation,
+  disabled,
+  onArchive,
+}: {
+  annotation: FeedbackAnnotation;
+  disabled: boolean;
+  onArchive: (annotation: FeedbackAnnotation) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
+      if (!disabled) setIsOpen(open);
+    }}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={disabled}
+        className="mt-3 ml-3 px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        onClick={() => setIsOpen(true)}
+      >
+        <Archive className="h-3.5 w-3.5" />
+        Archive
+      </Button>
+      <AlertDialogContent className="rounded-none bg-card">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Archive feedback?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This feedback will be removed from the active list and kept in Archived feedback.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={disabled}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={disabled}
+            className="rounded-none"
+            onClick={(event) => {
+              event.preventDefault();
+              onArchive(annotation);
+              setIsOpen(false);
+            }}
+          >
+            Archive feedback
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function DeleteArchivedFeedbackButton({
+  annotation,
+  disabled,
+  onDelete,
+}: {
+  annotation: FeedbackAnnotation;
+  disabled: boolean;
+  onDelete: (annotation: FeedbackAnnotation) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <AlertDialog open={isOpen} onOpenChange={(open) => {
+      if (!disabled) setIsOpen(open);
+    }}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={disabled}
+        className="mt-3 ml-3 px-0 text-destructive hover:bg-transparent hover:text-destructive"
+        onClick={() => setIsOpen(true)}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+        Delete
+      </Button>
+      <AlertDialogContent className="rounded-none border-destructive/25 bg-card">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete archived feedback?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This permanently deletes this archived reader feedback. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={disabled}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={disabled}
+            className="rounded-none bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={(event) => {
+              event.preventDefault();
+              onDelete(annotation);
+              setIsOpen(false);
+            }}
+          >
+            Delete feedback
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

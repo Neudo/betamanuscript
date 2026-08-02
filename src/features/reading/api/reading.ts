@@ -313,6 +313,7 @@ export async function getReaderManuscript(
     .from("manuscript_chapters")
     .select("id, position, title")
     .eq("manuscript_version_id", manuscript.versionId)
+    .is("archived_at", null)
     .order("position", { ascending: true });
 
   if (chaptersError) throw new Error(chaptersError.message);
@@ -324,6 +325,7 @@ export async function getReaderManuscript(
       .from("chapter_blocks")
       .select("id, chapter_id, position, content")
       .in("chapter_id", chapterIds)
+      .is("archived_at", null)
       .order("position", { ascending: true })
     : { data: [], error: null };
 
@@ -348,6 +350,7 @@ export async function getReaderManuscript(
       `)
       .eq("reader_assignment_id", manuscript.assignmentId)
       .in("chapter_id", chapterIds)
+      .is("archived_at", null)
     : { data: [], error: null };
 
   if (annotationsError) throw new Error(annotationsError.message);
@@ -358,6 +361,7 @@ export async function getReaderManuscript(
       .select("id, chapter_id, comment")
       .eq("reader_assignment_id", manuscript.assignmentId)
       .in("chapter_id", chapterIds)
+      .is("archived_at", null)
     : { data: [], error: null };
 
   if (generalCommentsError) throw new Error(generalCommentsError.message);
