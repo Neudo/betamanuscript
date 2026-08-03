@@ -37,8 +37,8 @@ export function useCreateManuscriptMutation() {
 
   return useMutation({
     mutationFn: createManuscript,
-    onSuccess: async () => {
-      await Promise.all([
+    onSuccess: () => {
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: manuscriptKeys.list() }),
         queryClient.invalidateQueries({ queryKey: readerKeys.manuscripts() }),
       ]);

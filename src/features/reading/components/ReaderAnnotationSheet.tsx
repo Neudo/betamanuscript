@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -37,6 +38,7 @@ import { getAnnotationTagColor } from "@/features/annotations/lib/tag-colors";
 import type {
   ReaderAnnotation,
   ReaderAnnotationDraft,
+  ReaderAnnotationTag,
 } from "@/features/reading/api/reading";
 import {
   useCreateReaderAnnotation,
@@ -48,27 +50,47 @@ import {
 type ReaderAnnotationSheetProps = {
   annotation?: ReaderAnnotation;
   draft?: ReaderAnnotationDraft;
+  initialComment?: string;
+  initialDisplayName?: string;
+  initialTagId?: string;
+  onAuthenticationRequired?: (input: ReaderAnnotationDraft & {
+    comment: string;
+    displayName: string;
+    tagId: string;
+  }) => void;
   onClose: () => void;
+  onCreateAnnotation?: (input: ReaderAnnotationDraft & { comment: string; tagId: string }) => Promise<void>;
   readerAssignmentId: string;
+  tags?: ReaderAnnotationTag[];
 };
 
 export function ReaderAnnotationSheet({
   annotation,
   draft,
+  initialComment,
+  initialDisplayName,
+  initialTagId,
+  onAuthenticationRequired,
   onClose,
+  onCreateAnnotation,
   readerAssignmentId,
+  tags: providedTags,
 }: ReaderAnnotationSheetProps) {
   const isEditing = Boolean(annotation);
-  const tagsQuery = useReaderAnnotationTags(readerAssignmentId);
+  const tagsQuery = useReaderAnnotationTags(readerAssignmentId, !providedTags);
   const createAnnotation = useCreateReaderAnnotation();
   const updateAnnotation = useUpdateReaderAnnotation();
   const deleteAnnotation = useDeleteReaderAnnotation();
-  const [tagId, setTagId] = useState(annotation?.tag.id ?? "");
-  const [comment, setComment] = useState(annotation?.comment ?? "");
-  const tags = tagsQuery.data ?? [];
+  const [tagId, setTagId] = useState(annotation?.tag.id ?? initialTagId ?? "");
+  const [comment, setComment] = useState(annotation?.comment ?? initialComment ?? "");
+  const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
+  const [isExternalSaving, setIsExternalSaving] = useState(false);
+  const tags = providedTags ?? tagsQuery.data ?? [];
   const selectedTagId = tagId || tags[0]?.id || "";
   const quote = annotation?.quote ?? draft?.quote ?? "";
-  const isPending = createAnnotation.isPending || updateAnnotation.isPending || deleteAnnotation.isPending;
+  const isPending = createAnnotation.isPending || updateAnnotation.isPending || deleteAnnotation.isPending || isExternalSaving;
+  const requiresDisplayName = !annotation && Boolean(onAuthenticationRequired);
+  const normalizedDisplayName = displayName.trim();
 
   useEffect(() => {
     if (tagsQuery.isError) toast.error(tagsQuery.error.message);
@@ -99,12 +121,38 @@ export function ReaderAnnotationSheet({
 
     if (!draft) return;
 
+    const input = {
+      ...draft,
+      comment,
+      tagId: selectedTagId,
+    };
+
+    if (onAuthenticationRequired) {
+      onAuthenticationRequired({
+        ...input,
+        displayName: normalizedDisplayName,
+      });
+      return;
+    }
+
+    if (onCreateAnnotation) {
+      setIsExternalSaving(true);
+      void onCreateAnnotation(input)
+        .then(() => {
+          toast.success("Annotation saved.");
+          onClose();
+        })
+        .catch((error: unknown) => {
+          toast.error(error instanceof Error ? error.message : "The annotation could not be saved.");
+        })
+        .finally(() => setIsExternalSaving(false));
+      return;
+    }
+
     createAnnotation.mutate(
       {
-        ...draft,
-        comment,
+        ...input,
         readerAssignmentId,
-        tagId: selectedTagId,
       },
       {
         onError(error) {
@@ -161,12 +209,35 @@ export function ReaderAnnotationSheet({
                 <blockquote className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground/85">“{quote}”</blockquote>
               </div>
 
+              {requiresDisplayName ? (
+                <div className="space-y-2">
+                  <Label htmlFor="reader-annotation-display-name" className="text-xs">
+                    Your name
+                  </Label>
+                  <Input
+                    id="reader-annotation-display-name"
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    maxLength={80}
+                    minLength={2}
+                    autoComplete="name"
+                    placeholder="How the author should see you"
+                    className="border-foreground/15 bg-card"
+                    disabled={isPending}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required so the author can attribute this feedback.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="reader-annotation-tag" className="flex items-center gap-2 text-xs">
                   <Tags className="h-3.5 w-3.5" />
                   Tag
                 </Label>
-                <Select value={selectedTagId} onValueChange={setTagId} disabled={tagsQuery.isLoading || isPending}>
+                <Select value={selectedTagId} onValueChange={setTagId} disabled={(!providedTags && tagsQuery.isLoading) || isPending}>
                   <SelectTrigger id="reader-annotation-tag" className="border-foreground/15 bg-card">
                     <SelectValue placeholder="Choose a tag" />
                   </SelectTrigger>
@@ -221,7 +292,10 @@ export function ReaderAnnotationSheet({
                     </AlertDialogContent>
                   </AlertDialog>
                 ) : <span />}
-                <Button onClick={saveAnnotation} disabled={isPending || !selectedTagId}>
+                <Button
+                  onClick={saveAnnotation}
+                  disabled={isPending || !selectedTagId || (requiresDisplayName && normalizedDisplayName.length < 2)}
+                >
                   {isPending ? "Saving…" : isEditing ? "Save changes" : "Save annotation"}
                 </Button>
               </div>

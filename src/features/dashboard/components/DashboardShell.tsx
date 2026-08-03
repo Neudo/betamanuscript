@@ -16,6 +16,7 @@ export function DashboardShell({
   children,
 }: PropsWithChildren<{ account: AuthenticatedAccount }>) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const workspaceHome = account.role === "reader" ? "/reader" : "/dashboard";
 
   return (
     <div className="min-h-screen bg-background md:grid md:h-screen md:grid-cols-[220px_minmax(0,1fr)] md:overflow-hidden">
@@ -24,7 +25,7 @@ export function DashboardShell({
       </div>
 
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
-        <BrandLogo href="/dashboard" ariaLabel="BetaManuscript dashboard" imageClassName="h-8" />
+        <BrandLogo href={workspaceHome} ariaLabel="BetaManuscript workspace" imageClassName="h-8" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <NotificationCenter profileId={account.id} />
@@ -35,7 +36,7 @@ export function DashboardShell({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[220px] p-0">
-              <SheetTitle className="sr-only">Writer navigation</SheetTitle>
+              <SheetTitle className="sr-only">Workspace navigation</SheetTitle>
               <WorkspaceSidebar
                 account={account}
                 onNavigate={() => setMobileOpen(false)}

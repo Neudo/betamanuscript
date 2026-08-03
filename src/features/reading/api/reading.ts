@@ -1,9 +1,11 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Json } from "@/lib/supabase/database.types";
+import type { SocialPlatform } from "@/features/account/domain/social-links";
 import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
 
 export type ReaderManuscriptListItem = {
   assignmentId: string;
+  accessibleChapterIds: string[];
   feedbackEnabled: boolean;
   closingNote: string | null;
   completedChapterIds: string[];
@@ -20,6 +22,24 @@ export type ReaderManuscriptListItem = {
   totalChapters: number;
   versionId: string;
   versionNumber: number;
+};
+
+export type ReaderManuscriptDetails = {
+  author: {
+    avatarUrl: string | null;
+    bio: string;
+    displayName: string;
+    socialLinks: Array<{
+      platform: SocialPlatform;
+      url: string;
+    }>;
+    website: string | null;
+  } | null;
+  authorNote: string | null;
+  deadline: string | null;
+  genres: string[];
+  logline: string | null;
+  readerNote: string | null;
 };
 
 export type ReaderAnnotationTag = {
@@ -142,8 +162,33 @@ type ManuscriptCoverRow = {
   storage_path: string;
 };
 
+type ReaderManuscriptDetailsResponse = {
+  details?: ReaderManuscriptDetails;
+  error?: string;
+  ok?: boolean;
+};
+
+export async function getReaderManuscriptDetails(assignmentId: string) {
+  const query = new URLSearchParams({ assignmentId });
+  const response = await fetch(`/api/reader/manuscript-details?${query.toString()}`, {
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => null) as ReaderManuscriptDetailsResponse | null;
+
+  if (!response.ok || !payload?.ok || !payload.details) {
+    throw new Error(payload?.error ?? "Manuscript details could not be loaded.");
+  }
+
+  return payload.details;
+}
+
 export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]> {
   const supabase = createSupabaseBrowserClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+
+  if (authError) throw new Error(authError.message);
+  if (!authData.user) return [];
+
   const { data: draftAccess, error: draftAccessError } = await supabase
     .from("reader_draft_access")
     .select(`
@@ -161,6 +206,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
         )
       )
     `)
+    .eq("reader_assignments.reader_profile_id", authData.user.id)
     .order("created_at", { ascending: false });
 
   if (draftAccessError) throw new Error(draftAccessError.message);
@@ -251,16 +297,20 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     const version = readingRound?.manuscript_versions;
     if (!readingRound || !version) return [];
 
-    const totalChapters = accessibleChapterIdsByAssignment.get(assignment.id)?.size ?? 0;
+    const accessibleChapterIds = [
+      ...(accessibleChapterIdsByAssignment.get(assignment.id) ?? new Set<string>()),
+    ];
+    const totalChapters = accessibleChapterIds.length;
     const completedChapters = completedByAssignment.get(assignment.id) ?? 0;
     const status: ReaderManuscriptListItem["status"] = assignment.status === "completed" || (totalChapters > 0 && completedChapters >= totalChapters)
       ? "finished"
-      : assignment.status === "started"
+      : latestProgressByAssignment.has(assignment.id)
         ? "reading"
         : "not-started";
 
     return [{
       assignmentId: assignment.id,
+      accessibleChapterIds,
       closingNote: readingRound.reader_closing_note,
       completedChapterIds: completedChapterIdsByAssignment.get(assignment.id) ?? [],
       completedChapters,
@@ -313,6 +363,7 @@ export async function getReaderManuscript(
     .from("manuscript_chapters")
     .select("id, position, title")
     .eq("manuscript_version_id", manuscript.versionId)
+    .in("id", manuscript.accessibleChapterIds)
     .is("archived_at", null)
     .order("position", { ascending: true });
 
@@ -459,6 +510,29 @@ export async function completeReaderChapter({
       p_chapter_id: chapterId,
       p_reader_assignment_id: readerAssignmentId,
     });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function startReaderChapter({
+  chapterId,
+  readerAssignmentId,
+}: {
+  chapterId: string;
+  readerAssignmentId: string;
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("chapter_reading_progress")
+    .upsert(
+      {
+        chapter_id: chapterId,
+        last_read_at: new Date().toISOString(),
+        reader_assignment_id: readerAssignmentId,
+        status: "in_progress",
+      },
+      { onConflict: "reader_assignment_id,chapter_id" },
+    );
 
   if (error) throw new Error(error.message);
 }

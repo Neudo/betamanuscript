@@ -17,7 +17,13 @@ import { Turnstile } from "./Turnstile";
 
 type FieldErrors = Partial<Record<"email" | "password", string>>;
 
-export function LoginForm({ next }: { next: string | null }) {
+export function LoginForm({
+  next,
+  publicReaderFlow = false,
+}: {
+  next: string | null;
+  publicReaderFlow?: boolean;
+}) {
   const router = useRouter();
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -35,7 +41,11 @@ export function LoginForm({ next }: { next: string | null }) {
     },
   });
   const googleMutation = useMutation({
-    mutationFn: () => signInWithGoogle({ intent: "login", next }),
+    mutationFn: () => signInWithGoogle({
+      flow: publicReaderFlow ? "public-reader" : undefined,
+      intent: "login",
+      next,
+    }),
   });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -61,7 +71,12 @@ export function LoginForm({ next }: { next: string | null }) {
       return;
     }
 
-    mutation.mutate({ ...result.data, captchaToken: captchaToken ?? undefined, next });
+    mutation.mutate({
+      ...result.data,
+      captchaToken: captchaToken ?? undefined,
+      flow: publicReaderFlow ? "public-reader" : undefined,
+      next,
+    });
   }
 
   return (

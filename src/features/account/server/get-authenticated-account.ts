@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import type { AccountRole } from "@/features/account/domain/user-role";
+import { socialLinksFromRows } from "@/features/account/domain/social-links";
 import type {
   AccountPlan,
   AuthenticatedAccount,
@@ -34,6 +35,15 @@ export const getAuthenticatedAccount = cache(
       throw new Error("Authenticated user profile is missing.");
     }
 
+    const { data: socialLinks, error: socialLinksError } = await supabase
+      .from("profile_social_links")
+      .select("platform, url")
+      .eq("profile_id", user.id);
+
+    if (socialLinksError) {
+      throw new Error("Authenticated user social links could not be loaded.");
+    }
+
     await refreshAccountActivity(user.id, profile.last_active_at);
 
     const avatarUrl = profile.avatar_path
@@ -48,6 +58,7 @@ export const getAuthenticatedAccount = cache(
       email: user.email ?? "",
       displayName: profile.display_name,
       role: profile.role as AccountRole,
+      socialLinks: socialLinksFromRows(socialLinks ?? []),
       plan: profile.plan as AccountPlan,
       website: profile.website ?? "",
     };

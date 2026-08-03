@@ -5,11 +5,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getInviteableChapters,
   getManuscriptReaders,
+  disablePublicReadingLink,
+  enablePublicReadingLink,
   inviteReader,
   resendReaderInvitation,
   revokeReaderInvitation,
   setReaderChapterAccess,
   setReaderDraftAccess,
+  reviewReaderPlaceRequest,
   updateReaderLimit,
 } from "@/features/readers/api/readers";
 import { readerKeys } from "@/features/readers/query-keys";
@@ -95,6 +98,33 @@ export function useSetReaderChapterAccess() {
 
   return useMutation({
     mutationFn: setReaderChapterAccess,
+    onSettled: invalidate,
+  });
+}
+
+export function useEnablePublicReadingLink() {
+  const invalidate = useInvalidateReaderData();
+
+  return useMutation({
+    mutationFn: enablePublicReadingLink,
+    onSettled: invalidate,
+  });
+}
+
+export function useDisablePublicReadingLink() {
+  const invalidate = useInvalidateReaderData();
+
+  return useMutation({
+    mutationFn: disablePublicReadingLink,
+    onSettled: invalidate,
+  });
+}
+
+export function useReviewReaderPlaceRequest() {
+  const invalidate = useInvalidateReaderData();
+
+  return useMutation({
+    mutationFn: reviewReaderPlaceRequest,
     onSettled: invalidate,
   });
 }

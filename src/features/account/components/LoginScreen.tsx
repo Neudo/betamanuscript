@@ -8,14 +8,20 @@ export function LoginScreen({
   next,
   error,
   confirmed,
+  publicReaderDisplayName,
+  publicReaderFlow = false,
 }: {
   next: string | null;
   error: string | null;
   confirmed: boolean;
+  publicReaderDisplayName: string | null;
+  publicReaderFlow?: boolean;
 }) {
-  const signUpHref = next
-    ? `/signup?next=${encodeURIComponent(next)}`
-    : "/signup";
+  const signUpParams = new URLSearchParams();
+  if (next) signUpParams.set("next", next);
+  if (publicReaderFlow) signUpParams.set("flow", "public-reader");
+  if (publicReaderDisplayName) signUpParams.set("displayName", publicReaderDisplayName);
+  const signUpHref = signUpParams.size > 0 ? `/signup?${signUpParams.toString()}` : "/signup";
 
   return (
     <AuthScreen
@@ -31,16 +37,20 @@ export function LoginScreen({
         </p>
       }
     >
-      {error === "confirmation" || error === "oauth" ? (
+      {error === "confirmation" || error === "oauth" || error === "password-recovery" ? (
         <Alert variant="destructive">
           <AlertTitle>
             {error === "oauth"
               ? "Google sign-in could not be completed"
+              : error === "password-recovery"
+                ? "Password recovery link could not be verified"
               : "Confirmation link could not be verified"}
           </AlertTitle>
           <AlertDescription>
             {error === "oauth"
               ? "Try again, or use your email and password instead."
+              : error === "password-recovery"
+                ? "Request a new password reset email from your account settings."
               : "Request a new confirmation email or try logging in again."}
           </AlertDescription>
         </Alert>
@@ -53,7 +63,10 @@ export function LoginScreen({
           </AlertDescription>
         </Alert>
       ) : null}
-      <LoginForm next={next} />
+      <LoginForm
+        next={next}
+        publicReaderFlow={publicReaderFlow}
+      />
     </AuthScreen>
   );
 }

@@ -36,6 +36,7 @@ const freeFeatures = [
   "Reader reading list",
   "2 surveys",
   "Email reader invitations",
+  "Shareable reading pages",
 ];
 
 const authorFeatures = [
@@ -43,6 +44,7 @@ const authorFeatures = [
   "Unlimited beta readers",
   "Custom annotation tags",
   "Unlimited surveys",
+  "Shareable reading pages",
 ];
 
 const comparisonRows: Array<{
@@ -58,6 +60,7 @@ const comparisonRows: Array<{
   { feature: "Surveys", free: "2", author: "Unlimited" },
   { feature: "Free for readers", free: "Yes", author: "Yes" },
   { feature: "Email reader invitations", free: true, author: true },
+  { feature: "Shareable reading pages", free: true, author: true },
 ];
 
 const faqs = [
@@ -69,7 +72,12 @@ const faqs = [
   {
     question: "Do my beta readers need to pay?",
     answer:
-      "No. Your plan covers the workspace. Readers can open an invite, read your manuscript, and leave feedback without paying for an account.",
+      "No. Your plan covers the workspace. Readers can use private invitations or shareable reading pages without paying. A private invitation uses a free account with the invited email address; a shareable page only needs an account when the reader saves feedback.",
+  },
+  {
+    question: "Can I share a manuscript without inviting every reader?",
+    answer:
+      "Yes. Enable a shareable reading page for a reading round and anyone with the link can read it without an account. Feedback still requires a free account; on Free, a reader slot is only used when feedback is first saved.",
   },
   {
     question: "What happens to my manuscripts if I downgrade to Free?",
@@ -79,7 +87,7 @@ const faqs = [
   {
     question: "Is my manuscript data private?",
     answer:
-      "Yes. Your manuscript is visible only to you and the readers you invite. We do not publish, sell, or use your writing to train public models.",
+      "By default, your manuscript is available only through private invitations. You can choose to enable a shareable reading page for a specific reading round; anyone with that link can read it, and you can disable the page again from Readers.",
   },
 ];
 
@@ -107,7 +115,7 @@ export function PricingPage() {
               Make every reader note <em>count.</em>
             </Heading>
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-7 sm:text-lg" style={{ color: BODY }}>
-              Start free, then upgrade when you need more manuscripts, readers, surveys, or custom annotation tags.
+              Start free with private invitations and shareable reading pages, then upgrade when you need more manuscripts, readers, surveys, or custom annotation tags.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">

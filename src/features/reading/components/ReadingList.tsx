@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ReaderManuscriptListItem } from "@/features/reading/api/reading";
+import { ReaderManuscriptDetailsDialog } from "@/features/reading/components/ReaderManuscriptDetailsDialog";
 import { useReaderManuscripts } from "@/features/reading/hooks/use-reading";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -173,7 +174,7 @@ function ReadingCard({ book }: { book: ReaderManuscriptBook }) {
                 Draft {item.versionNumber}{book.drafts.length > 1 ? ` of ${book.drafts.length}` : ""}
               </p>
             </div>
-            <Badge variant="outline" className="rounded-none font-mono text-[8px] uppercase">
+            <Badge variant="outline" className="rounded-none font-mono text-sm uppercase">
               {item.status === "not-started" ? "Not started" : item.status}
             </Badge>
           </div>
@@ -192,15 +193,18 @@ function ReadingCard({ book }: { book: ReaderManuscriptBook }) {
 
           {item.note ? (
             <blockquote className="mt-5 border-l-2 border-primary/40 bg-background/70 px-4 py-3 text-xs leading-5 text-muted-foreground">
-              <span className="mr-2 font-mono text-[8px] uppercase tracking-[0.16em] text-primary-text">Note</span>
+              <span className="mr-2 font-mono text-[8px] uppercase tracking-[0.16em] text-primary-text">Note from the author</span>
               <span>{item.note}</span>
             </blockquote>
           ) : null}
 
-          <Link href={readingHref} className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-primary-text">
-            {item.status === "not-started" ? "Start reading" : item.status === "finished" ? "Read again" : "Continue reading"}
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-          </Link>
+          <div className="mt-5 flex flex-wrap items-center gap-4">
+            <ReaderManuscriptDetailsDialog manuscript={item} />
+            <Link href={readingHref} className="inline-flex items-center gap-2 text-xs font-medium text-primary-text">
+              {item.status === "not-started" ? "Start reading" : item.status === "finished" ? "Read again" : "Continue reading"}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
         </div>
       </div>
     </Card>

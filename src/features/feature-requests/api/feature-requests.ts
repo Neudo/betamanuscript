@@ -2,7 +2,10 @@ import {
   featureRequestSchema,
   type FeatureRequestInput,
 } from "@/features/feature-requests/schemas/feature-request.schema";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+
+function isFeatureRequestResponse(value: unknown): value is { error?: string; ok?: boolean } {
+  return Boolean(value) && typeof value === "object";
+}
 
 export async function createFeatureRequest({
   manuscriptId,
@@ -11,23 +14,22 @@ export async function createFeatureRequest({
   manuscriptId: string;
 }) {
   const request = featureRequestSchema.parse({ message });
-  const supabase = createSupabaseBrowserClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const response = await fetch("/api/feature-requests", {
+    body: JSON.stringify({ manuscriptId, message: request.message }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+  const responseBody: unknown = await response.json().catch(() => null);
 
-  if (userError || !user) {
-    throw new Error("Sign in to send a feature request.");
+  if (
+    !response.ok
+    || !isFeatureRequestResponse(responseBody)
+    || responseBody.ok !== true
+  ) {
+    const error = isFeatureRequestResponse(responseBody) && typeof responseBody.error === "string"
+      ? responseBody.error
+      : "Your feature request could not be sent.";
+
+    throw new Error(error);
   }
-
-  const { error } = await supabase
-    .from("feature_requests")
-    .insert({
-      manuscript_id: manuscriptId,
-      message: request.message,
-      profile_id: user.id,
-    });
-
-  if (error) throw new Error(error.message);
 }

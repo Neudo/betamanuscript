@@ -18,7 +18,15 @@ import { Turnstile } from "./Turnstile";
 
 type FieldErrors = Partial<Record<"email" | "password", string>>;
 
-export function SignUpForm({ next }: { next: string | null }) {
+export function SignUpForm({
+  next,
+  publicReaderDisplayName,
+  publicReaderFlow = false,
+}: {
+  next: string | null;
+  publicReaderDisplayName: string | null;
+  publicReaderFlow?: boolean;
+}) {
   const router = useRouter();
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -38,7 +46,12 @@ export function SignUpForm({ next }: { next: string | null }) {
     },
   });
   const googleMutation = useMutation({
-    mutationFn: () => signInWithGoogle({ intent: "signup", next }),
+    mutationFn: () => signInWithGoogle({
+      displayName: publicReaderDisplayName,
+      flow: publicReaderFlow ? "public-reader" : undefined,
+      intent: "signup",
+      next,
+    }),
   });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -64,7 +77,13 @@ export function SignUpForm({ next }: { next: string | null }) {
       return;
     }
 
-    mutation.mutate({ ...result.data, captchaToken: captchaToken ?? undefined, next });
+    mutation.mutate({
+      ...result.data,
+      captchaToken: captchaToken ?? undefined,
+      displayName: publicReaderDisplayName ?? undefined,
+      flow: publicReaderFlow ? "public-reader" : undefined,
+      next,
+    });
   }
 
   if (mutation.data?.status === "confirmation-required") {
@@ -73,7 +92,10 @@ export function SignUpForm({ next }: { next: string | null }) {
         <CheckCircle2 className="h-4 w-4 text-success" />
         <AlertTitle>Account created</AlertTitle>
         <AlertDescription className="space-y-3">
-          <p>Check your inbox and confirm your email to personalize your account.</p>
+          <p>
+            Check your inbox and confirm your email to return to the manuscript.
+            {publicReaderFlow ? " Your feedback is still waiting in the manuscript tab." : null}
+          </p>
           <Button asChild size="sm" variant="outline">
             <Link href="/login">Back to login</Link>
           </Button>
@@ -103,7 +125,9 @@ export function SignUpForm({ next }: { next: string | null }) {
           {googleMutation.isPending ? "Connecting to Google..." : "Continue with Google"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          You’ll choose your role and confirm your name next.
+          {publicReaderFlow
+            ? `Your feedback will be attributed to ${publicReaderDisplayName}.`
+            : "You’ll choose your role and confirm your name next."}
         </p>
       </div>
 

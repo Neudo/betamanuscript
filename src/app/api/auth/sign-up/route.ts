@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
+import {
+  getPublicReaderPath,
+  getSafeDisplayName,
+  getSafeInternalPath,
+  publicReaderFlow,
+} from "@/features/account/domain/auth-redirect";
 import { signUpSchema } from "@/features/account/schemas/sign-up.schema";
 import { verifyTurnstileToken } from "@/features/account/server/verify-turnstile";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -10,6 +15,8 @@ export const runtime = "nodejs";
 
 const requestSchema = signUpSchema.extend({
   captchaToken: z.string().trim().min(1).max(2048),
+  displayName: z.string().trim().max(80).optional(),
+  flow: z.literal(publicReaderFlow).optional(),
   next: z.string().nullable().optional(),
 });
 
@@ -52,10 +59,22 @@ export async function POST(request: Request) {
   }
 
   const safeNext = getSafeInternalPath(payload.next);
+  const publicReaderPath = payload.flow === publicReaderFlow
+    ? getPublicReaderPath(safeNext)
+    : null;
+  const displayName = getSafeDisplayName(payload.displayName);
+
+  if (payload.flow === publicReaderFlow && (!publicReaderPath || !displayName)) {
+    return errorResponse("Enter the name you want the author to see.", 400);
+  }
+
   const confirmationUrl = new URL("/auth/callback", appOrigin(request));
   confirmationUrl.searchParams.set("intent", "confirmation");
 
-  if (safeNext) {
+  if (publicReaderPath) {
+    confirmationUrl.searchParams.set("flow", publicReaderFlow);
+    confirmationUrl.searchParams.set("next", publicReaderPath);
+  } else if (safeNext) {
     confirmationUrl.searchParams.set("next", safeNext);
   }
 
@@ -64,6 +83,7 @@ export async function POST(request: Request) {
     email: payload.email,
     password: payload.password,
     options: {
+      data: displayName ? { display_name: displayName } : undefined,
       emailRedirectTo: confirmationUrl.toString(),
     },
   });
@@ -75,9 +95,9 @@ export async function POST(request: Request) {
   return Response.json(
     {
       ok: true,
-      redirectTo: safeNext
+      redirectTo: publicReaderPath ?? (safeNext
         ? `/onboarding?next=${encodeURIComponent(safeNext)}`
-        : "/onboarding",
+        : "/onboarding"),
       status: data.session ? "authenticated" : "confirmation-required",
     },
     { headers: { "Cache-Control": "private, no-store" } },

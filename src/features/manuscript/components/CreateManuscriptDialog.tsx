@@ -197,10 +197,10 @@ export function CreateManuscriptDialog({
       }
 
       onCreated?.(manuscript);
-      handleOpenChange(false);
-      router.push(
+      router.replace(
         `/dashboard/readers?manuscriptId=${encodeURIComponent(manuscript.manuscriptId)}`,
       );
+      handleOpenChange(false);
     } catch {
       // The mutation state renders the database error beneath the form.
     }

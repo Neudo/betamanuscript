@@ -1,4 +1,8 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import {
+  socialPlatforms,
+  socialLinksFromRows,
+} from "@/features/account/domain/social-links";
 
 import {
   profileSettingsSchema,
@@ -51,9 +55,33 @@ export async function updateProfileSettings(input: ProfileSettingsInput) {
 
   if (error) throw new Error(error.message);
 
+  const socialLinkRows = socialPlatforms.flatMap((platform) => {
+    const url = settings.socialLinks[platform];
+    return url ? [{ platform, profile_id: user.id, url }] : [];
+  });
+  const omittedPlatforms = socialPlatforms.filter((platform) => !settings.socialLinks[platform]);
+  const [upsertResult, deleteResult] = await Promise.all([
+    socialLinkRows.length > 0
+      ? supabase
+        .from("profile_social_links")
+        .upsert(socialLinkRows, { onConflict: "profile_id,platform" })
+      : Promise.resolve({ error: null }),
+    omittedPlatforms.length > 0
+      ? supabase
+        .from("profile_social_links")
+        .delete()
+        .eq("profile_id", user.id)
+        .in("platform", omittedPlatforms)
+      : Promise.resolve({ error: null }),
+  ]);
+
+  if (upsertResult.error) throw new Error(upsertResult.error.message);
+  if (deleteResult.error) throw new Error(deleteResult.error.message);
+
   return {
     bio: data.bio ?? "",
     displayName: data.display_name,
+    socialLinks: socialLinksFromRows(socialLinkRows),
     website: data.website ?? "",
   };
 }

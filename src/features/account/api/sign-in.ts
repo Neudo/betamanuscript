@@ -1,7 +1,11 @@
 import type { SignInInput } from "@/features/account/schemas/sign-in.schema";
 
 export async function signIn(
-  input: SignInInput & { captchaToken?: string; next?: string | null },
+  input: SignInInput & {
+    captchaToken?: string;
+    flow?: "public-reader";
+    next?: string | null;
+  },
 ) {
   const response = await fetch("/api/auth/sign-in", {
     method: "POST",

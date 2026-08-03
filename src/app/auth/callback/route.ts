@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 
 import {
+  getPublicReaderPath,
   getOnboardingPath,
+  getSafeDisplayName,
   getSafeInternalPath,
+  publicReaderFlow,
 } from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +17,13 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const safeNext = getSafeInternalPath(url.searchParams.get("next"));
+  const publicReaderPath = url.searchParams.get("flow") === publicReaderFlow
+    ? getPublicReaderPath(safeNext)
+    : null;
+  const requestedDisplayName = getSafeDisplayName(url.searchParams.get("displayName"));
   const isAccountSignUp = url.searchParams.get("intent") === "signup";
   const isEmailConfirmation = url.searchParams.get("intent") === "confirmation";
+  const isPasswordRecovery = url.searchParams.get("intent") === "password-recovery";
 
   if (code) {
     const supabase = await createSupabaseServerClient();
@@ -22,8 +31,13 @@ export async function GET(request: Request) {
 
     if (!error) {
       if (isEmailConfirmation) {
-        await supabase.auth.signOut();
-        return redirectToConfirmedLogin(url, safeNext);
+        return publicReaderPath
+          ? redirectToPublicReader(url, publicReaderPath)
+          : redirectToAccountPersonalization(url, safeNext);
+      }
+
+      if (isPasswordRecovery) {
+        return redirectToPasswordUpdate(url);
       }
 
       const {
@@ -32,9 +46,10 @@ export async function GET(request: Request) {
 
       if (user) {
         if (isAccountSignUp) {
-          const displayName = getGoogleDisplayName(user.user_metadata);
+          const displayName = requestedDisplayName ?? getGoogleDisplayName(user.user_metadata);
           if (displayName) {
-            const { error: profileUpdateError } = await supabase
+            const admin = createSupabaseAdminClient();
+            const { error: profileUpdateError } = await admin
               .from("profiles")
               .update({ display_name: displayName })
               .eq("id", user.id);
@@ -44,7 +59,13 @@ export async function GET(request: Request) {
             }
           }
 
-          return redirectToAccountPersonalization(url, safeNext);
+          return publicReaderPath
+            ? redirectToPublicReader(url, publicReaderPath)
+            : redirectToAccountPersonalization(url, safeNext);
+        }
+
+        if (publicReaderPath) {
+          return redirectToPublicReader(url, publicReaderPath);
         }
 
         const { data: profile } = await supabase
@@ -68,7 +89,15 @@ export async function GET(request: Request) {
 
   return isEmailConfirmation
     ? redirectToConfirmationError(url)
+    : isPasswordRecovery
+      ? redirectToPasswordRecoveryError(url)
     : redirectToOAuthError(url);
+}
+
+function redirectToPublicReader(url: URL, destination: string) {
+  const response = NextResponse.redirect(new URL(destination, url.origin));
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
 }
 
 function redirectToAccountPersonalization(url: URL, next: string | null) {
@@ -79,15 +108,8 @@ function redirectToAccountPersonalization(url: URL, next: string | null) {
   return response;
 }
 
-function redirectToConfirmedLogin(url: URL, next: string | null) {
-  const destination = new URL("/login", url.origin);
-  destination.searchParams.set("confirmation", "1");
-
-  if (next) {
-    destination.searchParams.set("next", next);
-  }
-
-  const response = NextResponse.redirect(destination);
+function redirectToPasswordUpdate(url: URL) {
+  const response = NextResponse.redirect(new URL("/update-password", url.origin));
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }
@@ -114,6 +136,14 @@ function redirectToOAuthError(url: URL) {
 function redirectToConfirmationError(url: URL) {
   const response = NextResponse.redirect(
     new URL("/login?error=confirmation", url.origin),
+  );
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
+function redirectToPasswordRecoveryError(url: URL) {
+  const response = NextResponse.redirect(
+    new URL("/login?error=password-recovery", url.origin),
   );
   response.headers.set("Cache-Control", "private, no-store");
   return response;

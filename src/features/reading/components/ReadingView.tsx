@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, CircleHelp, MessageSquare, MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -36,6 +36,7 @@ import {
   useReaderDueSurveys,
   useReaderManuscripts,
   useReaderManuscript,
+  useStartReaderChapter,
   useSubmitReaderSurvey,
 } from "@/features/reading/hooks/use-reading";
 import { cn } from "@/lib/utils";
@@ -71,6 +72,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const manuscriptQuery = useReaderManuscript(manuscriptId, manuscriptVersionId);
   const readerManuscriptsQuery = useReaderManuscripts();
   const completeChapterMutation = useCompleteReaderChapter();
+  const { mutate: startReaderChapter } = useStartReaderChapter();
   const { mutate: loadDueSurveys } = useReaderDueSurveys();
   const submitSurveyMutation = useSubmitReaderSurvey();
   const [chapterIndex, setChapterIndex] = useState<number | null>(null);
@@ -85,6 +87,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   );
   const [surveyQueue, setSurveyQueue] = useState<ReaderDueSurvey[]>([]);
   const [isSurveyPromptOpen, setIsSurveyPromptOpen] = useState(false);
+  const startedChapterRef = useRef<string | null>(null);
   const manuscript = manuscriptQuery.data;
   const availableDrafts = useMemo(() => {
     const draftsById = new Map<string, ReaderManuscriptListItem>();
@@ -120,6 +123,27 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const chapter = chapters[currentChapterIndex];
   const isAnnotationGuideVisible = isAnnotationGuideManuallyOpen
     || (!hasSeenAnnotationGuide && !isAnnotationGuideDismissed);
+  const initialChapterId = chapter?.id ?? null;
+  const initialReaderAssignmentId = manuscript?.assignmentId ?? null;
+  const shouldStartReading = manuscript?.status === "not-started";
+
+  useEffect(() => {
+    if (!initialReaderAssignmentId || !initialChapterId || !shouldStartReading) return;
+
+    const startKey = `${initialReaderAssignmentId}:${initialChapterId}`;
+    if (startedChapterRef.current === startKey) return;
+    startedChapterRef.current = startKey;
+
+    startReaderChapter(
+      { chapterId: initialChapterId, readerAssignmentId: initialReaderAssignmentId },
+      {
+        onError(error) {
+          startedChapterRef.current = null;
+          toast.error(`Unable to save your reading progress: ${error.message}`);
+        },
+      },
+    );
+  }, [initialChapterId, initialReaderAssignmentId, shouldStartReading, startReaderChapter]);
 
   useEffect(() => {
     if (

@@ -27,26 +27,47 @@ export type ManagedReader = {
   chapterAccessByDraftId: Record<string, ManagedReaderDraftChapterAccess>;
   email: string;
   expiresAt: string | null;
+  feedbackCount: number;
+  firstFeedbackAt: string | null;
   id: string;
   invitationId: string | null;
+  joinedAt: string | null;
   name: string | null;
+  participationOrigin: "email_invitation" | "public_link";
   readerProfileId: string | null;
   sentAt: string | null;
   startedAt: string | null;
   status: ReaderStatus;
 };
 
+export type ManagedReaderPlaceRequest = {
+  cancelledAt: string | null;
+  id: string;
+  readerEmail: string;
+  readerName: string;
+  readerProfileId: string;
+  readingRoundId: string;
+  requestedAt: string;
+  respondedAt: string | null;
+  status: Database["public"]["Enums"]["reader_place_request_status"];
+};
+
 export type ManuscriptReaders = {
   drafts: ManagedDraft[];
   id: string;
   maxReaders: number | null;
+  placeRequests: ManagedReaderPlaceRequest[];
+  publicLinkId: string | null;
   readingRoundId: string | null;
   readers: ManagedReader[];
   title: string;
 };
 
 type ReaderAssignmentRow = {
+  first_feedback_at: string | null;
   id: string;
+  joined_at: string | null;
+  participation_origin: "email_invitation" | "public_link";
   reader_display_name: string | null;
   reader_email: string;
   reader_profile_id: string | null;
@@ -103,6 +124,7 @@ function latestDate(left: string | null, right: string | null) {
 function toManagedReader(
   assignments: ReaderAssignmentWithRound[],
   accessibleDraftIds: string[],
+  feedbackCountByAssignmentId: Map<string, number>,
 ): ManagedReader {
   const sortedAssignments = [...assignments].sort((left, right) => {
     const statusDifference = readerStatusRank[right.status] - readerStatusRank[left.status];
@@ -132,9 +154,22 @@ function toManagedReader(
     chapterAccessByDraftId,
     email: statusSource.reader_email,
     expiresAt: invitationSource.reading_invitations?.expires_at ?? null,
+    feedbackCount: assignments.reduce(
+      (count, assignment) => count + (feedbackCountByAssignmentId.get(assignment.id) ?? 0),
+      0,
+    ),
+    firstFeedbackAt: assignments.reduce(
+      (latest, assignment) => latestDate(latest, assignment.first_feedback_at),
+      null as string | null,
+    ),
     id: invitationSource.id,
     invitationId: invitationSource.reading_invitations?.id ?? null,
+    joinedAt: assignments.reduce(
+      (latest, assignment) => latestDate(latest, assignment.joined_at),
+      null as string | null,
+    ),
     name: statusSource.reader_display_name,
+    participationOrigin: statusSource.participation_origin,
     readerProfileId: statusSource.reader_profile_id,
     sentAt: invitationSource.reading_invitations?.sent_at ?? null,
     startedAt: assignments.reduce(
@@ -168,6 +203,9 @@ export async function getManuscriptReaders(): Promise<ManuscriptReaders[]> {
             reader_email,
             reader_display_name,
             reader_profile_id,
+            participation_origin,
+            joined_at,
+            first_feedback_at,
             status,
             started_at,
             reader_draft_access (id),
@@ -182,7 +220,79 @@ export async function getManuscriptReaders(): Promise<ManuscriptReaders[]> {
 
   if (error) throw new Error(error.message);
 
-  return ((data ?? []) as unknown as ManuscriptReadersRow[]).map((manuscript) => {
+  const manuscripts = (data ?? []) as unknown as ManuscriptReadersRow[];
+  const readerAssignmentIds = [...new Set(manuscripts.flatMap((manuscript) => (
+    manuscript.manuscript_versions.flatMap((version) => (
+      version.reading_rounds.flatMap((round) => (
+        round.reader_assignments.map((assignment) => assignment.id)
+      ))
+    ))
+  )))];
+  const readingRoundIds = [...new Set(manuscripts.flatMap((manuscript) => (
+    manuscript.manuscript_versions.flatMap((version) => version.reading_rounds.map((round) => round.id))
+  )))];
+  const [annotationsResult, generalAnnotationsResult, accessLinksResult, placeRequestsResult] = await Promise.all([
+    readerAssignmentIds.length > 0
+      ? supabase
+        .from("annotations")
+        .select("reader_assignment_id")
+        .in("reader_assignment_id", readerAssignmentIds)
+        .is("archived_at", null)
+      : Promise.resolve({ data: [], error: null }),
+    readerAssignmentIds.length > 0
+      ? supabase
+        .from("chapter_general_comments")
+        .select("reader_assignment_id")
+        .in("reader_assignment_id", readerAssignmentIds)
+        .is("archived_at", null)
+      : Promise.resolve({ data: [], error: null }),
+    readingRoundIds.length > 0
+      ? supabase
+        .from("reading_round_access_links")
+        .select("id, reading_round_id")
+        .in("reading_round_id", readingRoundIds)
+        .is("revoked_at", null)
+      : Promise.resolve({ data: [], error: null }),
+    supabase.rpc("list_author_reader_place_requests"),
+  ]);
+
+  if (annotationsResult.error) throw new Error(annotationsResult.error.message);
+  if (generalAnnotationsResult.error) throw new Error(generalAnnotationsResult.error.message);
+  if (accessLinksResult.error) throw new Error(accessLinksResult.error.message);
+  if (placeRequestsResult.error) throw new Error(placeRequestsResult.error.message);
+
+  const publicLinkByReadingRoundId = new Map(
+    (accessLinksResult.data ?? []).map((link) => [link.reading_round_id, link.id]),
+  );
+  const placeRequestsByReadingRoundId = new Map<string, ManagedReaderPlaceRequest[]>();
+  for (const request of placeRequestsResult.data ?? []) {
+    const requests = placeRequestsByReadingRoundId.get(request.reading_round_id) ?? [];
+    requests.push({
+      cancelledAt: request.cancelled_at,
+      id: request.request_id,
+      readerEmail: request.requester_email,
+      readerName: request.requester_display_name,
+      readerProfileId: request.requester_profile_id,
+      readingRoundId: request.reading_round_id,
+      requestedAt: request.requested_at,
+      respondedAt: request.responded_at,
+      status: request.status,
+    });
+    placeRequestsByReadingRoundId.set(request.reading_round_id, requests);
+  }
+
+  const feedbackCountByAssignmentId = new Map<string, number>();
+  for (const feedback of [
+    ...(annotationsResult.data ?? []),
+    ...(generalAnnotationsResult.data ?? []),
+  ]) {
+    feedbackCountByAssignmentId.set(
+      feedback.reader_assignment_id,
+      (feedbackCountByAssignmentId.get(feedback.reader_assignment_id) ?? 0) + 1,
+    );
+  }
+
+  return manuscripts.map((manuscript) => {
     const assignmentsByEmail = new Map<string, ReaderAssignmentWithRound[]>();
     const accessibleDraftIdsByEmail = new Map<string, Set<string>>();
     const drafts = manuscript.manuscript_versions
@@ -246,11 +356,18 @@ export async function getManuscriptReaders(): Promise<ManuscriptReaders[]> {
       })),
       id: manuscript.id,
       maxReaders: currentReadingRound?.max_readers ?? null,
+      placeRequests: currentReadingRound
+        ? placeRequestsByReadingRoundId.get(currentReadingRound.id) ?? []
+        : [],
+      publicLinkId: currentReadingRound
+        ? publicLinkByReadingRoundId.get(currentReadingRound.id) ?? null
+        : null,
       readingRoundId: currentReadingRound?.id ?? null,
       readers: [...assignmentsByEmail.entries()]
         .map(([email, assignments]) => toManagedReader(
           assignments,
           [...(accessibleDraftIdsByEmail.get(email) ?? new Set<string>())],
+          feedbackCountByAssignmentId,
         ))
         .sort((left, right) => (right.startedAt ?? "").localeCompare(left.startedAt ?? "")),
       title: manuscript.internal_title,
@@ -388,6 +505,43 @@ export async function setReaderChapterAccess({
   const { error } = await supabase.rpc("set_reader_chapter_access", {
     p_chapter_ids: chapterIds,
     p_reader_assignment_id: readerAssignmentId,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function enablePublicReadingLink(readingRoundId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase.rpc("enable_public_reading_link", {
+    p_reading_round_id: readingRoundId,
+  });
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("The public reading link could not be enabled.");
+
+  return data;
+}
+
+export async function disablePublicReadingLink(readingRoundId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("disable_public_reading_link", {
+    p_reading_round_id: readingRoundId,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function reviewReaderPlaceRequest({
+  accept,
+  requestId,
+}: {
+  accept: boolean;
+  requestId: string;
+}) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.rpc("review_reader_place_request", {
+    p_accept: accept,
+    p_request_id: requestId,
   });
 
   if (error) throw new Error(error.message);

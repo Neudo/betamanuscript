@@ -746,6 +746,38 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_social_links: {
+        Row: {
+          created_at: string
+          platform: string
+          profile_id: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          platform: string
+          profile_id: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          platform?: string
+          profile_id?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_social_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_plan_overrides: {
         Row: {
           created_at: string
@@ -938,8 +970,11 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          first_feedback_at: string | null
           id: string
+          joined_at: string | null
           last_active_at: string | null
+          participation_origin: "email_invitation" | "public_link"
           reader_display_name: string | null
           reader_email: string
           reader_profile_id: string | null
@@ -952,8 +987,11 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          first_feedback_at?: string | null
           id?: string
+          joined_at?: string | null
           last_active_at?: string | null
+          participation_origin?: "email_invitation" | "public_link"
           reader_display_name?: string | null
           reader_email: string
           reader_profile_id?: string | null
@@ -966,8 +1004,11 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          first_feedback_at?: string | null
           id?: string
+          joined_at?: string | null
           last_active_at?: string | null
+          participation_origin?: "email_invitation" | "public_link"
           reader_display_name?: string | null
           reader_email?: string
           reader_profile_id?: string | null
@@ -1000,6 +1041,120 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reader_place_request_email_outbox: {
+        Row: {
+          attempts: number
+          author_profile_id: string
+          created_at: string
+          id: string
+          included_through: string | null
+          last_error: string | null
+          not_before: string
+          pending_request_count: number | null
+          processing_started_at: string | null
+          reading_round_id: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["reader_place_request_email_status"]
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          author_profile_id: string
+          created_at?: string
+          id?: string
+          included_through?: string | null
+          last_error?: string | null
+          not_before?: string
+          pending_request_count?: number | null
+          processing_started_at?: string | null
+          reading_round_id: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["reader_place_request_email_status"]
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          author_profile_id?: string
+          created_at?: string
+          id?: string
+          included_through?: string | null
+          last_error?: string | null
+          not_before?: string
+          pending_request_count?: number | null
+          processing_started_at?: string | null
+          reading_round_id?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["reader_place_request_email_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reader_place_request_notification_state: {
+        Row: {
+          author_profile_id: string
+          last_email_sent_at: string | null
+          last_notified_request_at: string | null
+          last_request_at: string
+          reading_round_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_profile_id: string
+          last_email_sent_at?: string | null
+          last_notified_request_at?: string | null
+          last_request_at?: string
+          reading_round_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_profile_id?: string
+          last_email_sent_at?: string | null
+          last_notified_request_at?: string | null
+          last_request_at?: string
+          reading_round_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reader_place_requests: {
+        Row: {
+          author_profile_id: string
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          reading_round_id: string
+          requested_at: string
+          requester_profile_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["reader_place_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          author_profile_id: string
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          reading_round_id: string
+          requested_at?: string
+          requester_profile_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["reader_place_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          author_profile_id?: string
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          reading_round_id?: string
+          requested_at?: string
+          requester_profile_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["reader_place_request_status"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       reader_draft_access: {
         Row: {
@@ -1438,9 +1593,26 @@ export type Database = {
           reading_round_id: string
         }[]
       }
+      cancel_reader_place_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      claim_reader_place_request_email_notifications: {
+        Args: { p_limit?: number }
+        Returns: {
+          author_email: string
+          manuscript_title: string
+          outbox_id: string
+          pending_request_count: number
+        }[]
+      }
       complete_reader_chapter: {
         Args: { p_chapter_id: string; p_reader_assignment_id: string }
         Returns: undefined
+      }
+      consume_public_reading_rate_limit: {
+        Args: { p_fingerprint_hash: string; p_public_link_id: string }
+        Returns: boolean
       }
       clone_manuscript_surveys: {
         Args: {
@@ -1500,6 +1672,34 @@ export type Database = {
         }
         Returns: string
       }
+      create_public_reader_annotation: {
+        Args: {
+          p_chapter_block_id: string
+          p_chapter_id: string
+          p_comment: string
+          p_context_after: string | null
+          p_context_before: string | null
+          p_public_link_id: string
+          p_quote: string
+          p_selection_end: number
+          p_selection_end_chapter_block_id?: string | null
+          p_selection_end_offset?: number | null
+          p_selection_start: number
+          p_tag_id: string
+        }
+        Returns: string
+      }
+      create_public_reader_general_annotation: {
+        Args: { p_chapter_id: string; p_comment: string; p_public_link_id: string }
+        Returns: string
+      }
+      create_reader_place_request: {
+        Args: { p_public_link_id: string }
+        Returns: {
+          request_id: string
+          status: Database["public"]["Enums"]["reader_place_request_status"]
+        }[]
+      }
       archive_feedback: {
         Args: { p_feedback_id: string; p_feedback_kind: string }
         Returns: undefined
@@ -1524,6 +1724,14 @@ export type Database = {
         Args: { p_feedback_id: string; p_feedback_kind: string }
         Returns: undefined
       }
+      disable_public_reading_link: {
+        Args: { p_reading_round_id: string }
+        Returns: undefined
+      }
+      enable_public_reading_link: {
+        Args: { p_reading_round_id: string }
+        Returns: string
+      }
       open_reader_surveys: {
         Args: {
           p_reader_assignment_id: string
@@ -1533,9 +1741,35 @@ export type Database = {
           survey_id: string
         }[]
       }
+      mark_reader_place_request_email_sent: {
+        Args: { p_outbox_id: string }
+        Returns: undefined
+      }
+      list_author_reader_place_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          cancelled_at: string | null
+          reading_round_id: string
+          request_id: string
+          requested_at: string
+          requester_display_name: string
+          requester_email: string
+          requester_profile_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["reader_place_request_status"]
+        }[]
+      }
       revoke_reading_invitation: {
         Args: { p_invitation_id: string }
         Returns: undefined
+      }
+      reschedule_reader_place_request_email: {
+        Args: { p_error: string; p_outbox_id: string }
+        Returns: undefined
+      }
+      review_reader_place_request: {
+        Args: { p_accept: boolean; p_request_id: string }
+        Returns: string | null
       }
       set_reader_draft_access: {
         Args: {
@@ -1636,6 +1870,8 @@ export type Database = {
         | "revoked"
         | "pending"
         | "started"
+      reader_place_request_email_status: "pending" | "processing" | "sent"
+      reader_place_request_status: "pending" | "accepted" | "rejected" | "cancelled"
       reading_access_mode: "invite_only" | "open_signup"
       reading_invitation_status: "pending" | "accepted" | "revoked" | "expired"
       reading_round_status: "draft" | "open" | "closed" | "archived"
@@ -1790,6 +2026,8 @@ export const Constants = {
         "pending",
         "started",
       ],
+      reader_place_request_email_status: ["pending", "processing", "sent"],
+      reader_place_request_status: ["pending", "accepted", "rejected", "cancelled"],
       reading_access_mode: ["invite_only", "open_signup"],
       reading_invitation_status: ["pending", "accepted", "revoked", "expired"],
       reading_round_status: ["draft", "open", "closed", "archived"],

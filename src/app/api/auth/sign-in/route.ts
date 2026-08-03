@@ -1,8 +1,10 @@
 import { z } from "zod";
 
 import {
+  getPublicReaderPath,
   getOnboardingPath,
   getSafeInternalPath,
+  publicReaderFlow,
 } from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { signInSchema } from "@/features/account/schemas/sign-in.schema";
@@ -14,6 +16,7 @@ export const runtime = "nodejs";
 
 const requestSchema = signInSchema.extend({
   captchaToken: z.string().trim().min(1).max(2048),
+  flow: z.literal(publicReaderFlow).optional(),
   next: z.string().nullable().optional(),
 });
 
@@ -45,6 +48,10 @@ export async function POST(request: Request) {
     return errorResponse("Verification failed. Please try again.", 403);
   }
 
+  const publicReaderPath = payload.flow === publicReaderFlow
+    ? getPublicReaderPath(payload.next)
+    : null;
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email: payload.email,
@@ -75,7 +82,9 @@ export async function POST(request: Request) {
     {
       ok: true,
       redirectTo:
-        profile.role === null
+        publicReaderPath
+          ? publicReaderPath
+          : profile.role === null
           ? getOnboardingPath(payload.next)
           : getSafeInternalPath(payload.next) ?? getWorkspaceHome(profile.role),
     },

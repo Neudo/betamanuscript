@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 
 import type { AdminOverview as AdminOverviewData } from "@/features/admin/server/get-admin-overview";
+import type { AdminFeatureRequest } from "@/features/admin/server/get-feature-requests";
 import type { ManualProEntitlement } from "@/features/admin/server/get-manual-pro-entitlements";
 import { Heading } from "@/shared/ui/Heading";
+import { FeatureRequests } from "./FeatureRequests";
 import { ManualProEntitlements } from "./ManualProEntitlements";
 
 type Metric = {
@@ -26,9 +28,11 @@ const numberFormat = new Intl.NumberFormat("en-US");
 
 export function AdminOverview({
   entitlements,
+  featureRequests,
   overview,
 }: {
   entitlements: ManualProEntitlement[];
+  featureRequests: AdminFeatureRequest[];
   overview: AdminOverviewData;
 }) {
   const coreMetrics: Metric[] = [
@@ -88,6 +92,7 @@ export function AdminOverview({
       </section>
 
       <ManualProEntitlements entitlements={entitlements} />
+      <FeatureRequests featureRequests={featureRequests} />
     </div>
   );
 }

@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async headers() {
     const headers = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+    const privateReadingHeaders = [
+      ...headers,
+      { key: "Cache-Control", value: "private, no-store, max-age=0" },
+      { key: "Referrer-Policy", value: "no-referrer" },
+    ];
 
     return [
       { source: "/api/:path*", headers },
@@ -11,6 +16,7 @@ const nextConfig: NextConfig = {
       { source: "/invite/:path*", headers },
       { source: "/login", headers },
       { source: "/onboarding", headers },
+      { source: "/read/:path*", headers: privateReadingHeaders },
       { source: "/reader/:path*", headers },
       { source: "/signup", headers },
     ];

@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -37,7 +38,15 @@ type ReaderChapterGeneralCommentSheetProps = {
   chapterPosition: number;
   chapterTitle: string;
   generalComment: ReaderChapterGeneralComment | null;
+  initialComment?: string;
+  initialDisplayName?: string;
+  onAuthenticationRequired?: (input: {
+    chapterId: string;
+    comment: string;
+    displayName: string;
+  }) => void;
   onClose: () => void;
+  onSaveGeneralAnnotation?: (input: { chapterId: string; comment: string }) => Promise<void>;
   readerAssignmentId: string;
 };
 
@@ -46,22 +55,47 @@ export function ReaderChapterGeneralCommentSheet({
   chapterPosition,
   chapterTitle,
   generalComment,
+  initialComment,
+  initialDisplayName,
+  onAuthenticationRequired,
   onClose,
+  onSaveGeneralAnnotation,
   readerAssignmentId,
 }: ReaderChapterGeneralCommentSheetProps) {
   const upsertGeneralComment = useUpsertReaderChapterGeneralComment();
   const deleteGeneralComment = useDeleteReaderChapterGeneralComment();
-  const [comment, setComment] = useState(generalComment?.comment ?? "");
+  const [comment, setComment] = useState(generalComment?.comment ?? initialComment ?? "");
+  const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
+  const [isExternalSaving, setIsExternalSaving] = useState(false);
   const isEditing = Boolean(generalComment);
-  const isPending = upsertGeneralComment.isPending || deleteGeneralComment.isPending;
+  const isPending = upsertGeneralComment.isPending || deleteGeneralComment.isPending || isExternalSaving;
+  const requiresDisplayName = !isEditing && Boolean(onAuthenticationRequired);
+  const normalizedDisplayName = displayName.trim();
 
   function saveGeneralComment() {
+    const input = { chapterId, comment };
+
+    if (!isEditing && onAuthenticationRequired) {
+      onAuthenticationRequired({ ...input, displayName: normalizedDisplayName });
+      return;
+    }
+
+    if (!isEditing && onSaveGeneralAnnotation) {
+      setIsExternalSaving(true);
+      void onSaveGeneralAnnotation(input)
+        .then(() => {
+          toast.success("General annotation saved.");
+          onClose();
+        })
+        .catch((error: unknown) => {
+          toast.error(error instanceof Error ? error.message : "The general annotation could not be saved.");
+        })
+        .finally(() => setIsExternalSaving(false));
+      return;
+    }
+
     upsertGeneralComment.mutate(
-      {
-        chapterId,
-        comment,
-        readerAssignmentId,
-      },
+      { ...input, readerAssignmentId },
       {
         onError(error) {
           toast.error(error.message);
@@ -109,6 +143,29 @@ export function ReaderChapterGeneralCommentSheet({
             </SheetHeader>
 
             <div className="mt-7 space-y-6">
+              {requiresDisplayName ? (
+                <div className="space-y-2">
+                  <Label htmlFor="reader-general-annotation-display-name" className="text-xs">
+                    Your name
+                  </Label>
+                  <Input
+                    id="reader-general-annotation-display-name"
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    maxLength={80}
+                    minLength={2}
+                    autoComplete="name"
+                    placeholder="How the author should see you"
+                    className="border-foreground/15 bg-card"
+                    disabled={isPending}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required so the author can attribute this feedback.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="space-y-2">
                 <Label htmlFor="reader-chapter-general-comment" className="text-xs">
                   Your general annotation
@@ -149,7 +206,10 @@ export function ReaderChapterGeneralCommentSheet({
                     </AlertDialogContent>
                   </AlertDialog>
                 ) : <span />}
-                <Button onClick={saveGeneralComment} disabled={isPending || !comment.trim()}>
+                <Button
+                  onClick={saveGeneralComment}
+                  disabled={isPending || !comment.trim() || (requiresDisplayName && normalizedDisplayName.length < 2)}
+                >
                   {isPending ? "Saving…" : isEditing ? "Save changes" : "Save comment"}
                 </Button>
               </div>

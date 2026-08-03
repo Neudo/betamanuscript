@@ -10,8 +10,10 @@ import {
   getReaderAnnotationTags,
   getReaderDueSurveys,
   getReaderManuscript,
+  getReaderManuscriptDetails,
   getReaderManuscripts,
   getReaderSubmittedSurveys,
+  startReaderChapter,
   submitReaderSurvey,
   upsertReaderChapterGeneralComment,
   updateReaderAnnotation,
@@ -26,6 +28,11 @@ export const readingKeys = {
     "detail",
     manuscriptId,
     manuscriptVersionId,
+  ] as const,
+  manuscriptDetails: (assignmentId: string) => [
+    ...readingKeys.all,
+    "manuscript-details",
+    assignmentId,
   ] as const,
   list: () => [...readingKeys.all, "list"] as const,
   submittedSurveys: () => [...readingKeys.all, "submitted-surveys"] as const,
@@ -49,11 +56,20 @@ export function useReaderManuscript(manuscriptId: string, manuscriptVersionId: s
   });
 }
 
-export function useReaderAnnotationTags(readerAssignmentId: string) {
+export function useReaderManuscriptDetails(assignmentId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: readingKeys.manuscriptDetails(assignmentId),
+    queryFn: () => getReaderManuscriptDetails(assignmentId),
+    enabled: enabled && Boolean(assignmentId),
+    staleTime: 30_000,
+  });
+}
+
+export function useReaderAnnotationTags(readerAssignmentId: string, enabled = true) {
   return useQuery({
     queryKey: readingKeys.tags(readerAssignmentId),
     queryFn: () => getReaderAnnotationTags(readerAssignmentId),
-    enabled: Boolean(readerAssignmentId),
+    enabled: enabled && Boolean(readerAssignmentId),
     staleTime: 5 * 60_000,
   });
 }
@@ -63,6 +79,20 @@ export function useCompleteReaderChapter() {
 
   return useMutation({
     mutationFn: completeReaderChapter,
+    async onSuccess() {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),
+        queryClient.invalidateQueries({ queryKey: readingKeys.all }),
+      ]);
+    },
+  });
+}
+
+export function useStartReaderChapter() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: startReaderChapter,
     async onSuccess() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: dashboardKeys.all }),

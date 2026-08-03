@@ -39,16 +39,16 @@ const steps = [
   {
     Icon: Mail,
     number: "01",
-    title: "Open your invitation",
+    title: "Open the link you received",
     detail:
-      "Your author sends you a private invitation by email. Create an account or sign in with the same email address to access the manuscript and save your progress.",
+      "An author can send a private invitation or share a reading page. A shared page opens straight away; a private invitation uses the email address it was sent to.",
   },
   {
     Icon: BookmarkCheck,
     number: "02",
     title: "Start reading",
     detail:
-      "The manuscript appears in your reading list with its chapters, deadline, and saved reading progress in one place.",
+      "On a shared reading page, you can begin without an account. Create a free account when you want to save feedback or keep invited manuscripts in your reading list.",
   },
   {
     Icon: Highlighter,
@@ -117,7 +117,7 @@ export function ForReadersPage() {
                 </a>
               </div>
               <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
-                Free for beta readers · No subscription or payment details required
+                Shared reading pages open without an account · Feedback is free for beta readers
               </p>
             </motion.div>
 
@@ -143,7 +143,7 @@ export function ForReadersPage() {
               <ReaderPrinciple
                 eyebrow="Read"
                 title="Stay with the story"
-                detail="Read each manuscript chapter by chapter in a clean, distraction-free view. Everything you have been invited to read stays in one reading list."
+                detail="Open a shared reading page directly, or keep privately invited manuscripts together in one reading list."
               />
               <ReaderPrinciple
                 eyebrow="Notice"
@@ -238,8 +238,12 @@ export function ForReadersPage() {
                 answer="Yes. Authors pay for the workspace. You can read manuscripts and leave feedback without purchasing a subscription or entering payment details."
               />
               <ReaderQuestion
-                question="Why do I need an account?"
-                answer="Your account keeps invited manuscripts private, saves your reading progress, and gathers your current reading rounds in one place."
+                question="Can I read without an account?"
+                answer="Yes, when the author shares a reading page. You only need a free account to save feedback. Private invitations also use an account so the manuscript stays tied to the email address invited by the author."
+              />
+              <ReaderQuestion
+                question="Why do I need an account to leave feedback?"
+                answer="It lets the author attribute your reaction to you and keeps your feedback in your reader workspace. Saving feedback is free and is the point at which you become a reader in that beta-reading round."
               />
               <ReaderQuestion
                 question="Can other beta readers see my feedback?"
@@ -251,7 +255,7 @@ export function ForReadersPage() {
               />
               <ReaderQuestion
                 question="Can I share the manuscript with someone else?"
-                answer="No. Your invitation gives you private access to the manuscript. Do not copy or share it with anyone else."
+                answer="Only the author decides whether a manuscript has a shareable reading page. Keep personal invitations private. If an author has shared a reading link with you, anyone with that link can read, but feedback still requires their own account."
               />
             </div>
           </div>
@@ -263,7 +267,7 @@ export function ForReadersPage() {
             Already invited to read?
           </Heading>
           <p className="mx-auto mt-4 max-w-md text-sm leading-6" style={{ color: BODY }}>
-            Sign in with the email address that received the invitation to open the manuscript and continue reading.
+            Open a shared reading link directly, or sign in with the email address that received a private invitation.
           </p>
           <Link
             href="/login"
