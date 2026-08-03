@@ -304,7 +304,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
     const completedChapters = completedByAssignment.get(assignment.id) ?? 0;
     const status: ReaderManuscriptListItem["status"] = assignment.status === "completed" || (totalChapters > 0 && completedChapters >= totalChapters)
       ? "finished"
-      : latestProgressByAssignment.has(assignment.id)
+      : assignment.status === "started" || latestProgressByAssignment.has(assignment.id)
         ? "reading"
         : "not-started";
 

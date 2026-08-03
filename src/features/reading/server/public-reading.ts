@@ -3,7 +3,12 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { socialPlatforms, type SocialPlatform } from "@/features/account/domain/social-links";
-import type { ReaderAnnotationTag } from "@/features/reading/api/reading";
+import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
+import type {
+  ReaderAnnotation,
+  ReaderAnnotationTag,
+  ReaderChapterGeneralComment,
+} from "@/features/reading/api/reading";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -22,10 +27,12 @@ export type PublicReaderManuscript = {
   authorNote: string | null;
   chapters: Array<{
     blocks: Array<{
+      annotations: ReaderAnnotation[];
       content: string;
       id: string;
       position: number;
     }>;
+    generalComment: ReaderChapterGeneralComment | null;
     id: string;
     position: number;
     title: string;
@@ -235,7 +242,83 @@ export async function getPublicReadingAccess(
 
   if (blocksError) return null;
 
-  const blocksByChapter = new Map<string, PublicReaderManuscript["chapters"][number]["blocks"]>();
+  const [annotationsResult, generalCommentsResult] = viewerResult.assignmentId && chapterIds.length > 0
+    ? await Promise.all([
+      admin
+        .from("annotations")
+        .select(`
+          id,
+          chapter_id,
+          chapter_block_id,
+          tag_id,
+          quote,
+          selection_start,
+          selection_end,
+          selection_end_chapter_block_id,
+          selection_end_offset,
+          context_before,
+          context_after,
+          comment
+        `)
+        .eq("reader_assignment_id", viewerResult.assignmentId)
+        .in("chapter_id", chapterIds)
+        .is("archived_at", null),
+      admin
+        .from("chapter_general_comments")
+        .select("id, chapter_id, comment")
+        .eq("reader_assignment_id", viewerResult.assignmentId)
+        .in("chapter_id", chapterIds)
+        .is("archived_at", null),
+    ])
+    : [
+      { data: [], error: null },
+      { data: [], error: null },
+    ];
+
+  if (annotationsResult.error || generalCommentsResult.error) return null;
+
+  const tagsById = new Map((tagsResult.data ?? []).map((tag) => [tag.id, tag]));
+  const annotationsByChapter = new Map<string, ReaderAnnotation[]>();
+  const generalCommentsByChapter = new Map<string, ReaderChapterGeneralComment>();
+
+  for (const generalComment of generalCommentsResult.data ?? []) {
+    generalCommentsByChapter.set(generalComment.chapter_id, {
+      comment: generalComment.comment,
+      id: generalComment.id,
+    });
+  }
+
+  for (const annotation of annotationsResult.data ?? []) {
+    const tag = tagsById.get(annotation.tag_id);
+    const chapterAnnotations = annotationsByChapter.get(annotation.chapter_id) ?? [];
+
+    chapterAnnotations.push({
+      chapterBlockId: annotation.chapter_block_id,
+      chapterId: annotation.chapter_id,
+      comment: annotation.comment,
+      contextAfter: annotation.context_after,
+      contextBefore: annotation.context_before,
+      id: annotation.id,
+      quote: annotation.quote,
+      selectionEnd: annotation.selection_end,
+      selectionEndChapterBlockId: annotation.selection_end_chapter_block_id,
+      selectionEndOffset: annotation.selection_end_offset,
+      selectionStart: annotation.selection_start,
+      tag: {
+        color: tag?.color ?? "#6B7280",
+        id: annotation.tag_id,
+        label: tag?.label ?? "Unknown tag",
+        slug: tag?.slug ?? "unknown",
+      },
+    });
+    annotationsByChapter.set(annotation.chapter_id, chapterAnnotations);
+  }
+
+  const blocksByChapter = new Map<string, Array<{
+    content: string;
+    id: string;
+    position: number;
+  }>>();
   for (const block of blocks ?? []) {
     const chapterBlocks = blocksByChapter.get(block.chapter_id) ?? [];
     chapterBlocks.push({
@@ -251,12 +334,21 @@ export async function getPublicReadingAccess(
       accessLinkId,
       author,
       authorNote: round.welcome_message,
-      chapters: chapters.map((chapter) => ({
-        blocks: blocksByChapter.get(chapter.id) ?? [],
-        id: chapter.id,
-        position: chapter.position,
-        title: chapter.title,
-      })),
+      chapters: chapters.map((chapter) => {
+        const chapterBlocks = blocksByChapter.get(chapter.id) ?? [];
+        const chapterAnnotations = annotationsByChapter.get(chapter.id) ?? [];
+
+        return {
+          blocks: chapterBlocks.map((block) => ({
+            ...block,
+            annotations: getBlockAnnotationRanges(chapterBlocks, block, chapterAnnotations),
+          })),
+          generalComment: generalCommentsByChapter.get(chapter.id) ?? null,
+          id: chapter.id,
+          position: chapter.position,
+          title: chapter.title,
+        };
+      }),
       coverUrl,
       deadline: round.reading_deadline,
       genres: genreSlugs.flatMap((slug) => {

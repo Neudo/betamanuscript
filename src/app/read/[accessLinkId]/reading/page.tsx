@@ -39,6 +39,7 @@ export default async function PublicReadingPage({ params, searchParams }: Public
       isAuthenticated={access.isAuthenticated}
       manuscript={access.manuscript}
       pendingFeedbackToken={getPendingPublicFeedbackToken(Array.isArray(feedback) ? feedback[0] : feedback)}
+      readerAssignmentId={access.readerAssignmentId}
     />
   );
 }

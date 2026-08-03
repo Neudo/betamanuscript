@@ -11,6 +11,10 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  annotationBackgroundColor,
+  getTextAnnotationSegments,
+} from "@/features/annotations/lib/text-annotations";
 import { createMultiBlockTextSelection } from "@/features/annotations/lib/multi-block-annotations";
 import {
   createPendingPublicFeedback,
@@ -24,17 +28,23 @@ import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnot
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
 import { ReaderChapterGeneralCommentSheet } from "@/features/reading/components/ReaderChapterGeneralCommentSheet";
 import { PublicFeedbackAuthDialog } from "@/features/reading/components/PublicFeedbackAuthDialog";
-import type { ReaderAnnotationDraft } from "@/features/reading/api/reading";
+import type { ReaderAnnotation, ReaderAnnotationDraft } from "@/features/reading/api/reading";
 import type { PublicReaderManuscript } from "@/features/reading/server/public-reading";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
 
-type AnnotationPanel = {
-  draft: ReaderAnnotationDraft;
-  initialComment?: string;
-  initialDisplayName?: string;
-  initialTagId?: string;
-};
+type AnnotationPanel =
+  | {
+    annotation: ReaderAnnotation;
+    kind: "edit";
+  }
+  | {
+    draft: ReaderAnnotationDraft;
+    initialComment?: string;
+    initialDisplayName?: string;
+    initialTagId?: string;
+    kind: "create";
+  };
 
 type GeneralAnnotationPanel = {
   chapterId: string;
@@ -63,10 +73,12 @@ export function PublicReadingView({
   isAuthenticated,
   manuscript,
   pendingFeedbackToken,
+  readerAssignmentId,
 }: {
   isAuthenticated: boolean;
   manuscript: PublicReaderManuscript;
   pendingFeedbackToken: string | null;
+  readerAssignmentId: string | null;
 }) {
   const router = useRouter();
   const [chapterIndex, setChapterIndex] = useState(0);
@@ -225,7 +237,7 @@ export function PublicReadingView({
       return;
     }
 
-    setAnnotationPanel({ draft: { chapterId: chapter.id, ...selectionDraft } });
+    setAnnotationPanel({ draft: { chapterId: chapter.id, ...selectionDraft }, kind: "create" });
   }
 
   const displayedGeneralChapter = generalAnnotationPanel
@@ -322,7 +334,13 @@ export function PublicReadingView({
           )}
           onMouseUp={handleTextSelection}
         >
-          {chapter.blocks.map((block) => <p key={block.id} data-reader-block-id={block.id}>{block.content}</p>)}
+          {chapter.blocks.map((block) => (
+            <PublicReaderAnnotatedBlock
+              key={block.id}
+              block={block}
+              onAnnotationClick={(annotation) => setAnnotationPanel({ annotation, kind: "edit" })}
+            />
+          ))}
         </div>
 
         <div className="mt-12 flex justify-end border-t border-foreground/10 pt-6">
@@ -344,20 +362,23 @@ export function PublicReadingView({
         onClick={() => setGeneralAnnotationPanel({ chapterId: chapter.id })}
       >
         <MessageSquarePlus className="h-4 w-4" />
-        General annotation
+        {chapter.generalComment ? "Edit general annotation" : "General annotation"}
       </Button>
 
       {annotationPanel ? (
         <ReaderAnnotationSheet
-          key={`${annotationPanel.draft.chapterBlockId}:${annotationPanel.draft.selectionStart}:${annotationPanel.draft.selectionEnd}`}
-          draft={annotationPanel.draft}
-          initialComment={annotationPanel.initialComment}
-          initialDisplayName={annotationPanel.initialDisplayName}
-          initialTagId={annotationPanel.initialTagId}
-          onAuthenticationRequired={isAuthenticated ? undefined : promptForAnnotationAuthentication}
+          key={annotationPanel.kind === "edit"
+            ? annotationPanel.annotation.id
+            : `${annotationPanel.draft.chapterBlockId}:${annotationPanel.draft.selectionStart}:${annotationPanel.draft.selectionEnd}`}
+          annotation={annotationPanel.kind === "edit" ? annotationPanel.annotation : undefined}
+          draft={annotationPanel.kind === "create" ? annotationPanel.draft : undefined}
+          initialComment={annotationPanel.kind === "create" ? annotationPanel.initialComment : undefined}
+          initialDisplayName={annotationPanel.kind === "create" ? annotationPanel.initialDisplayName : undefined}
+          initialTagId={annotationPanel.kind === "create" ? annotationPanel.initialTagId : undefined}
+          onAuthenticationRequired={annotationPanel.kind === "create" && !isAuthenticated ? promptForAnnotationAuthentication : undefined}
           onClose={() => setAnnotationPanel(null)}
-          onCreateAnnotation={isAuthenticated ? saveAnnotation : undefined}
-          readerAssignmentId=""
+          onCreateAnnotation={annotationPanel.kind === "create" && isAuthenticated ? saveAnnotation : undefined}
+          readerAssignmentId={readerAssignmentId ?? ""}
           tags={manuscript.tags}
         />
       ) : null}
@@ -367,7 +388,7 @@ export function PublicReadingView({
           chapterId={displayedGeneralChapter.id}
           chapterPosition={displayedGeneralChapter.position}
           chapterTitle={displayedGeneralChapter.title}
-          generalComment={null}
+          generalComment={displayedGeneralChapter.generalComment}
           initialComment={generalAnnotationPanel.initialComment}
           initialDisplayName={generalAnnotationPanel.initialDisplayName}
           onAuthenticationRequired={isAuthenticated ? undefined : (input) => promptForAuthentication({
@@ -377,7 +398,7 @@ export function PublicReadingView({
           })}
           onClose={() => setGeneralAnnotationPanel(null)}
           onSaveGeneralAnnotation={isAuthenticated ? saveGeneralAnnotation : undefined}
-          readerAssignmentId=""
+          readerAssignmentId={readerAssignmentId ?? ""}
         />
       ) : null}
 
@@ -389,5 +410,62 @@ export function PublicReadingView({
         onOpenChange={setIsAuthDialogOpen}
       />
     </div>
+  );
+}
+
+function PublicReaderAnnotatedBlock({
+  block,
+  onAnnotationClick,
+}: {
+  block: PublicReaderManuscript["chapters"][number]["blocks"][number];
+  onAnnotationClick: (annotation: ReaderAnnotation) => void;
+}) {
+  const segments = getTextAnnotationSegments(block.content, block.annotations);
+
+  return (
+    <p data-reader-block-id={block.id}>
+      {segments.map((segment) => {
+        if (!segment.group) return segment.content;
+
+        const { annotations, color, hasMultipleTags } = segment.group;
+        const count = annotations.length;
+        const tagLabel = hasMultipleTags ? "multiple tags" : annotations[0].tag.label;
+
+        return (
+          <span
+            key={segment.key}
+            role="button"
+            tabIndex={0}
+            className={cn(
+              "inline cursor-pointer rounded-sm border-0 px-0.5 text-inherit decoration-2 underline-offset-4 transition-colors hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              hasMultipleTags && "font-medium",
+            )}
+            style={{ backgroundColor: annotationBackgroundColor(color), textDecorationColor: color }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAnnotationClick(annotations[0]);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              event.stopPropagation();
+              onAnnotationClick(annotations[0]);
+            }}
+            aria-label={`${count} annotation${count > 1 ? "s" : ""} tagged ${tagLabel}. Open annotation.`}
+          >
+            {segment.content}
+            {count > 1 ? (
+              <span
+                className="ml-1 inline-flex h-4 min-w-4 translate-y-[-0.45em] items-center justify-center rounded-full px-1 align-super font-mono text-[8px] leading-none text-white"
+                style={{ backgroundColor: color }}
+                aria-hidden="true"
+              >
+                {count}
+              </span>
+            ) : null}
+          </span>
+        );
+      })}
+    </p>
   );
 }
