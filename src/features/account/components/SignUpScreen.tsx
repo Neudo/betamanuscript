@@ -5,10 +5,12 @@ import { SignUpForm } from "./SignUpForm";
 
 export function SignUpScreen({
   next,
+  feedbackToken,
   publicReaderDisplayName,
   publicReaderFlow = false,
 }: {
   next: string | null;
+  feedbackToken: string | null;
   publicReaderDisplayName: string | null;
   publicReaderFlow?: boolean;
 }) {
@@ -16,6 +18,7 @@ export function SignUpScreen({
   if (next) loginParams.set("next", next);
   if (publicReaderFlow) loginParams.set("flow", "public-reader");
   if (publicReaderDisplayName) loginParams.set("displayName", publicReaderDisplayName);
+  if (feedbackToken) loginParams.set("feedback", feedbackToken);
   const loginHref = loginParams.size > 0 ? `/login?${loginParams.toString()}` : "/login";
 
   return (
@@ -36,6 +39,7 @@ export function SignUpScreen({
     >
       <SignUpForm
         next={next}
+        feedbackToken={feedbackToken}
         publicReaderDisplayName={publicReaderDisplayName}
         publicReaderFlow={publicReaderFlow}
       />

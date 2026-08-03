@@ -19,9 +19,11 @@ type FieldErrors = Partial<Record<"email" | "password", string>>;
 
 export function LoginForm({
   next,
+  feedbackToken,
   publicReaderFlow = false,
 }: {
   next: string | null;
+  feedbackToken: string | null;
   publicReaderFlow?: boolean;
 }) {
   const router = useRouter();
@@ -42,6 +44,7 @@ export function LoginForm({
   });
   const googleMutation = useMutation({
     mutationFn: () => signInWithGoogle({
+      feedbackToken,
       flow: publicReaderFlow ? "public-reader" : undefined,
       intent: "login",
       next,
@@ -74,6 +77,7 @@ export function LoginForm({
     mutation.mutate({
       ...result.data,
       captchaToken: captchaToken ?? undefined,
+      feedbackToken: feedbackToken ?? undefined,
       flow: publicReaderFlow ? "public-reader" : undefined,
       next,
     });

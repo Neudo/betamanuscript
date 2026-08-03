@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import {
+  getPendingPublicFeedbackToken,
+  getPublicReaderFeedbackPath,
   getPublicReaderPath,
   getOnboardingPath,
   getSafeDisplayName,
@@ -8,6 +10,7 @@ import {
   publicReaderFlow,
 } from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
+import { bindPendingPublicFeedbackToProfile } from "@/features/reading/server/pending-public-feedback";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -21,6 +24,7 @@ export async function GET(request: Request) {
     ? getPublicReaderPath(safeNext)
     : null;
   const requestedDisplayName = getSafeDisplayName(url.searchParams.get("displayName"));
+  const pendingFeedbackToken = getPendingPublicFeedbackToken(url.searchParams.get("feedback"));
   const isAccountSignUp = url.searchParams.get("intent") === "signup";
   const isEmailConfirmation = url.searchParams.get("intent") === "confirmation";
   const isPasswordRecovery = url.searchParams.get("intent") === "password-recovery";
@@ -32,7 +36,7 @@ export async function GET(request: Request) {
     if (!error) {
       if (isEmailConfirmation) {
         return publicReaderPath
-          ? redirectToPublicReader(url, publicReaderPath)
+          ? redirectToPublicReader(url, publicReaderPath, pendingFeedbackToken)
           : redirectToAccountPersonalization(url, safeNext);
       }
 
@@ -45,6 +49,18 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
+        if (publicReaderPath && pendingFeedbackToken && !isEmailConfirmation) {
+          try {
+            await bindPendingPublicFeedbackToProfile({
+              profileId: user.id,
+              token: pendingFeedbackToken,
+            });
+          } catch (bindingError) {
+            console.error("Unable to bind saved public feedback after OAuth", bindingError);
+            return redirectToOAuthError(url);
+          }
+        }
+
         if (isAccountSignUp) {
           const displayName = requestedDisplayName ?? getGoogleDisplayName(user.user_metadata);
           if (displayName) {
@@ -60,12 +76,12 @@ export async function GET(request: Request) {
           }
 
           return publicReaderPath
-            ? redirectToPublicReader(url, publicReaderPath)
+            ? redirectToPublicReader(url, publicReaderPath, pendingFeedbackToken)
             : redirectToAccountPersonalization(url, safeNext);
         }
 
         if (publicReaderPath) {
-          return redirectToPublicReader(url, publicReaderPath);
+          return redirectToPublicReader(url, publicReaderPath, pendingFeedbackToken);
         }
 
         const { data: profile } = await supabase
@@ -94,8 +110,11 @@ export async function GET(request: Request) {
     : redirectToOAuthError(url);
 }
 
-function redirectToPublicReader(url: URL, destination: string) {
-  const response = NextResponse.redirect(new URL(destination, url.origin));
+function redirectToPublicReader(url: URL, destination: string, pendingFeedbackToken: string | null) {
+  const response = NextResponse.redirect(new URL(
+    getPublicReaderFeedbackPath(destination, pendingFeedbackToken) ?? destination,
+    url.origin,
+  ));
   response.headers.set("Cache-Control", "private, no-store");
   return response;
 }

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createNoIndexMetadata } from "@/shared/config/seo";
 import { SignUpScreen } from "@/features/account/components/SignUpScreen";
 import {
+  getPendingPublicFeedbackToken,
+  getPublicReaderFeedbackPath,
   getPublicReaderPath,
   getOnboardingPath,
   getSafeDisplayName,
@@ -15,6 +17,7 @@ import { getAuthenticatedAccount } from "@/features/account/server/get-authentic
 type SignUpPageProps = {
   searchParams: Promise<{
     displayName?: string | string[];
+    feedback?: string | string[];
     flow?: string | string[];
     next?: string | string[];
   }>;
@@ -24,18 +27,21 @@ export const metadata = createNoIndexMetadata("Create your account | BetaManuscr
 
 export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const account = await getAuthenticatedAccount();
-  const { displayName, flow, next } = await searchParams;
+  const { displayName, feedback, flow, next } = await searchParams;
   const safeNext = getSafeInternalPath(Array.isArray(next) ? next[0] : next);
   const isPublicReaderFlow = (Array.isArray(flow) ? flow[0] : flow) === publicReaderFlow;
   const publicReaderPath = isPublicReaderFlow ? getPublicReaderPath(safeNext) : null;
   const publicReaderDisplayName = publicReaderPath
     ? getSafeDisplayName(Array.isArray(displayName) ? displayName[0] : displayName)
     : null;
+  const feedbackToken = publicReaderPath
+    ? getPendingPublicFeedbackToken(Array.isArray(feedback) ? feedback[0] : feedback)
+    : null;
 
   if (account) {
     redirect(
       publicReaderPath
-        ? publicReaderPath
+        ? getPublicReaderFeedbackPath(publicReaderPath, feedbackToken) ?? publicReaderPath
         : account.role === null
         ? getOnboardingPath(safeNext)
         : safeNext ?? getWorkspaceHome(account.role),
@@ -45,6 +51,7 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   return (
     <SignUpScreen
       next={safeNext}
+      feedbackToken={feedbackToken}
       publicReaderDisplayName={publicReaderDisplayName}
       publicReaderFlow={Boolean(publicReaderPath && publicReaderDisplayName)}
     />

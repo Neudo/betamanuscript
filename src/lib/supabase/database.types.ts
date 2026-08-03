@@ -707,6 +707,115 @@ export type Database = {
           },
         ]
       }
+      pending_public_feedback: {
+        Row: {
+          bound_profile_id: string | null
+          chapter_block_id: string | null
+          chapter_id: string
+          comment: string | null
+          context_after: string | null
+          context_before: string | null
+          created_at: string
+          display_name: string
+          expires_at: string
+          id: string
+          kind: string
+          public_link_id: string
+          quote: string | null
+          selection_end: number | null
+          selection_end_chapter_block_id: string | null
+          selection_end_offset: number | null
+          selection_start: number | null
+          tag_id: string | null
+          token_digest: string
+        }
+        Insert: {
+          bound_profile_id?: string | null
+          chapter_block_id?: string | null
+          chapter_id: string
+          comment?: string | null
+          context_after?: string | null
+          context_before?: string | null
+          created_at?: string
+          display_name: string
+          expires_at?: string
+          id?: string
+          kind: string
+          public_link_id: string
+          quote?: string | null
+          selection_end?: number | null
+          selection_end_chapter_block_id?: string | null
+          selection_end_offset?: number | null
+          selection_start?: number | null
+          tag_id?: string | null
+          token_digest: string
+        }
+        Update: {
+          bound_profile_id?: string | null
+          chapter_block_id?: string | null
+          chapter_id?: string
+          comment?: string | null
+          context_after?: string | null
+          context_before?: string | null
+          created_at?: string
+          display_name?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          public_link_id?: string
+          quote?: string | null
+          selection_end?: number | null
+          selection_end_chapter_block_id?: string | null
+          selection_end_offset?: number | null
+          selection_start?: number | null
+          tag_id?: string | null
+          token_digest?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_public_feedback_bound_profile_id_fkey"
+            columns: ["bound_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_public_feedback_chapter_block_id_fkey"
+            columns: ["chapter_block_id"]
+            isOneToOne: false
+            referencedRelation: "chapter_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_public_feedback_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "manuscript_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_public_feedback_public_link_id_fkey"
+            columns: ["public_link_id"]
+            isOneToOne: false
+            referencedRelation: "reading_round_access_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_public_feedback_selection_end_chapter_block_id_fkey"
+            columns: ["selection_end_chapter_block_id"]
+            isOneToOne: false
+            referencedRelation: "chapter_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_public_feedback_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "manuscript_annotation_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_path: string | null
@@ -1672,6 +1781,27 @@ export type Database = {
         }
         Returns: string
       }
+      create_pending_public_feedback: {
+        Args: {
+          p_chapter_block_id: string | null
+          p_chapter_id: string
+          p_comment: string | null
+          p_context_after: string | null
+          p_context_before: string | null
+          p_display_name: string
+          p_fingerprint_hash: string
+          p_kind: string
+          p_public_link_id: string
+          p_quote: string | null
+          p_selection_end: number | null
+          p_selection_end_chapter_block_id: string | null
+          p_selection_end_offset: number | null
+          p_selection_start: number | null
+          p_tag_id: string | null
+          p_token_digest: string
+        }
+        Returns: string
+      }
       create_public_reader_annotation: {
         Args: {
           p_chapter_block_id: string
@@ -1699,6 +1829,14 @@ export type Database = {
           request_id: string
           status: Database["public"]["Enums"]["reader_place_request_status"]
         }[]
+      }
+      bind_pending_public_feedback: {
+        Args: { p_profile_id: string; p_token_digest: string }
+        Returns: undefined
+      }
+      finalize_pending_public_feedback: {
+        Args: { p_token_digest: string }
+        Returns: string
       }
       archive_feedback: {
         Args: { p_feedback_id: string; p_feedback_kind: string }

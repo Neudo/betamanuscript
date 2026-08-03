@@ -1,12 +1,15 @@
 import { z } from "zod";
 
 import {
+  getPendingPublicFeedbackToken,
+  getPublicReaderFeedbackPath,
   getPublicReaderPath,
   getSafeDisplayName,
   getSafeInternalPath,
   publicReaderFlow,
 } from "@/features/account/domain/auth-redirect";
 import { signUpSchema } from "@/features/account/schemas/sign-up.schema";
+import { bindPendingPublicFeedbackToProfile } from "@/features/reading/server/pending-public-feedback";
 import { verifyTurnstileToken } from "@/features/account/server/verify-turnstile";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -16,6 +19,7 @@ export const runtime = "nodejs";
 const requestSchema = signUpSchema.extend({
   captchaToken: z.string().trim().min(1).max(2048),
   displayName: z.string().trim().max(80).optional(),
+  feedbackToken: z.string().optional(),
   flow: z.literal(publicReaderFlow).optional(),
   next: z.string().nullable().optional(),
 });
@@ -63,9 +67,18 @@ export async function POST(request: Request) {
     ? getPublicReaderPath(safeNext)
     : null;
   const displayName = getSafeDisplayName(payload.displayName);
+  const feedbackToken = getPendingPublicFeedbackToken(payload.feedbackToken);
 
   if (payload.flow === publicReaderFlow && (!publicReaderPath || !displayName)) {
     return errorResponse("Enter the name you want the author to see.", 400);
+  }
+
+  if (payload.feedbackToken && !feedbackToken) {
+    return errorResponse("The saved feedback is invalid.", 400);
+  }
+
+  if (feedbackToken && !publicReaderPath) {
+    return errorResponse("The saved feedback needs a valid manuscript link.", 400);
   }
 
   const confirmationUrl = new URL("/auth/callback", appOrigin(request));
@@ -74,6 +87,7 @@ export async function POST(request: Request) {
   if (publicReaderPath) {
     confirmationUrl.searchParams.set("flow", publicReaderFlow);
     confirmationUrl.searchParams.set("next", publicReaderPath);
+    if (feedbackToken) confirmationUrl.searchParams.set("feedback", feedbackToken);
   } else if (safeNext) {
     confirmationUrl.searchParams.set("next", safeNext);
   }
@@ -92,10 +106,22 @@ export async function POST(request: Request) {
     return errorResponse(error.message, 400);
   }
 
+  if (feedbackToken && data.user) {
+    try {
+      await bindPendingPublicFeedbackToProfile({
+        profileId: data.user.id,
+        token: feedbackToken,
+      });
+    } catch (bindingError) {
+      console.error("Unable to bind saved public feedback to the new account", bindingError);
+      return errorResponse("Your account was created, but your saved feedback could not be secured. Please log in and try again.", 500);
+    }
+  }
+
   return Response.json(
     {
       ok: true,
-      redirectTo: publicReaderPath ?? (safeNext
+      redirectTo: getPublicReaderFeedbackPath(publicReaderPath, feedbackToken) ?? (safeNext
         ? `/onboarding?next=${encodeURIComponent(safeNext)}`
         : "/onboarding"),
       status: data.session ? "authenticated" : "confirmation-required",

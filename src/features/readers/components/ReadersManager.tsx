@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Check, Copy, Link2, Mail, RotateCcw, UserRoundX, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -176,6 +177,7 @@ function ManuscriptReadersSection({
 
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/read/${manuscript.publicLinkId}`);
+      toast.success("Public link copied.");
     } catch {
       // Clipboard permission is a browser concern; selecting the displayed URL remains possible.
     }
@@ -251,11 +253,6 @@ function ManuscriptReadersSection({
               </Button>
             )}
           </div>
-          {manuscript.publicLinkId ? (
-            <div className="mt-4 flex items-center gap-2 border border-foreground/10 bg-muted/20 px-3 py-2 font-mono text-[11px] text-muted-foreground">
-              <span className="truncate">/read/{manuscript.publicLinkId}</span>
-            </div>
-          ) : null}
         </Card>
       ) : null}
 

@@ -24,6 +24,19 @@ export function getSafeDisplayName(value: string | null | undefined) {
   return displayName.length >= 2 && displayName.length <= 80 ? displayName : null;
 }
 
+export function getPendingPublicFeedbackToken(value: string | null | undefined) {
+  return value && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : null;
+}
+
+export function getPublicReaderFeedbackPath(
+  publicReaderPath: string | null,
+  pendingFeedbackToken: string | null,
+) {
+  if (!publicReaderPath || !pendingFeedbackToken) return publicReaderPath;
+
+  return `${publicReaderPath}?feedback=${encodeURIComponent(pendingFeedbackToken)}`;
+}
+
 export function getOnboardingPath(next?: string | null) {
   const safeNext = getSafeInternalPath(next);
 

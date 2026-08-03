@@ -7,6 +7,23 @@ export type PublicReaderAnnotationInput = ReaderAnnotationDraft & {
   tagId: string;
 };
 
+export type PendingPublicReaderFeedback =
+  | {
+    accessLinkId: string;
+    comment: string;
+    displayName: string;
+    draft: ReaderAnnotationDraft;
+    kind: "annotation";
+    tagId: string;
+  }
+  | {
+    accessLinkId: string;
+    chapterId: string;
+    comment: string;
+    displayName: string;
+    kind: "general";
+  };
+
 export async function createPublicReaderAnnotation({
   accessLinkId,
   chapterBlockId,
@@ -76,4 +93,39 @@ export async function createReaderPlaceRequest(accessLinkId: string) {
   }
 
   return payload.request;
+}
+
+export async function createPendingPublicFeedback(input: PendingPublicReaderFeedback) {
+  const response = await fetch("/api/public-feedback/pending", {
+    body: JSON.stringify(input),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+  const payload = await response.json().catch(() => null) as {
+    error?: string;
+    ok?: boolean;
+    token?: string;
+  } | null;
+
+  if (!response.ok || !payload?.ok || !payload.token) {
+    throw new Error(payload?.error ?? "Your feedback could not be saved.");
+  }
+
+  return payload.token;
+}
+
+export async function finalizePendingPublicFeedback(token: string) {
+  const response = await fetch("/api/public-feedback/finalize", {
+    body: JSON.stringify({ token }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+  const payload = await response.json().catch(() => null) as {
+    error?: string;
+    ok?: boolean;
+  } | null;
+
+  if (!response.ok || !payload?.ok) {
+    throw new Error(payload?.error ?? "Your saved feedback could not be added.");
+  }
 }

@@ -44,7 +44,7 @@ export function PublicManuscriptOverview({ manuscript }: { manuscript: PublicRea
             {manuscript.coverUrl ? (
               <aside className="border-b border-foreground/10 bg-sidebar/40 p-6 sm:p-8 lg:border-b-0 lg:border-r lg:p-10">
                 <div className="mx-auto max-w-[280px]">
-                  <div className="relative aspect-[2/3] overflow-hidden border border-foreground/15 bg-primary text-primary-foreground shadow-[10px_12px_0_rgba(28,24,18,0.1)]">
+                  <div className="relative aspect-[2/3] overflow-hidden text-primary-foreground shadow-[10px_12px_0_rgba(28,24,18,0.1)]">
                     <Image
                       src={manuscript.coverUrl}
                       alt={`${manuscript.title} cover`}
@@ -117,7 +117,7 @@ export function PublicManuscriptOverview({ manuscript }: { manuscript: PublicRea
                 <section className="border-t border-foreground/10 pt-8" aria-labelledby="public-author-heading">
                   <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-primary-text">Author</p>
                   <div className="mt-3 flex items-start gap-4">
-                    <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden border border-foreground/15 bg-primary font-mono text-sm font-semibold text-primary-foreground">
+                    <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden bg-primary font-mono text-sm font-semibold text-primary-foreground">
                       {manuscript.author.avatarUrl ? (
                         <Image
                           src={manuscript.author.avatarUrl}

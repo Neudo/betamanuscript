@@ -6,12 +6,14 @@ import { LoginForm } from "@/features/account/components/LoginForm";
 
 export function LoginScreen({
   next,
+  feedbackToken,
   error,
   confirmed,
   publicReaderDisplayName,
   publicReaderFlow = false,
 }: {
   next: string | null;
+  feedbackToken: string | null;
   error: string | null;
   confirmed: boolean;
   publicReaderDisplayName: string | null;
@@ -21,6 +23,7 @@ export function LoginScreen({
   if (next) signUpParams.set("next", next);
   if (publicReaderFlow) signUpParams.set("flow", "public-reader");
   if (publicReaderDisplayName) signUpParams.set("displayName", publicReaderDisplayName);
+  if (feedbackToken) signUpParams.set("feedback", feedbackToken);
   const signUpHref = signUpParams.size > 0 ? `/signup?${signUpParams.toString()}` : "/signup";
 
   return (
@@ -65,6 +68,7 @@ export function LoginScreen({
       ) : null}
       <LoginForm
         next={next}
+        feedbackToken={feedbackToken}
         publicReaderFlow={publicReaderFlow}
       />
     </AuthScreen>

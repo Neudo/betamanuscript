@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import {
+  getPendingPublicFeedbackToken,
+  getPublicReaderFeedbackPath,
   getPublicReaderPath,
   getOnboardingPath,
   getSafeInternalPath,
@@ -8,6 +10,7 @@ import {
 } from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { signInSchema } from "@/features/account/schemas/sign-in.schema";
+import { bindPendingPublicFeedbackToProfile } from "@/features/reading/server/pending-public-feedback";
 import { verifyTurnstileToken } from "@/features/account/server/verify-turnstile";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -16,6 +19,7 @@ export const runtime = "nodejs";
 
 const requestSchema = signInSchema.extend({
   captchaToken: z.string().trim().min(1).max(2048),
+  feedbackToken: z.string().optional(),
   flow: z.literal(publicReaderFlow).optional(),
   next: z.string().nullable().optional(),
 });
@@ -51,6 +55,15 @@ export async function POST(request: Request) {
   const publicReaderPath = payload.flow === publicReaderFlow
     ? getPublicReaderPath(payload.next)
     : null;
+  const feedbackToken = getPendingPublicFeedbackToken(payload.feedbackToken);
+
+  if (payload.feedbackToken && !feedbackToken) {
+    return errorResponse("The saved feedback is invalid.", 400);
+  }
+
+  if (feedbackToken && !publicReaderPath) {
+    return errorResponse("The saved feedback needs a valid manuscript link.", 400);
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -78,12 +91,24 @@ export async function POST(request: Request) {
     return errorResponse("Your account profile could not be loaded.", 500);
   }
 
+  if (feedbackToken) {
+    try {
+      await bindPendingPublicFeedbackToProfile({
+        profileId: data.user.id,
+        token: feedbackToken,
+      });
+    } catch (bindingError) {
+      console.error("Unable to bind saved public feedback to the signed-in account", bindingError);
+      return errorResponse("Your feedback could not be secured. Please try again.", 500);
+    }
+  }
+
   return Response.json(
     {
       ok: true,
       redirectTo:
         publicReaderPath
-          ? publicReaderPath
+          ? getPublicReaderFeedbackPath(publicReaderPath, feedbackToken)
           : profile.role === null
           ? getOnboardingPath(payload.next)
           : getSafeInternalPath(payload.next) ?? getWorkspaceHome(profile.role),

@@ -44,7 +44,7 @@ type ReaderChapterGeneralCommentSheetProps = {
     chapterId: string;
     comment: string;
     displayName: string;
-  }) => void;
+  }) => Promise<void>;
   onClose: () => void;
   onSaveGeneralAnnotation?: (input: { chapterId: string; comment: string }) => Promise<void>;
   readerAssignmentId: string;
@@ -76,7 +76,12 @@ export function ReaderChapterGeneralCommentSheet({
     const input = { chapterId, comment };
 
     if (!isEditing && onAuthenticationRequired) {
-      onAuthenticationRequired({ ...input, displayName: normalizedDisplayName });
+      setIsExternalSaving(true);
+      void onAuthenticationRequired({ ...input, displayName: normalizedDisplayName })
+        .catch((error: unknown) => {
+          toast.error(error instanceof Error ? error.message : "Your feedback could not be saved.");
+        })
+        .finally(() => setIsExternalSaving(false));
       return;
     }
 

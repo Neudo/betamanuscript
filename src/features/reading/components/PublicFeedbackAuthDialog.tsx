@@ -12,17 +12,20 @@ import {
 
 export function PublicFeedbackAuthDialog({
   displayName,
+  feedbackToken,
   next,
   onOpenChange,
   open,
 }: {
   displayName: string;
+  feedbackToken: string;
   next: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
   const authParams = new URLSearchParams({
     displayName,
+    feedback: feedbackToken,
     flow: "public-reader",
     next,
   });

@@ -20,10 +20,12 @@ type FieldErrors = Partial<Record<"email" | "password", string>>;
 
 export function SignUpForm({
   next,
+  feedbackToken,
   publicReaderDisplayName,
   publicReaderFlow = false,
 }: {
   next: string | null;
+  feedbackToken: string | null;
   publicReaderDisplayName: string | null;
   publicReaderFlow?: boolean;
 }) {
@@ -48,6 +50,7 @@ export function SignUpForm({
   const googleMutation = useMutation({
     mutationFn: () => signInWithGoogle({
       displayName: publicReaderDisplayName,
+      feedbackToken,
       flow: publicReaderFlow ? "public-reader" : undefined,
       intent: "signup",
       next,
@@ -81,6 +84,7 @@ export function SignUpForm({
       ...result.data,
       captchaToken: captchaToken ?? undefined,
       displayName: publicReaderDisplayName ?? undefined,
+      feedbackToken: feedbackToken ?? undefined,
       flow: publicReaderFlow ? "public-reader" : undefined,
       next,
     });
@@ -94,7 +98,7 @@ export function SignUpForm({
         <AlertDescription className="space-y-3">
           <p>
             Check your inbox and confirm your email to return to the manuscript.
-            {publicReaderFlow ? " Your feedback is still waiting in the manuscript tab." : null}
+            {publicReaderFlow ? " Your feedback is saved and will be added when you confirm your email." : null}
           </p>
           <Button asChild size="sm" variant="outline">
             <Link href="/login">Back to login</Link>

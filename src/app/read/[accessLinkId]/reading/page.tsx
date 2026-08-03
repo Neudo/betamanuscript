@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { PublicReadingView } from "@/features/reading/components/PublicReadingView";
+import { getPendingPublicFeedbackToken } from "@/features/account/domain/auth-redirect";
 import {
   getPublicReadingAccess,
   publicReadingFingerprint,
@@ -14,10 +15,12 @@ export const metadata = createNoIndexMetadata("Shared manuscript | BetaManuscrip
 
 type PublicReadingPageProps = {
   params: Promise<{ accessLinkId: string }>;
+  searchParams: Promise<{ feedback?: string | string[] }>;
 };
 
-export default async function PublicReadingPage({ params }: PublicReadingPageProps) {
+export default async function PublicReadingPage({ params, searchParams }: PublicReadingPageProps) {
   const { accessLinkId } = await params;
+  const { feedback } = await searchParams;
   const requestHeaders = await headers();
   const access = await getPublicReadingAccess(
     accessLinkId,
@@ -31,5 +34,11 @@ export default async function PublicReadingPage({ params }: PublicReadingPagePro
 
   if (!access) notFound();
 
-  return <PublicReadingView isAuthenticated={access.isAuthenticated} manuscript={access.manuscript} />;
+  return (
+    <PublicReadingView
+      isAuthenticated={access.isAuthenticated}
+      manuscript={access.manuscript}
+      pendingFeedbackToken={getPendingPublicFeedbackToken(Array.isArray(feedback) ? feedback[0] : feedback)}
+    />
+  );
 }

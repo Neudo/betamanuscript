@@ -13,20 +13,18 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { createMultiBlockTextSelection } from "@/features/annotations/lib/multi-block-annotations";
 import {
+  createPendingPublicFeedback,
   createPublicReaderAnnotation,
   createPublicReaderGeneralAnnotation,
   createReaderPlaceRequest,
+  finalizePendingPublicFeedback,
+  type PendingPublicReaderFeedback,
 } from "@/features/readers/api/public-reading";
 import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnotationGuide";
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
 import { ReaderChapterGeneralCommentSheet } from "@/features/reading/components/ReaderChapterGeneralCommentSheet";
 import { PublicFeedbackAuthDialog } from "@/features/reading/components/PublicFeedbackAuthDialog";
 import type { ReaderAnnotationDraft } from "@/features/reading/api/reading";
-import {
-  type PendingPublicFeedback,
-  parsePendingPublicFeedback,
-  pendingFeedbackStorageKey,
-} from "@/features/reading/lib/public-feedback-draft";
 import type { PublicReaderManuscript } from "@/features/reading/server/public-reading";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
@@ -44,6 +42,11 @@ type GeneralAnnotationPanel = {
   initialDisplayName?: string;
 };
 
+type PreparedPublicFeedback = {
+  displayName: string;
+  token: string;
+};
+
 function getReaderBlockElement(node: Node) {
   const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
   return element?.closest<HTMLElement>("[data-reader-block-id]") ?? null;
@@ -56,52 +59,26 @@ function getTextOffset(block: HTMLElement, container: Node, offset: number) {
   return prefixRange.toString().length;
 }
 
-function readPendingFeedback(accessLinkId: string): PendingPublicFeedback | null {
-  try {
-    return parsePendingPublicFeedback(
-      window.sessionStorage.getItem(pendingFeedbackStorageKey(accessLinkId)),
-    );
-  } catch {
-    // Storage is only a convenience for a draft; it is never an identity or access check.
-  }
-
-  return null;
-}
-
-function savePendingFeedback(accessLinkId: string, feedback: PendingPublicFeedback) {
-  try {
-    window.sessionStorage.setItem(pendingFeedbackStorageKey(accessLinkId), JSON.stringify(feedback));
-  } catch {
-    // Browsers that disable storage can still use the normal account flow.
-  }
-}
-
-function clearPendingFeedback(accessLinkId: string) {
-  try {
-    window.sessionStorage.removeItem(pendingFeedbackStorageKey(accessLinkId));
-  } catch {
-    // Nothing to clear when session storage is unavailable.
-  }
-}
-
 export function PublicReadingView({
   isAuthenticated,
   manuscript,
+  pendingFeedbackToken,
 }: {
   isAuthenticated: boolean;
   manuscript: PublicReaderManuscript;
+  pendingFeedbackToken: string | null;
 }) {
   const router = useRouter();
   const [chapterIndex, setChapterIndex] = useState(0);
   const [annotationPanel, setAnnotationPanel] = useState<AnnotationPanel | null>(null);
   const [generalAnnotationPanel, setGeneralAnnotationPanel] = useState<GeneralAnnotationPanel | null>(null);
-  const [pendingFeedback, setPendingFeedback] = useState<PendingPublicFeedback | null>(null);
+  const [pendingFeedback, setPendingFeedback] = useState<PreparedPublicFeedback | null>(null);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(true);
   const [isAtReaderLimit, setIsAtReaderLimit] = useState(false);
   const [isRequestingPlace, setIsRequestingPlace] = useState(false);
   const [hasRequestedPlace, setHasRequestedPlace] = useState(false);
-  const pendingFeedbackSubmissionRef = useRef(false);
+  const pendingFeedbackFinalizationRef = useRef(false);
   const chapter = manuscript.chapters[chapterIndex];
   const next = `/read/${manuscript.accessLinkId}/reading`;
   const loginHref = `/login?next=${encodeURIComponent(next)}`;
@@ -130,7 +107,6 @@ export function PublicReadingView({
         accessLinkId: manuscript.accessLinkId,
         ...input,
       });
-      clearPendingFeedback(manuscript.accessLinkId);
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "The annotation could not be saved.";
@@ -148,7 +124,6 @@ export function PublicReadingView({
         accessLinkId: manuscript.accessLinkId,
         ...input,
       });
-      clearPendingFeedback(manuscript.accessLinkId);
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "The general annotation could not be saved.";
@@ -160,101 +135,33 @@ export function PublicReadingView({
     }
   }, [manuscript.accessLinkId, requestReaderPlace, router]);
 
-  useEffect(() => {
-    if (!isAuthenticated || annotationPanel || generalAnnotationPanel) return;
-
-    const pendingFeedback = readPendingFeedback(manuscript.accessLinkId);
-    if (!pendingFeedback) return;
-
-    const timeout = window.setTimeout(() => {
-      if (pendingFeedback.kind === "annotation") {
-        setAnnotationPanel({
-          draft: pendingFeedback.draft,
-          initialComment: pendingFeedback.comment,
-          initialDisplayName: pendingFeedback.displayName,
-          initialTagId: pendingFeedback.tagId,
-        });
-        return;
-      }
-
-      setGeneralAnnotationPanel({
-        chapterId: pendingFeedback.chapterId,
-        initialComment: pendingFeedback.comment,
-        initialDisplayName: pendingFeedback.displayName,
-      });
-    }, 0);
-
-    return () => window.clearTimeout(timeout);
-  }, [annotationPanel, generalAnnotationPanel, isAuthenticated, manuscript.accessLinkId]);
+  const promptForAuthentication = useCallback(async (feedback: PendingPublicReaderFeedback) => {
+    const token = await createPendingPublicFeedback(feedback);
+    setPendingFeedback({ displayName: feedback.displayName, token });
+    setIsAuthDialogOpen(true);
+  }, []);
 
   useEffect(() => {
-    if (isAuthenticated || !isAuthDialogOpen) return;
+    if (!isAuthenticated || !pendingFeedbackToken || pendingFeedbackFinalizationRef.current) return;
 
-    function refreshSessionWhenReaderReturns() {
-      if (document.visibilityState === "visible") {
+    pendingFeedbackFinalizationRef.current = true;
+    void finalizePendingPublicFeedback(pendingFeedbackToken)
+      .then(() => {
+        toast.success("Your feedback has been saved.");
+        router.replace(next);
         router.refresh();
-      }
-    }
+      })
+      .catch(async (error: unknown) => {
+        const message = error instanceof Error ? error.message : "Your saved feedback could not be added.";
 
-    window.addEventListener("focus", refreshSessionWhenReaderReturns);
-    return () => window.removeEventListener("focus", refreshSessionWhenReaderReturns);
-  }, [isAuthenticated, isAuthDialogOpen, router]);
+        if (/reached its reader limit/i.test(message)) {
+          setIsAtReaderLimit(true);
+          await requestReaderPlace();
+        }
 
-  useEffect(() => {
-    if (!isAuthenticated || !isAuthDialogOpen || pendingFeedbackSubmissionRef.current) return;
-
-    const pending = readPendingFeedback(manuscript.accessLinkId);
-    if (!pending) return;
-
-    const submissionTimer = window.setTimeout(() => {
-      if (pendingFeedbackSubmissionRef.current) return;
-
-      pendingFeedbackSubmissionRef.current = true;
-      setAnnotationPanel(null);
-      setGeneralAnnotationPanel(null);
-
-      const save = pending.kind === "annotation"
-        ? saveAnnotation({
-          ...pending.draft,
-          comment: pending.comment,
-          tagId: pending.tagId,
-        })
-        : saveGeneralAnnotation({
-          chapterId: pending.chapterId,
-          comment: pending.comment,
-        });
-
-      void save
-        .then(() => {
-          setAnnotationPanel(null);
-          setGeneralAnnotationPanel(null);
-          setPendingFeedback(null);
-          toast.success(pending.kind === "annotation" ? "Annotation saved." : "General annotation saved.");
-        })
-        .catch((error: unknown) => {
-          const message = error instanceof Error ? error.message : "Your feedback could not be saved.";
-          toast.error(message);
-
-          if (pending.kind === "annotation") {
-            setAnnotationPanel({
-              draft: pending.draft,
-              initialComment: pending.comment,
-              initialDisplayName: pending.displayName,
-              initialTagId: pending.tagId,
-            });
-            return;
-          }
-
-          setGeneralAnnotationPanel({
-            chapterId: pending.chapterId,
-            initialComment: pending.comment,
-            initialDisplayName: pending.displayName,
-          });
-        });
-    }, 0);
-
-    return () => window.clearTimeout(submissionTimer);
-  }, [isAuthenticated, isAuthDialogOpen, manuscript.accessLinkId, saveAnnotation, saveGeneralAnnotation]);
+        toast.error(message);
+      });
+  }, [isAuthenticated, next, pendingFeedbackToken, requestReaderPlace, router]);
 
   const chapterById = useMemo(
     () => new Map(manuscript.chapters.map((item) => [item.id, item])),
@@ -269,20 +176,15 @@ export function PublicReadingView({
     );
   }
 
-  function promptForAuthentication(feedback: PendingPublicFeedback) {
-    savePendingFeedback(manuscript.accessLinkId, feedback);
-    setPendingFeedback(feedback);
-    setIsAuthDialogOpen(true);
-  }
-
-  function promptForAnnotationAuthentication(input: ReaderAnnotationDraft & {
+  async function promptForAnnotationAuthentication(input: ReaderAnnotationDraft & {
     comment: string;
     displayName: string;
     tagId: string;
   }) {
     const { comment, displayName, tagId, ...draft } = input;
 
-    promptForAuthentication({
+    await promptForAuthentication({
+      accessLinkId: manuscript.accessLinkId,
       comment,
       displayName,
       draft,
@@ -468,7 +370,11 @@ export function PublicReadingView({
           generalComment={null}
           initialComment={generalAnnotationPanel.initialComment}
           initialDisplayName={generalAnnotationPanel.initialDisplayName}
-          onAuthenticationRequired={isAuthenticated ? undefined : (input) => promptForAuthentication({ kind: "general", ...input })}
+          onAuthenticationRequired={isAuthenticated ? undefined : (input) => promptForAuthentication({
+            accessLinkId: manuscript.accessLinkId,
+            kind: "general",
+            ...input,
+          })}
           onClose={() => setGeneralAnnotationPanel(null)}
           onSaveGeneralAnnotation={isAuthenticated ? saveGeneralAnnotation : undefined}
           readerAssignmentId=""
@@ -477,6 +383,7 @@ export function PublicReadingView({
 
       <PublicFeedbackAuthDialog
         displayName={pendingFeedback?.displayName ?? ""}
+        feedbackToken={pendingFeedback?.token ?? ""}
         next={next}
         open={!isAuthenticated && isAuthDialogOpen}
         onOpenChange={setIsAuthDialogOpen}

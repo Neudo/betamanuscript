@@ -1,4 +1,5 @@
 import {
+  getPendingPublicFeedbackToken,
   getPublicReaderPath,
   getSafeDisplayName,
   getSafeInternalPath,
@@ -8,6 +9,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type GoogleSignInInput = {
   displayName?: string | null;
+  feedbackToken?: string | null;
   flow?: "public-reader";
   intent: "login" | "signup";
   next?: string | null;
@@ -15,6 +17,7 @@ type GoogleSignInInput = {
 
 export async function signInWithGoogle({
   displayName,
+  feedbackToken,
   flow,
   intent,
   next,
@@ -40,6 +43,11 @@ export async function signInWithGoogle({
     const safeDisplayName = getSafeDisplayName(displayName);
     if (safeDisplayName) {
       callbackUrl.searchParams.set("displayName", safeDisplayName);
+    }
+
+    const safeFeedbackToken = getPendingPublicFeedbackToken(feedbackToken);
+    if (safeFeedbackToken) {
+      callbackUrl.searchParams.set("feedback", safeFeedbackToken);
     }
   }
 

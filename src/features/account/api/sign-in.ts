@@ -3,6 +3,7 @@ import type { SignInInput } from "@/features/account/schemas/sign-in.schema";
 export async function signIn(
   input: SignInInput & {
     captchaToken?: string;
+    feedbackToken?: string;
     flow?: "public-reader";
     next?: string | null;
   },

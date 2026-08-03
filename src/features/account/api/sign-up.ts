@@ -4,6 +4,7 @@ export async function signUp(
   input: SignUpInput & {
     captchaToken?: string;
     displayName?: string;
+    feedbackToken?: string;
     flow?: "public-reader";
     next?: string | null;
   },
