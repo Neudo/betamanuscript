@@ -19,7 +19,7 @@ export function LegalPage({ children, eyebrow, lastUpdated, summary, title }: Le
     <div className="min-h-screen" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
       <header className="border-b px-6 py-4 md:px-12" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <BrandLogo href="/" imageClassName="h-7" />
+          <BrandLogo href="/" imageClassName="h-8" />
           <Link
             href="/"
             className="text-xs font-medium transition-colors hover:text-primary-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"

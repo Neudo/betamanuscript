@@ -33,6 +33,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { getAnnotationTagColor } from "@/features/annotations/lib/tag-colors";
 import type {
   ReaderAnnotation,
   ReaderAnnotationDraft,
@@ -173,7 +174,7 @@ export function ReaderAnnotationSheet({
                     {tags.map((tag) => (
                       <SelectItem key={tag.id} value={tag.id}>
                         <span className="flex items-center gap-2">
-                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getAnnotationTagColor(tag) }} />
                           {tag.label}
                         </span>
                       </SelectItem>

@@ -33,7 +33,7 @@ export default async function InviteReaderPage({ searchParams }: InviteReaderPag
   return (
     <main className="grid min-h-screen place-items-center bg-muted/30 p-5">
       <Card className="w-full max-w-lg border-foreground/10 p-7 sm:p-9">
-        <BrandLogo imageClassName="h-8" />
+        <BrandLogo imageClassName="h-9" />
         <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           BetaManuscript reader invitation
         </p>

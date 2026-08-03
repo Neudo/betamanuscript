@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DragEvent,
   FormEvent,
@@ -57,6 +58,7 @@ import type {
   ImportedManuscriptChapter,
 } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
+import { Heading } from "@/shared/ui/Heading";
 
 type CreateManuscriptDialogProps = {
   children?: ReactNode;
@@ -73,6 +75,7 @@ export function CreateManuscriptDialog({
   onOpenChange,
   accountPlan = "free",
 }: CreateManuscriptDialogProps) {
+  const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const editor = useManuscriptDraft();
@@ -89,10 +92,16 @@ export function CreateManuscriptDialog({
   const [createdManuscript, setCreatedManuscript] = useState<CreatedManuscript | null>(null);
   const stepTitle =
     editor.step === "info"
-      ? "Tell us about the book"
+      ? "Upload your manuscript files"
       : editor.step === "structure"
-        ? "Manuscript structure"
+        ? "Set up your book"
         : "Beta reader settings";
+  const stepDescription =
+    editor.step === "info"
+      ? "Start with the manuscript file: we will detect its chapters automatically."
+      : editor.step === "structure"
+        ? "Add the book details, then review the structure for this draft."
+        : "Choose how many readers can access this draft and what they will see.";
 
   function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen === undefined) setInternalOpen(nextOpen);
@@ -189,6 +198,9 @@ export function CreateManuscriptDialog({
 
       onCreated?.(manuscript);
       handleOpenChange(false);
+      router.push(
+        `/dashboard/readers?manuscriptId=${encodeURIComponent(manuscript.manuscriptId)}`,
+      );
     } catch {
       // The mutation state renders the database error beneath the form.
     }
@@ -206,11 +218,13 @@ export function CreateManuscriptDialog({
             <p className="mb-1.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
               New manuscript
             </p>
-            <DialogTitle className="text-lg font-semibold tracking-normal">
-              {stepTitle}
+            <DialogTitle asChild>
+              <Heading level={2} size="workspace">
+                {stepTitle}
+              </Heading>
             </DialogTitle>
-            <DialogDescription className="sr-only">
-              Create a manuscript and configure its reader access.
+            <DialogDescription className="mt-1 text-xs leading-5 text-muted-foreground">
+              {stepDescription}
             </DialogDescription>
           </header>
 
@@ -218,29 +232,34 @@ export function CreateManuscriptDialog({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
             {editor.step === "info" ? (
-              <BookInfoStep
-                draft={editor.draft}
-                genres={genresQuery.data ?? []}
-                genresError={genresQuery.isError}
-                genresLoading={genresQuery.isLoading}
+              <ManuscriptFilesStep
                 coverFile={coverFile}
                 sourceFile={sourceFile}
                 importedChapters={importedChapters}
                 sourceImportError={sourceImportError}
                 isParsingSource={isParsingSource}
-                onChange={editor.updateDraft}
                 onCoverChange={handleCoverChange}
                 onSourceChange={handleSourceChange}
               />
             ) : null}
             {editor.step === "structure" ? (
-              <StructureStep
-                draft={editor.draft}
-                genres={genresQuery.data ?? []}
-                coverFile={coverFile}
-                importedChapters={importedChapters}
-                onChange={editor.updateDraft}
-              />
+              <div className="space-y-8">
+                <BookInfoStep
+                  draft={editor.draft}
+                  genres={genresQuery.data ?? []}
+                  genresError={genresQuery.isError}
+                  genresLoading={genresQuery.isLoading}
+                  onChange={editor.updateDraft}
+                />
+                <div className="border-t border-foreground/[0.08]" />
+                <StructureStep
+                  draft={editor.draft}
+                  genres={genresQuery.data ?? []}
+                  coverFile={coverFile}
+                  importedChapters={importedChapters}
+                  onChange={editor.updateDraft}
+                />
+              </div>
             ) : null}
             {editor.step === "readers" ? (
               <ReaderSettingsStep
@@ -372,25 +391,11 @@ function BookInfoStep({
   genres,
   genresError,
   genresLoading,
-  coverFile,
-  sourceFile,
-  importedChapters,
-  sourceImportError,
-  isParsingSource,
   onChange,
-  onCoverChange,
-  onSourceChange,
 }: StepProps & {
   genres: ManuscriptGenre[];
   genresError: boolean;
   genresLoading: boolean;
-  coverFile: File | null;
-  sourceFile: File | null;
-  importedChapters: ImportedManuscriptChapter[] | null;
-  sourceImportError: string | null;
-  isParsingSource: boolean;
-  onCoverChange: (file: File | null) => void;
-  onSourceChange: (file: File | null) => void;
 }) {
   function toggleGenre(genreSlug: string) {
     onChange({
@@ -402,16 +407,6 @@ function BookInfoStep({
 
   return (
     <div className="space-y-5">
-      <CoverUpload file={coverFile} onChange={onCoverChange} />
-
-      <SourceDocumentUpload
-        file={sourceFile}
-        importedChapters={importedChapters}
-        error={sourceImportError}
-        isParsing={isParsingSource}
-        onChange={onSourceChange}
-      />
-
       <div>
         <FieldLabel htmlFor="manuscript-title" required>Title</FieldLabel>
         <Input
@@ -488,6 +483,52 @@ function BookInfoStep({
             </Label>
           ))}
         </RadioGroup>
+      </div>
+    </div>
+  );
+}
+
+function ManuscriptFilesStep({
+  coverFile,
+  sourceFile,
+  importedChapters,
+  sourceImportError,
+  isParsingSource,
+  onCoverChange,
+  onSourceChange,
+}: {
+  coverFile: File | null;
+  sourceFile: File | null;
+  importedChapters: ImportedManuscriptChapter[] | null;
+  sourceImportError: string | null;
+  isParsingSource: boolean;
+  onCoverChange: (file: File | null) => void;
+  onSourceChange: (file: File | null) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="border-l-2 border-primary bg-primary/[0.035] px-4 py-3">
+        <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">
+          Start here
+        </p>
+        <p className="mt-1 text-sm leading-6 text-foreground">
+          Upload your source manuscript to bring its chapters into BetaManuscript automatically.
+        </p>
+        <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+          The cover is optional and can be added now or later.
+        </p>
+      </div>
+
+      <SourceDocumentUpload
+        file={sourceFile}
+        importedChapters={importedChapters}
+        error={sourceImportError}
+        isParsing={isParsingSource}
+        onChange={onSourceChange}
+      />
+
+      <div className="border-t border-foreground/[0.08] pt-6">
+        <CoverUpload file={coverFile} onChange={onCoverChange} />
       </div>
     </div>
   );
@@ -727,7 +768,7 @@ function SourceDocumentUpload({
 
   return (
     <div>
-      <FieldLabel htmlFor="source-document-upload">Source manuscript</FieldLabel>
+      <FieldLabel htmlFor="source-document-upload">Source manuscript <span className="normal-case tracking-normal">(recommended)</span></FieldLabel>
       <input
         ref={inputRef}
         id="source-document-upload"
@@ -795,9 +836,12 @@ function SourceDocumentUpload({
             dragging && "border-foreground bg-foreground/[0.03] text-foreground",
           )}
         >
-          <FileText className="h-[18px] w-[18px]" strokeWidth={1.25} />
-          <span className="text-center text-[11px]">
-            Drop your manuscript or <span className="underline">browse</span>
+          <FileText className="h-5 w-5 text-foreground" strokeWidth={1.25} />
+          <span className="text-center text-xs font-medium text-foreground">
+            Upload your manuscript file
+          </span>
+          <span className="text-center text-[11px] leading-5">
+            Drag and drop a file here, or click to choose one.
           </span>
           <span className="text-center font-mono text-[9px]">
             DOCX, TXT, Markdown · max 20 MB · chapters detected automatically
@@ -841,7 +885,7 @@ function CoverUpload({
 
   return (
     <div>
-      <FieldLabel htmlFor="cover-upload">Book cover</FieldLabel>
+      <FieldLabel htmlFor="cover-upload">Book cover <span className="normal-case tracking-normal">(optional)</span></FieldLabel>
       <input
         ref={inputRef}
         id="cover-upload"
@@ -909,9 +953,12 @@ function CoverUpload({
             dragging && "border-foreground bg-foreground/[0.03] text-foreground",
           )}
         >
-          <ImagePlus className="h-[18px] w-[18px]" strokeWidth={1.25} />
-          <span className="text-center text-[11px]">
-            Drop an image or <span className="underline">browse</span>
+          <ImagePlus className="h-5 w-5 text-foreground" strokeWidth={1.25} />
+          <span className="text-center text-xs font-medium text-foreground">
+            Upload your book cover
+          </span>
+          <span className="text-center text-[11px] leading-5">
+            Drag and drop an image here, or click to choose one.
           </span>
           <span className="font-mono text-[9px]">JPG, PNG, WEBP · max 5 MB · recommended 2:3 ratio</span>
         </button>

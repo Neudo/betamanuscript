@@ -4,6 +4,7 @@ export const userRoles = workspaceRoles;
 
 export type WorkspaceRole = (typeof workspaceRoles)[number];
 export type UserRole = WorkspaceRole | "super_admin";
+export type AccountRole = UserRole | null;
 
 export const roleOptions: Array<{
   value: WorkspaceRole;

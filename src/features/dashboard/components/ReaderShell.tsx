@@ -24,7 +24,7 @@ function ReaderSidebar({
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-foreground/10 bg-sidebar">
       <div className="flex h-16 items-center gap-2.5 border-b border-foreground/10 px-5">
-        <BrandLogo href="/reader" ariaLabel="BetaManuscript reader workspace" priority imageClassName="h-7" />
+        <BrandLogo href="/reader" ariaLabel="BetaManuscript reader workspace" priority imageClassName="h-12" />
       </div>
       <nav className="flex-1 p-3" aria-label="Reader workspace">
         <Link
@@ -88,7 +88,7 @@ export function ReaderShell({
         <ReaderSidebar account={account} />
       </div>
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
-        <BrandLogo href="/reader" ariaLabel="BetaManuscript reader workspace" imageClassName="h-7" />
+        <BrandLogo href="/reader" ariaLabel="BetaManuscript reader workspace" imageClassName="h-8" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

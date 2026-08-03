@@ -3,11 +3,12 @@
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { INK, INVERSE_FOREGROUND, SANS, premiumEase } from "../../../shared/config/design-tokens";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const navigationLinks = [
   { href: "/how-it-works", label: "How it works" },
@@ -18,6 +19,27 @@ const navigationLinks = [
 export function Nav() {
   const reduceMotion = useReducedMotion();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    let isMounted = true;
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (isMounted) setIsAuthenticated(Boolean(session));
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session));
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <motion.nav
@@ -27,7 +49,7 @@ export function Nav() {
       animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: premiumEase }}
     >
-      <BrandLogo href="/" priority imageClassName="h-8" />
+      <BrandLogo href="/" priority imageClassName="h-12" />
       <div
         className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 text-xs md:flex"
         style={{ color: INK, fontFamily: SANS }}
@@ -40,20 +62,32 @@ export function Nav() {
       </div>
       <div className="hidden items-center gap-4 md:flex">
         <ThemeToggle />
-        <Link
-          href="/login"
-          className="text-sm transition-colors hover:opacity-65"
-          style={{ color: INK, fontFamily: SANS }}
-        >
-          Log in
-        </Link>
-        <Link
-          href="/signup"
-          className="border px-4 py-2 text-sm transition-colors hover:bg-foreground/[0.06]"
-          style={{ borderColor: "hsl(var(--border) / 0.95)", color: INK, fontFamily: SANS }}
-        >
-          Start for free
-        </Link>
+        {isAuthenticated ? (
+          <Link
+            href="/dashboard"
+            className="border px-4 py-2 text-sm transition-colors hover:bg-foreground/[0.06]"
+            style={{ borderColor: "hsl(var(--border) / 0.95)", color: INK, fontFamily: SANS }}
+          >
+            Dashboard
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/login"
+              className="text-sm transition-colors hover:opacity-65"
+              style={{ color: INK, fontFamily: SANS }}
+            >
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className="border px-4 py-2 text-sm transition-colors hover:bg-foreground/[0.06]"
+              style={{ borderColor: "hsl(var(--border) / 0.95)", color: INK, fontFamily: SANS }}
+            >
+              Start for free
+            </Link>
+          </>
+        )}
       </div>
       <div className="flex items-center gap-2 md:hidden">
         <ThemeToggle />
@@ -96,24 +130,37 @@ export function Nav() {
                     </Link>
                   ))}
                 </div>
-                <div className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-3">
-                  <Link
-                    href="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex min-h-11 items-center justify-center border text-sm transition-colors hover:bg-foreground/[0.06]"
-                    style={{ borderColor: "hsl(var(--border) / 0.95)", color: INK, fontFamily: SANS }}
-                  >
-                    Log in
-                  </Link>
-                  <Link
-                    href="/signup"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex min-h-11 items-center justify-center border text-sm transition-colors hover:opacity-90"
-                    style={{ borderColor: INK, background: INK, color: INVERSE_FOREGROUND, fontFamily: SANS }}
-                  >
-                    Start for free
-                  </Link>
-                </div>
+                {isAuthenticated ? (
+                  <div className="mx-auto mt-4 max-w-md">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex min-h-11 items-center justify-center border text-sm transition-colors hover:opacity-90"
+                      style={{ borderColor: INK, background: INK, color: INVERSE_FOREGROUND, fontFamily: SANS }}
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="mx-auto mt-4 grid max-w-md grid-cols-2 gap-3">
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex min-h-11 items-center justify-center border text-sm transition-colors hover:bg-foreground/[0.06]"
+                      style={{ borderColor: "hsl(var(--border) / 0.95)", color: INK, fontFamily: SANS }}
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex min-h-11 items-center justify-center border text-sm transition-colors hover:opacity-90"
+                      style={{ borderColor: INK, background: INK, color: INVERSE_FOREGROUND, fontFamily: SANS }}
+                    >
+                      Start for free
+                    </Link>
+                  </div>
+                )}
               </motion.div>
             ) : null}
           </AnimatePresence>,

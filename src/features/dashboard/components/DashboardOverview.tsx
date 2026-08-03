@@ -10,6 +10,8 @@ import {
   type DashboardReader,
 } from "@/features/dashboard/api/dashboard";
 import { useDashboardOverview } from "@/features/dashboard/hooks/use-dashboard-overview";
+import { getAnnotationTagColor, isDefaultAnnotationTag } from "@/features/annotations/lib/tag-colors";
+import { FeatureRequestDialog } from "@/features/feature-requests/components/FeatureRequestDialog";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
@@ -17,6 +19,14 @@ import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
 
 import { TagBadge } from "./TagBadge";
+
+function accessibleTagColor(tag: { color: string; slug?: string }) {
+  const color = getAnnotationTagColor(tag);
+
+  return isDefaultAnnotationTag(tag)
+    ? color
+    : `color-mix(in srgb, hsl(var(--foreground)) 68%, ${color})`;
+}
 
 export function DashboardOverview() {
   const searchParams = useSearchParams();
@@ -81,7 +91,10 @@ function DashboardContent({
           <Heading level={1} size="workspace">{data.title}</Heading>
           <p className="mt-1 text-sm text-muted-foreground">{data.draftLabel} · {formatActivityDate(data.lastActivityAt)}</p>
         </div>
-        <InviteReaderDialog manuscriptId={manuscriptId} triggerVariant="outline" />
+        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+          <FeatureRequestDialog manuscriptId={manuscriptId} />
+          <InviteReaderDialog manuscriptId={manuscriptId} triggerVariant="outline" />
+        </div>
       </div>
 
       <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -115,9 +128,9 @@ function DashboardContent({
                     <span
                       className="mx-auto w-full max-w-[40px] transition-opacity"
                       style={{
-                        backgroundColor: tag.color,
+                        backgroundColor: accessibleTagColor(tag),
                         height: `${Math.max(8, Math.round(tag.count / highestTagCount * 100))}%`,
-                        opacity: selectedTagSlug && selectedTagSlug !== tag.slug ? 0.3 : 0.82,
+                        opacity: selectedTagSlug && selectedTagSlug !== tag.slug ? 0.3 : 1,
                       }}
                     />
                     <span className="min-h-7 text-center font-mono text-[8px] leading-3 text-muted-foreground">{tag.label}</span>
@@ -157,7 +170,7 @@ function DashboardContent({
                     key={tag.slug}
                     type="button"
                     className={cn("h-3 w-3 transition-opacity", selectedTagSlug && selectedTagSlug !== tag.slug && "opacity-30")}
-                    style={{ backgroundColor: tag.color }}
+                    style={{ backgroundColor: accessibleTagColor(tag) }}
                     onClick={() => onSelectTag(tag.slug)}
                     aria-label={`Filter by ${tag.label}`}
                   />

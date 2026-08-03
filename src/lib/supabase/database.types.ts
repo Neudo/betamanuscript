@@ -372,6 +372,45 @@ export type Database = {
           },
         ]
       }
+      feature_requests: {
+        Row: {
+          created_at: string
+          id: string
+          manuscript_id: string | null
+          message: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          manuscript_id?: string | null
+          message: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          manuscript_id?: string | null
+          message?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_requests_manuscript_id_fkey"
+            columns: ["manuscript_id"]
+            isOneToOne: false
+            referencedRelation: "manuscripts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       genres: {
         Row: {
           is_active: boolean
@@ -677,7 +716,7 @@ export type Database = {
           id: string
           last_active_at: string | null
           plan: Database["public"]["Enums"]["account_plan"]
-          role: Database["public"]["Enums"]["user_role"]
+          role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string
           website: string | null
         }
@@ -689,7 +728,7 @@ export type Database = {
           id: string
           last_active_at?: string | null
           plan?: Database["public"]["Enums"]["account_plan"]
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
           website?: string | null
         }
@@ -701,7 +740,7 @@ export type Database = {
           id?: string
           last_active_at?: string | null
           plan?: Database["public"]["Enums"]["account_plan"]
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
           website?: string | null
         }

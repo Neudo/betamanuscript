@@ -1,11 +1,12 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,18 +17,26 @@ import { RolePicker } from "./RolePicker";
 
 export function AccountPersonalizationForm({
   accountId,
+  initialAvatarPath,
+  initialAvatarUrl,
   initialDisplayName,
   initialRole,
   next,
 }: {
   accountId: string;
+  initialAvatarPath: string | null;
+  initialAvatarUrl: string | null;
   initialDisplayName: string;
-  initialRole: WorkspaceRole;
+  initialRole: WorkspaceRole | null;
   next: string | null;
 }) {
   const router = useRouter();
-  const [role, setRole] = useState<WorkspaceRole>(initialRole);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [role, setRole] = useState<WorkspaceRole | null>(initialRole);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(initialAvatarUrl);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
   const mutation = useMutation({
     mutationFn: personalizeAccount,
     onSuccess(result) {
@@ -46,15 +55,75 @@ export function AccountPersonalizationForm({
 
     if (!result.success) {
       setNameError(result.error.flatten().fieldErrors.displayName?.[0] ?? null);
+      setRoleError(result.error.flatten().fieldErrors.role?.[0] ?? null);
       return;
     }
 
     setNameError(null);
-    mutation.mutate({ accountId, ...result.data });
+    setRoleError(null);
+    mutation.mutate({
+      accountId,
+      avatarFile,
+      previousAvatarPath: initialAvatarPath,
+      ...result.data,
+    });
   }
+
+  function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setAvatarFile(file);
+
+    if (!file) {
+      setAvatarPreviewUrl(initialAvatarUrl);
+      return;
+    }
+
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+  }
+
+  useEffect(() => {
+    return () => {
+      if (avatarFile && avatarPreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+      }
+    };
+  }, [avatarFile, avatarPreviewUrl]);
+
+  const initials = initialDisplayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "U";
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit} noValidate>
+      <div className="space-y-3">
+        <Label>Profile photo <span className="font-normal text-muted-foreground">(optional)</span></Label>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16 border border-foreground/10">
+            {avatarPreviewUrl ? <AvatarImage src={avatarPreviewUrl} alt="Profile photo preview" className="object-cover" /> : null}
+            <AvatarFallback className="bg-primary font-mono text-sm font-semibold text-primary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1.5">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={handleAvatarChange}
+            />
+            <Button type="button" variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()}>
+              <Camera className="h-3.5 w-3.5" />
+              Choose photo
+            </Button>
+            <p className="text-xs text-muted-foreground">JPG, PNG, or WEBP up to 2 MB.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="displayName">Name</Label>
         <Input
@@ -78,6 +147,7 @@ export function AccountPersonalizationForm({
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">How will you use BetaManuscript?</legend>
         <RolePicker value={role} onChange={setRole} compact />
+        {roleError ? <p className="text-xs text-destructive">Choose an account role.</p> : null}
       </fieldset>
 
       {mutation.isError ? (

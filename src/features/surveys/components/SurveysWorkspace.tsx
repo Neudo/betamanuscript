@@ -64,9 +64,9 @@ import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { cn } from "@/lib/utils";
 
 const statusStyles = {
-  active: "bg-emerald-900/10 text-emerald-900",
+  active: "bg-success/10 text-foreground",
   closed: "bg-foreground/[0.06] text-muted-foreground",
-  draft: "bg-amber-900/10 text-amber-900",
+  draft: "bg-primary/10 text-primary-text",
 };
 
 const FREE_SURVEY_LIMIT = 2;
@@ -491,7 +491,7 @@ function SurveyEditor({
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={isDeleting}
                   onClick={onDelete}
                 >
@@ -595,7 +595,7 @@ function SurveyEditor({
                   {showValidation && editor.validationError ? (
                     <p className="font-mono text-[10px] text-primary-text">{editor.validationError}</p>
                   ) : editor.lastSavedAt && !editor.isDirty ? (
-                    <p className="flex items-center gap-2 font-mono text-[10px] text-emerald-900"><Check className="h-3.5 w-3.5" />Changes saved</p>
+                    <p className="flex items-center gap-2 font-mono text-[10px] text-foreground"><Check className="h-3.5 w-3.5 text-success" />Changes saved</p>
                   ) : (
                     <p className="font-mono text-[10px] text-muted-foreground">{editor.isDirty ? "Unsaved changes" : `${editor.survey.status} - linked to this manuscript`}</p>
                   )}

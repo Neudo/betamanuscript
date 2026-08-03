@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import type { UserRole } from "@/features/account/domain/user-role";
+import type { AccountRole } from "@/features/account/domain/user-role";
 import type {
   AccountPlan,
   AuthenticatedAccount,
@@ -47,7 +47,7 @@ export const getAuthenticatedAccount = cache(
       id: user.id,
       email: user.email ?? "",
       displayName: profile.display_name,
-      role: profile.role as UserRole,
+      role: profile.role as AccountRole,
       plan: profile.plan as AccountPlan,
       website: profile.website ?? "",
     };

@@ -17,8 +17,8 @@ export function useManuscriptDraft() {
 
   const stepIndex = manuscriptWizardSteps.findIndex((item) => item.id === step);
   const canContinue = useMemo(() => {
-    if (step === "info") return draft.title.trim().length > 0;
-    if (step === "structure") return draft.chapters > 0;
+    if (step === "info") return true;
+    if (step === "structure") return draft.title.trim().length > 0 && draft.chapters > 0;
     return true;
   }, [draft.chapters, draft.title, step]);
 

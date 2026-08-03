@@ -4,5 +4,5 @@ import { FeedbackExplorer } from "@/features/feedback/components/FeedbackExplore
 export default async function FeedbackPage() {
   const account = await requireWorkspaceAccount("writer");
 
-  return <FeedbackExplorer accountPlan={account.plan} />;
+  return <FeedbackExplorer accountId={account.id} accountPlan={account.plan} />;
 }

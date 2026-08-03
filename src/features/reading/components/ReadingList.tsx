@@ -161,7 +161,7 @@ function ReadingCard({ book }: { book: ReaderManuscriptBook }) {
               fill
               sizes="78px"
               unoptimized
-              className="object-contain"
+              className="object-cover"
             />
           ) : <BookOpen className="h-5 w-5 opacity-60" strokeWidth={1.25} />}
         </div>

@@ -63,6 +63,17 @@ const structuredData = JSON.stringify([
   },
 ]).replace(/</g, "\\u003c");
 
+const themeBootstrapScript = `(() => {
+  try {
+    const theme = window.localStorage.getItem("betaquill.theme") === "dark" ? "dark" : "light";
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.dataset.theme = theme;
+  } catch {
+    document.documentElement.classList.remove("dark");
+    document.documentElement.dataset.theme = "light";
+  }
+})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -75,18 +86,10 @@ export default function RootLayout({
       className={`${inter.variable} ${ebGaramond.variable} ${dmMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
+      </head>
       <body>
-        <Script id="theme-preference" strategy="beforeInteractive">
-          {`(() => {
-            try {
-              const theme = window.localStorage.getItem("betaquill.theme") === "dark" ? "dark" : "light";
-              document.documentElement.classList.toggle("dark", theme === "dark");
-              document.documentElement.dataset.theme = theme;
-            } catch {
-              document.documentElement.dataset.theme = "light";
-            }
-          })();`}
-        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: structuredData }}

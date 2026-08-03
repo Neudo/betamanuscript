@@ -36,6 +36,7 @@ import {
   annotationFocusedBackgroundColor,
   getTextAnnotationSegments,
 } from "@/features/annotations/lib/text-annotations";
+import { getAnnotationTagColor } from "@/features/annotations/lib/tag-colors";
 import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
 import {
   useUpdateAnnotationSeenMutation,
@@ -897,6 +898,7 @@ function FeedbackList({
       ) : null}
       {annotations.map((annotation) => {
         const isSeen = annotation.isSeenByAuthor;
+        const tagColor = getAnnotationTagColor(annotation.tag);
 
         return (
           <article
@@ -914,10 +916,10 @@ function FeedbackList({
             <div className="flex items-center gap-3">
               <span
                 className={cn(
-                  "grid h-8 w-8 place-items-center rounded-full text-xs text-white",
+                  "grid h-8 w-8 place-items-center rounded-full border text-xs text-foreground",
                   isSeen && "grayscale",
                 )}
-                style={{ backgroundColor: annotation.tag.color }}
+                style={{ backgroundColor: "hsl(var(--muted))", borderColor: tagColor }}
               >
                 {getInitials(annotation.readerName)}
               </span>
@@ -931,7 +933,7 @@ function FeedbackList({
                   )}
                   style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}
                 >
-                  <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: annotation.tag.color }} aria-hidden />
+                  <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tagColor }} aria-hidden />
                   {annotation.tag.label}
                 </Badge>
               </div>
@@ -944,7 +946,7 @@ function FeedbackList({
                 "mt-4 whitespace-pre-wrap border-l-2 pl-3 text-sm leading-6",
                 isSeen && "line-through",
               )}
-              style={{ borderLeftColor: annotation.tag.color }}
+              style={{ borderLeftColor: tagColor }}
             >
               “{annotation.comment ?? annotation.quote}”
             </blockquote>
@@ -984,7 +986,7 @@ function getFeedbackTags(
   return [
     ...(generalComments.length > 0 ? [generalAnnotationTag] : []),
     ...[...tagsBySlug.values()].map((tag) => ({
-      color: tag.color,
+      color: getAnnotationTagColor(tag),
       label: tag.label,
       slug: tag.slug,
     })),

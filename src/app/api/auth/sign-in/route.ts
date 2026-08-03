@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
+import {
+  getOnboardingPath,
+  getSafeInternalPath,
+} from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { signInSchema } from "@/features/account/schemas/sign-in.schema";
 import { verifyTurnstileToken } from "@/features/account/server/verify-turnstile";
@@ -72,7 +75,9 @@ export async function POST(request: Request) {
     {
       ok: true,
       redirectTo:
-        getSafeInternalPath(payload.next) ?? getWorkspaceHome(profile.role),
+        profile.role === null
+          ? getOnboardingPath(payload.next)
+          : getSafeInternalPath(payload.next) ?? getWorkspaceHome(profile.role),
     },
     { headers: { "Cache-Control": "private, no-store" } },
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { Mail, RotateCcw, UserRoundX } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -30,11 +31,11 @@ import {
 import { Heading } from "@/shared/ui/Heading";
 
 const statusStyles: Record<ReaderStatus, string> = {
-  active: "border-sky-800/25 bg-sky-800/10 text-sky-900",
-  completed: "border-success/25 bg-success/10 text-success",
-  pending: "border-warning/25 bg-warning/10 text-warning",
+  active: "border-success/45 bg-success/10 text-foreground",
+  completed: "border-success/45 bg-success/10 text-foreground",
+  pending: "border-warning/45 bg-warning/10 text-foreground",
   revoked: "border-border bg-muted text-muted-foreground",
-  started: "border-sky-800/25 bg-sky-800/10 text-sky-900",
+  started: "border-success/45 bg-success/10 text-foreground",
 };
 
 const statusLabels: Record<ReaderStatus, string> = {
@@ -56,12 +57,17 @@ function formatDate(value: string | null) {
 }
 
 export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
+  const searchParams = useSearchParams();
   const manuscriptsQuery = useManuscriptReaders();
   const resendMutation = useResendReaderInvitation();
   const revokeMutation = useRevokeReaderInvitation();
   const chapterAccessMutation = useSetReaderChapterAccess();
   const draftAccessMutation = useSetReaderDraftAccess();
   const manuscripts = manuscriptsQuery.data ?? [];
+  const selectedManuscript = manuscripts.find(
+    (manuscript) => manuscript.id === searchParams.get("manuscriptId"),
+  );
+  const visibleManuscripts = selectedManuscript ? [selectedManuscript] : manuscripts;
 
   return (
     <div className="min-h-full">
@@ -88,7 +94,7 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
           </Card>
         ) : null}
 
-        {manuscripts.map((manuscript) => (
+        {visibleManuscripts.map((manuscript) => (
           <ManuscriptReadersSection
             key={manuscript.id}
             isResending={resendMutation.isPending}

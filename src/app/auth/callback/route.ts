@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
+import {
+  getOnboardingPath,
+  getSafeInternalPath,
+} from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -11,12 +14,18 @@ export async function GET(request: Request) {
   const code = url.searchParams.get("code");
   const safeNext = getSafeInternalPath(url.searchParams.get("next"));
   const isAccountSignUp = url.searchParams.get("intent") === "signup";
+  const isEmailConfirmation = url.searchParams.get("intent") === "confirmation";
 
   if (code) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      if (isEmailConfirmation) {
+        await supabase.auth.signOut();
+        return redirectToConfirmedLogin(url, safeNext);
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -44,22 +53,35 @@ export async function GET(request: Request) {
           .eq("id", user.id)
           .single();
 
-        if (profile) {
+        if (profile && profile.role !== null) {
           const response = NextResponse.redirect(
             new URL(safeNext ?? getWorkspaceHome(profile.role), url.origin),
           );
           response.headers.set("Cache-Control", "private, no-store");
           return response;
         }
+
+        return redirectToAccountPersonalization(url, safeNext);
       }
     }
   }
 
-  return redirectToOAuthError(url);
+  return isEmailConfirmation
+    ? redirectToConfirmationError(url)
+    : redirectToOAuthError(url);
 }
 
 function redirectToAccountPersonalization(url: URL, next: string | null) {
-  const destination = new URL("/onboarding", url.origin);
+  const destination = new URL(getOnboardingPath(next), url.origin);
+
+  const response = NextResponse.redirect(destination);
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
+function redirectToConfirmedLogin(url: URL, next: string | null) {
+  const destination = new URL("/login", url.origin);
+  destination.searchParams.set("confirmation", "1");
 
   if (next) {
     destination.searchParams.set("next", next);
@@ -84,6 +106,14 @@ function getGoogleDisplayName(metadata: Record<string, unknown>) {
 function redirectToOAuthError(url: URL) {
   const response = NextResponse.redirect(
     new URL("/login?error=oauth", url.origin),
+  );
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
+function redirectToConfirmationError(url: URL) {
+  const response = NextResponse.redirect(
+    new URL("/login?error=confirmation", url.origin),
   );
   response.headers.set("Cache-Control", "private, no-store");
   return response;

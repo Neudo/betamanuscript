@@ -17,7 +17,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.7fr)_repeat(3,minmax(0,0.65fr))]">
           <div className="max-w-xs">
-            <BrandLogo href="/" imageClassName="h-7" />
+            <BrandLogo href="/" imageClassName="h-8" />
             <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>
               A focused workspace for authors who turn reader reactions into better revisions.
             </p>

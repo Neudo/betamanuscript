@@ -6,20 +6,24 @@ import type { WorkspaceRole } from "../domain/user-role";
 
 export function AccountPersonalizationScreen({
   accountId,
+  initialAvatarPath,
+  initialAvatarUrl,
   initialDisplayName,
   initialRole,
   next,
 }: {
   accountId: string;
+  initialAvatarPath: string | null;
+  initialAvatarUrl: string | null;
   initialDisplayName: string;
-  initialRole: WorkspaceRole;
+  initialRole: WorkspaceRole | null;
   next: string | null;
 }) {
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b bg-card/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
-          <BrandLogo href="/" priority imageClassName="h-8" />
+          <BrandLogo href="/" priority imageClassName="h-9" />
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Account setup
           </p>
@@ -42,6 +46,8 @@ export function AccountPersonalizationScreen({
         <div className="mt-12 w-full border bg-card p-5 paper-shadow sm:p-8 lg:p-10">
           <AccountPersonalizationForm
             accountId={accountId}
+            initialAvatarPath={initialAvatarPath}
+            initialAvatarUrl={initialAvatarUrl}
             initialDisplayName={initialDisplayName}
             initialRole={initialRole}
             next={next}

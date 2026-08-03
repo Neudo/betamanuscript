@@ -88,7 +88,7 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
           href={withSelectedManuscript("/dashboard")}
           ariaLabel="BetaManuscript dashboard"
           priority
-          imageClassName="h-7"
+          imageClassName="h-10"
         />
         <div className="ml-auto">
           <NotificationCenter profileId={account.id} />

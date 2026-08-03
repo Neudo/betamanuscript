@@ -58,13 +58,7 @@ export async function updateProfileSettings(input: ProfileSettingsInput) {
   };
 }
 
-export async function uploadProfileAvatar({
-  file,
-  previousPath,
-}: {
-  file: File;
-  previousPath: string | null;
-}) {
+export async function uploadAvatarFile(file: File) {
   const validationError = getAvatarFileError(file);
   if (validationError) throw new Error(validationError);
 
@@ -90,40 +84,70 @@ export async function uploadProfileAvatar({
 
   if (uploadError) throw new Error(uploadError.message);
 
+  const { data: signedUrl } = await supabase.storage
+    .from(PROFILE_AVATARS_BUCKET)
+    .createSignedUrl(storagePath, 60 * 60);
+
+  return {
+    avatarPath: storagePath,
+    avatarUrl: signedUrl?.signedUrl ?? null,
+  };
+}
+
+export async function removeProfileAvatarFile(path: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase.storage
+    .from(PROFILE_AVATARS_BUCKET)
+    .remove([path]);
+
+  if (error) {
+    console.warn("Unable to remove the replaced profile photo.", error);
+  }
+}
+
+export async function uploadProfileAvatar({
+  file,
+  previousPath,
+}: {
+  file: File;
+  previousPath: string | null;
+}) {
+  const avatar = await uploadAvatarFile(file);
+  const supabase = createSupabaseBrowserClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    await removeProfileAvatarFile(avatar.avatarPath);
+    throw new Error("Sign in to upload a profile photo.");
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .update({ avatar_path: storagePath })
+    .update({ avatar_path: avatar.avatarPath })
     .eq("id", user.id)
     .select("avatar_path")
     .single();
 
   if (profileError || !profile) {
-    await supabase.storage.from(PROFILE_AVATARS_BUCKET).remove([storagePath]);
+    await removeProfileAvatarFile(avatar.avatarPath);
     throw new Error(profileError?.message ?? "Unable to save your profile photo.");
   }
 
   const avatarPath = profile.avatar_path;
   if (!avatarPath) {
-    await supabase.storage.from(PROFILE_AVATARS_BUCKET).remove([storagePath]);
+    await removeProfileAvatarFile(avatar.avatarPath);
     throw new Error("Unable to save your profile photo.");
   }
 
   if (previousPath) {
-    const { error: deleteError } = await supabase.storage
-      .from(PROFILE_AVATARS_BUCKET)
-      .remove([previousPath]);
-
-    if (deleteError) {
-      console.warn("Unable to remove the replaced profile photo.", deleteError);
-    }
+    await removeProfileAvatarFile(previousPath);
   }
-
-  const { data: signedUrl } = await supabase.storage
-    .from(PROFILE_AVATARS_BUCKET)
-    .createSignedUrl(avatarPath, 60 * 60);
 
   return {
     avatarPath,
-    avatarUrl: signedUrl?.signedUrl ?? null,
+    avatarUrl: avatar.avatarUrl,
   };
 }

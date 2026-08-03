@@ -7,9 +7,11 @@ import { LoginForm } from "@/features/account/components/LoginForm";
 export function LoginScreen({
   next,
   error,
+  confirmed,
 }: {
   next: string | null;
   error: string | null;
+  confirmed: boolean;
 }) {
   const signUpHref = next
     ? `/signup?next=${encodeURIComponent(next)}`
@@ -40,6 +42,14 @@ export function LoginScreen({
             {error === "oauth"
               ? "Try again, or use your email and password instead."
               : "Request a new confirmation email or try logging in again."}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {confirmed ? (
+        <Alert className="border-success/30 bg-success/5">
+          <AlertTitle>Email confirmed</AlertTitle>
+          <AlertDescription>
+            Log in to finish setting up your account.
           </AlertDescription>
         </Alert>
       ) : null}

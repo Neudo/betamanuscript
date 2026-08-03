@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AccountPlan } from "@/features/account/types";
+import { getAnnotationTagColor, getAnnotationTagTint } from "@/features/annotations/lib/tag-colors";
 import { FeedbackTagManagerDialog } from "@/features/feedback/components/FeedbackTagManagerDialog";
 import {
   useArchiveFeedbackMutation,
@@ -27,6 +28,10 @@ import {
   useManuscriptFeedback,
   useUpdateFeedbackSeenMutation,
 } from "@/features/feedback/hooks/use-feedback";
+import {
+  getFeedbackFilterPreferencesStorageKey,
+  useFeedbackFilterPreferences,
+} from "@/features/feedback/hooks/use-feedback-filter-preferences";
 import type { FeedbackAnnotation, FeedbackTag } from "@/features/feedback/types";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
@@ -37,7 +42,13 @@ type FilterChapter = FeedbackAnnotation["chapter"] & { count: number };
 type FilterReader = FeedbackAnnotation["reader"] & { count: number };
 const emptyAnnotations: FeedbackAnnotation[] = [];
 
-export function FeedbackExplorer({ accountPlan }: { accountPlan: AccountPlan }) {
+export function FeedbackExplorer({
+  accountId,
+  accountPlan,
+}: {
+  accountId: string;
+  accountPlan: AccountPlan;
+}) {
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
@@ -52,6 +63,7 @@ export function FeedbackExplorer({ accountPlan }: { accountPlan: AccountPlan }) 
   return (
     <FeedbackExplorerContent
       key={`${manuscriptId ?? "no-manuscript"}:${selectedVersionId ?? "latest"}`}
+      accountId={accountId}
       accountPlan={accountPlan}
       manuscriptId={manuscriptId}
       manuscriptVersionId={selectedVersionId}
@@ -66,12 +78,14 @@ function FeedbackNoManuscript() {
 }
 
 function FeedbackExplorerContent({
+  accountId,
   accountPlan,
   isResolvingManuscript,
   manuscriptError,
   manuscriptId,
   manuscriptVersionId,
 }: {
+  accountId: string;
   accountPlan: AccountPlan;
   isResolvingManuscript: boolean;
   manuscriptError: Error | null;
@@ -83,12 +97,14 @@ function FeedbackExplorerContent({
   const archiveFeedback = useArchiveFeedbackMutation();
   const deleteArchivedFeedback = useDeleteArchivedFeedbackMutation();
   const annotations = feedbackQuery.data ?? emptyAnnotations;
+  const feedbackFilterStorageKey = getFeedbackFilterPreferencesStorageKey({
+    accountId,
+    manuscriptId,
+    manuscriptVersionId,
+  });
+  const [feedbackFilters, setFeedbackFilters] = useFeedbackFilterPreferences(feedbackFilterStorageKey);
 
   const [feedbackScope, setFeedbackScope] = useState<"active" | "archived">("active");
-  const [selectedTagSlug, setSelectedTagSlug] = useState<string | null>(null);
-  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
-  const [selectedReaderId, setSelectedReaderId] = useState<string | null>(null);
-  const [hideReadFeedback, setHideReadFeedback] = useState(false);
   const [query, setQuery] = useState("");
 
   const scopedAnnotations = useMemo(
@@ -100,6 +116,16 @@ function FeedbackExplorerContent({
   const tags = useMemo(() => collectTags(scopedAnnotations), [scopedAnnotations]);
   const chapters = useMemo(() => collectChapters(scopedAnnotations), [scopedAnnotations]);
   const readers = useMemo(() => collectReaders(scopedAnnotations), [scopedAnnotations]);
+  const selectedTagSlug = tags.some((tag) => tag.slug === feedbackFilters.selectedTagSlug)
+    ? feedbackFilters.selectedTagSlug
+    : null;
+  const selectedChapterId = chapters.some((chapter) => chapter.id === feedbackFilters.selectedChapterId)
+    ? feedbackFilters.selectedChapterId
+    : null;
+  const selectedReaderId = readers.some((reader) => reader.id === feedbackFilters.selectedReaderId)
+    ? feedbackFilters.selectedReaderId
+    : null;
+  const hideReadFeedback = feedbackFilters.hideReadFeedback;
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -204,7 +230,10 @@ function FeedbackExplorerContent({
               key={tag.slug}
               type="button"
               aria-pressed={selectedTagSlug === tag.slug}
-              onClick={() => setSelectedTagSlug(selectedTagSlug === tag.slug ? null : tag.slug)}
+              onClick={() => setFeedbackFilters({
+                ...feedbackFilters,
+                selectedTagSlug: selectedTagSlug === tag.slug ? null : tag.slug,
+              })}
               className={cn(
                 "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
                 selectedTagSlug === tag.slug && "bg-foreground/[0.06] text-primary-text",
@@ -223,7 +252,10 @@ function FeedbackExplorerContent({
               key={chapter.id}
               type="button"
               aria-pressed={selectedChapterId === chapter.id}
-              onClick={() => setSelectedChapterId(selectedChapterId === chapter.id ? null : chapter.id)}
+              onClick={() => setFeedbackFilters({
+                ...feedbackFilters,
+                selectedChapterId: selectedChapterId === chapter.id ? null : chapter.id,
+              })}
               className={cn(
                 "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
                 selectedChapterId === chapter.id && "bg-foreground/[0.06] text-primary-text",
@@ -242,7 +274,10 @@ function FeedbackExplorerContent({
               key={reader.id}
               type="button"
               aria-pressed={selectedReaderId === reader.id}
-              onClick={() => setSelectedReaderId(selectedReaderId === reader.id ? null : reader.id)}
+              onClick={() => setFeedbackFilters({
+                ...feedbackFilters,
+                selectedReaderId: selectedReaderId === reader.id ? null : reader.id,
+              })}
               className={cn(
                 "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
                 selectedReaderId === reader.id && "bg-foreground/[0.06] text-primary-text",
@@ -260,7 +295,10 @@ function FeedbackExplorerContent({
           <button
             type="button"
             aria-pressed={hideReadFeedback}
-            onClick={() => setHideReadFeedback((hidden) => !hidden)}
+            onClick={() => setFeedbackFilters({
+              ...feedbackFilters,
+              hideReadFeedback: !hideReadFeedback,
+            })}
             className={cn(
               "flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
               hideReadFeedback && "bg-foreground/[0.06] text-primary-text",
@@ -520,6 +558,7 @@ function AnnotationRow({
 }) {
   const isSeen = annotation.isSeenByAuthor;
   const isArchived = annotation.archivedAt !== null;
+  const tagColor = getAnnotationTagColor(annotation.tag);
   const href = manuscriptId && !isArchived ? `/dashboard/manuscript?${new URLSearchParams({
     ...(annotation.kind === "annotation"
       ? { annotationId: annotation.id }
@@ -548,7 +587,7 @@ function AnnotationRow({
           ) : null}
         </div>
         {annotation.quote ? (
-          <blockquote className="whitespace-pre-wrap border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: annotation.tag.color, backgroundColor: `${annotation.tag.color}1A` }}>“{annotation.quote}”</blockquote>
+          <blockquote className="whitespace-pre-wrap border-l-2 px-3 py-2 text-sm italic" style={{ borderLeftColor: tagColor, backgroundColor: getAnnotationTagTint(annotation.tag, 10) }}>“{annotation.quote}”</blockquote>
         ) : null}
         {annotation.comment ? <p className="mt-2.5 text-sm leading-6 text-foreground/85">{annotation.comment}</p> : null}
         <Button
@@ -583,9 +622,11 @@ function AnnotationRow({
 }
 
 function FeedbackTagBadge({ tag }: { tag: FeedbackTag }) {
+  const tagColor = getAnnotationTagColor(tag);
+
   return (
     <Badge variant="outline" className="gap-1.5 rounded-none font-mono text-[9px] uppercase" style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}>
-      <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tag.color }} aria-hidden />
+      <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tagColor }} aria-hidden />
       {tag.label}
     </Badge>
   );

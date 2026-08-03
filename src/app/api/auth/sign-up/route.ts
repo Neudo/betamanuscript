@@ -52,11 +52,11 @@ export async function POST(request: Request) {
   }
 
   const safeNext = getSafeInternalPath(payload.next);
-  const callbackUrl = new URL("/auth/callback", appOrigin(request));
-  callbackUrl.searchParams.set("intent", "signup");
+  const confirmationUrl = new URL("/auth/callback", appOrigin(request));
+  confirmationUrl.searchParams.set("intent", "confirmation");
 
   if (safeNext) {
-    callbackUrl.searchParams.set("next", safeNext);
+    confirmationUrl.searchParams.set("next", safeNext);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     email: payload.email,
     password: payload.password,
     options: {
-      emailRedirectTo: callbackUrl.toString(),
+      emailRedirectTo: confirmationUrl.toString(),
     },
   });
 

@@ -2,7 +2,10 @@ import { redirect } from "next/navigation";
 
 import { createNoIndexMetadata } from "@/shared/config/seo";
 import { SignUpScreen } from "@/features/account/components/SignUpScreen";
-import { getSafeInternalPath } from "@/features/account/domain/auth-redirect";
+import {
+  getOnboardingPath,
+  getSafeInternalPath,
+} from "@/features/account/domain/auth-redirect";
 import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
 
@@ -20,7 +23,11 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
   const safeNext = getSafeInternalPath(Array.isArray(next) ? next[0] : next);
 
   if (account) {
-    redirect(safeNext ?? getWorkspaceHome(account.role));
+    redirect(
+      account.role === null
+        ? getOnboardingPath(safeNext)
+        : safeNext ?? getWorkspaceHome(account.role),
+    );
   }
 
   return <SignUpScreen next={safeNext} />;

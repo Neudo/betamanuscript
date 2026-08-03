@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return errorResponse("You need to sign in before choosing a plan.", 401);
   }
 
-  if (!canWrite(account.role)) {
+  if (account.role === null || !canWrite(account.role)) {
     return errorResponse("Only writer workspaces can subscribe to Pro.", 403);
   }
 

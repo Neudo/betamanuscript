@@ -26,13 +26,19 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
     redirect(loginUrl);
   }
 
-  if (account.role === "super_admin") {
-    redirect(getWorkspaceHome(account.role));
+  if (account.role !== null) {
+    redirect(
+      account.role === "super_admin"
+        ? getWorkspaceHome(account.role)
+        : safeNext ?? getWorkspaceHome(account.role),
+    );
   }
 
   return (
     <AccountPersonalizationScreen
       accountId={account.id}
+      initialAvatarPath={account.avatarPath}
+      initialAvatarUrl={account.avatarUrl}
       initialDisplayName={account.displayName}
       initialRole={account.role}
       next={safeNext}

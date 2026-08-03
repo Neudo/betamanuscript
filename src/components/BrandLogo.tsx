@@ -9,6 +9,7 @@ type BrandLogoProps = {
   href?: string;
   imageClassName?: string;
   priority?: boolean;
+  isSmall?: boolean;
 };
 
 export function BrandLogo({
@@ -17,16 +18,25 @@ export function BrandLogo({
   href,
   imageClassName,
   priority = false,
+  isSmall = false,
 }: BrandLogoProps) {
   const logo = (
     <span className="brand-logo inline-flex shrink-0">
       <Image
-        src="/logo-full.svg"
-        alt="BetaManuscript"
-        width={303}
-        height={90}
+        src={isSmall ? "/logo-small.svg" : "/logo-full.svg"}
+        alt="BetaManuscript brand logo"
+        width={220}
+        height={110}
         priority={priority}
-        className={cn("h-8 w-auto", imageClassName)}
+        className={cn("w-auto dark:hidden", imageClassName)}
+      />
+      <Image
+        src={isSmall ? "/logo-dark-small.svg" : "/logo-dark.svg"}
+        alt="BetaManuscript brand logo"
+        width={220}
+        height={110}
+        priority={priority}
+        className={cn("hidden h-14 w-auto dark:block", imageClassName)}
       />
     </span>
   );

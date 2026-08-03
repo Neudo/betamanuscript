@@ -21,7 +21,7 @@ export function AuthScreen({
   return (
     <main className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.72fr)]">
       <section className="dashboard-grid hidden border-r p-12 lg:flex lg:flex-col lg:justify-between">
-        <BrandLogo href="/" priority imageClassName="h-9" />
+        <BrandLogo href="/" priority imageClassName="h-12" />
         <div className="max-w-xl space-y-6">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary-text">
             One account, two workspaces
@@ -42,7 +42,7 @@ export function AuthScreen({
       <section className="flex items-center justify-center px-5 py-12 sm:px-10">
         <div className="w-full max-w-xl space-y-8">
           <div className="space-y-3">
-            <BrandLogo href="/" priority className="lg:hidden" imageClassName="h-8" />
+            <BrandLogo href="/" priority className="lg:hidden" imageClassName="h-9" />
             <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary-text">
               {eyebrow}
             </p>

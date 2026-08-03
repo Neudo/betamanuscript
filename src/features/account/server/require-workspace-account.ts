@@ -8,6 +8,7 @@ import {
   getWorkspaceHome,
   type WorkspaceRole,
 } from "@/features/account/domain/user-role";
+import { getOnboardingPath } from "@/features/account/domain/auth-redirect";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
 import type { AuthenticatedAccount } from "@/features/account/types";
 
@@ -24,6 +25,11 @@ export async function requireWorkspaceAccount(
   if (!account) {
     const next = workspace === "reader" ? "/reader" : "/dashboard";
     redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
+
+  if (account.role === null) {
+    const next = workspace === "reader" ? "/reader" : "/dashboard";
+    redirect(getOnboardingPath(next));
   }
 
   const hasAccess = account.role === "super_admin"

@@ -5,8 +5,8 @@ import type {
 } from "@/features/manuscript/types";
 
 export const manuscriptWizardSteps: Array<{ id: ManuscriptWizardStep; label: string }> = [
-  { id: "info", label: "Book info" },
-  { id: "structure", label: "Structure" },
+  { id: "info", label: "Files" },
+  { id: "structure", label: "Book setup" },
   { id: "readers", label: "Beta readers" },
 ];
 

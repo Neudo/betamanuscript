@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 type Theme = "light" | "dark";
 
 const storageKey = "betaquill.theme";
-const isThemeToggleAvailable = false;
 
 function getTheme(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
@@ -40,8 +39,6 @@ type ThemeToggleProps = {
 
 export function ThemeToggle({ className, label = false }: ThemeToggleProps) {
   const theme = useSyncExternalStore(subscribeToTheme, getTheme, () => "light");
-
-  if (!isThemeToggleAvailable) return null;
 
   function toggleTheme() {
     const nextTheme: Theme = getTheme() === "dark" ? "light" : "dark";

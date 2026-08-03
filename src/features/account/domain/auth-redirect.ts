@@ -5,3 +5,11 @@ export function getSafeInternalPath(value: string | null | undefined) {
 
   return value;
 }
+
+export function getOnboardingPath(next?: string | null) {
+  const safeNext = getSafeInternalPath(next);
+
+  return safeNext
+    ? `/onboarding?next=${encodeURIComponent(safeNext)}`
+    : "/onboarding";
+}

@@ -3,10 +3,14 @@
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
-import { roleOptions, type WorkspaceRole } from "../domain/user-role";
+import {
+  roleOptions,
+  workspaceRoles,
+  type WorkspaceRole,
+} from "../domain/user-role";
 
 type RolePickerProps = {
-  value: WorkspaceRole;
+  value: WorkspaceRole | null;
   onChange: (role: WorkspaceRole) => void;
   compact?: boolean;
 };
@@ -14,8 +18,12 @@ type RolePickerProps = {
 export function RolePicker({ value, onChange, compact = false }: RolePickerProps) {
   return (
     <RadioGroup
-      value={value}
-      onValueChange={(nextValue) => onChange(nextValue as WorkspaceRole)}
+      value={value ?? ""}
+      onValueChange={(nextValue) => {
+        if (workspaceRoles.includes(nextValue as WorkspaceRole)) {
+          onChange(nextValue as WorkspaceRole);
+        }
+      }}
       className={cn("grid gap-3", compact ? "md:grid-cols-3" : "")}
     >
       {roleOptions.map((option) => {

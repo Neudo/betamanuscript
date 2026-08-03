@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { AccountPlan } from "@/features/account/types";
+import { getAnnotationTagColor } from "@/features/annotations/lib/tag-colors";
 import type { ManuscriptAnnotationTag } from "@/features/feedback/api/feedback-tags";
 import {
   useCreateManuscriptAnnotationTag,
@@ -203,7 +204,7 @@ function TagRow({
 
   return (
     <div className="flex flex-wrap items-center gap-3 py-3.5">
-      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} aria-hidden />
+      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: getAnnotationTagColor(tag) }} aria-hidden />
       <div className="min-w-28 flex-1">
         <p className="text-sm font-medium">{tag.label}</p>
         <p className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground">{tag.isActive ? "Active" : "Removed"}</p>

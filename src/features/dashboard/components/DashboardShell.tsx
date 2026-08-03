@@ -24,7 +24,7 @@ export function DashboardShell({
       </div>
 
       <div className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-sidebar px-4 md:hidden">
-        <BrandLogo href="/dashboard" ariaLabel="BetaManuscript dashboard" imageClassName="h-7" />
+        <BrandLogo href="/dashboard" ariaLabel="BetaManuscript dashboard" imageClassName="h-8" />
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <NotificationCenter profileId={account.id} />

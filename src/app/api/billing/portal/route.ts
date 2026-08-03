@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return errorResponse("You need to sign in before managing your plan.", 401);
   }
 
-  if (!canWrite(account.role)) {
+  if (account.role === null || !canWrite(account.role)) {
     return errorResponse("Only writer workspaces can manage a Pro subscription.", 403);
   }
 

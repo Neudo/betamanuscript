@@ -1,4 +1,6 @@
-export const MULTIPLE_ANNOTATIONS_COLOR = "#6D5E9C";
+import { getAnnotationTagColor } from "@/features/annotations/lib/tag-colors";
+
+export const MULTIPLE_ANNOTATIONS_COLOR = "hsl(var(--annotation-tag-multiple))";
 
 export type TextAnnotationRange = {
   id: string;
@@ -64,7 +66,7 @@ export function groupTextAnnotations<T extends TextAnnotationRange>(
 
       return {
         annotations: group,
-        color: hasMultipleTags ? MULTIPLE_ANNOTATIONS_COLOR : group[0].tag.color,
+        color: hasMultipleTags ? MULTIPLE_ANNOTATIONS_COLOR : getAnnotationTagColor(group[0].tag),
         end,
         hasMultipleTags,
         key,
@@ -116,12 +118,14 @@ export function getTextAnnotationSegments<T extends TextAnnotationRange>(
 }
 
 export function annotationBackgroundColor(color: string) {
-  return /^#[0-9a-f]{6}$/i.test(color) ? `${color}2E` : "hsl(var(--primary) / 0.16)";
+  return /^#[0-9a-f]{6}$/i.test(color)
+    ? `${color}2E`
+    : `color-mix(in srgb, ${color} 18%, transparent)`;
 }
 
 export function annotationFocusedBackgroundColor(color: string, theme: "light" | "dark") {
   if (!/^#[0-9a-f]{6}$/i.test(color)) {
-    return theme === "dark" ? "hsl(var(--primary) / 0.34)" : "hsl(var(--primary) / 0.32)";
+    return `color-mix(in srgb, ${color} ${theme === "dark" ? 34 : 32}%, transparent)`;
   }
 
   const channels = [color.slice(1, 3), color.slice(3, 5), color.slice(5, 7)].map(

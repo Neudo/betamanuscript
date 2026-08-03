@@ -39,6 +39,17 @@
     --tag-pacing: 33 59% 30%;
     --tag-missing: 235 29% 36%;
     --tag-emotional: 133 35% 27%;
+    --annotation-tag-confusing: 26 90% 37%;
+    --annotation-tag-pacing: 271 81% 56%;
+    --annotation-tag-missing-context: 175 77% 26%;
+    --annotation-tag-strong-line: 123 17% 21%;
+    --annotation-tag-emotional-impact: 0 62% 30%;
+    --annotation-tag-character: 48 100% 27%;
+    --annotation-tag-worldbuilding: 229 40% 39%;
+    --annotation-tag-prose: 123 17% 21%;
+    --annotation-tag-other: 220 9% 46%;
+    --annotation-tag-general: 220 9% 46%;
+    --annotation-tag-multiple: 255 25% 49%;
     --inverse-background: 33 22% 9%;
     --inverse-foreground: 36 42% 97%;
     --inverse-muted: 35 17% 76%;
@@ -56,7 +67,7 @@
 
   .dark {
     /* A walnut-and-parchment night palette: deliberately warm, never blue-black. */
-    --background: 30 19% 16%;
+    --background: 30 20% 16%;
     --foreground: 38 31% 90%;
     --card: 30 18% 22%;
     --card-foreground: 38 31% 90%;
@@ -91,6 +102,17 @@
     --tag-pacing: 35 67% 72%;
     --tag-missing: 232 55% 76%;
     --tag-emotional: 141 39% 68%;
+    --annotation-tag-confusing: 34 83% 72%;
+    --annotation-tag-pacing: 272 70% 78%;
+    --annotation-tag-missing-context: 192 83% 50%;
+    --annotation-tag-strong-line: 123 24% 69%;
+    --annotation-tag-emotional-impact: 3 88% 78%;
+    --annotation-tag-character: 61 100% 50%;
+    --annotation-tag-worldbuilding: 197 61% 75%;
+    --annotation-tag-prose: 139 40% 70%;
+    --annotation-tag-other: 220 14% 74%;
+    --annotation-tag-general: 220 14% 74%;
+    --annotation-tag-multiple: 255 44% 76%;
     --inverse-background: 27 23% 12%;
     --inverse-foreground: 38 31% 90%;
     --inverse-muted: 36 19% 72%;

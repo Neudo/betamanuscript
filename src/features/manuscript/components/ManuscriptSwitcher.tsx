@@ -169,7 +169,6 @@ export function ManuscriptSwitcher({
         accountPlan={accountPlan}
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={({ manuscriptId }) => selectManuscript(manuscriptId)}
       />
       <PlanRequiredDialog
         open={planDialogOpen}
