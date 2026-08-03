@@ -281,7 +281,7 @@ export function PublicReadingView({
                   <Link href={loginHref}>Log in</Link>
                 </Button>
                 <Button asChild size="sm" className="h-9 rounded-none px-3 text-xs">
-                  <Link href={signUpHref} target="_blank" rel="noopener">Create my account</Link>
+                  <Link href={signUpHref}>Create my account</Link>
                 </Button>
               </>
             )}

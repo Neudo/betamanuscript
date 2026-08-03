@@ -44,7 +44,7 @@ export function PublicFeedbackAuthDialog({
         </DialogHeader>
         <DialogFooter className="gap-2 sm:justify-start">
           <Button asChild>
-            <Link href={signUpHref} target="_blank" rel="noopener">
+            <Link href={signUpHref}>
               Create free account
             </Link>
           </Button>
