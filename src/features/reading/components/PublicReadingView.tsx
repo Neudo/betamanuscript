@@ -110,6 +110,20 @@ export function PublicReadingView({
     ? ((chapterIndex + 1) / manuscript.chapters.length) * 100
     : 0;
 
+  const requestReaderPlace = useCallback(async () => {
+    if (hasRequestedPlace) return;
+
+    setIsRequestingPlace(true);
+    try {
+      await createReaderPlaceRequest(manuscript.accessLinkId);
+      setHasRequestedPlace(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The place request could not be sent.");
+    } finally {
+      setIsRequestingPlace(false);
+    }
+  }, [hasRequestedPlace, manuscript.accessLinkId]);
+
   const saveAnnotation = useCallback(async (input: ReaderAnnotationDraft & { comment: string; tagId: string }) => {
     try {
       await createPublicReaderAnnotation({
@@ -120,10 +134,13 @@ export function PublicReadingView({
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "The annotation could not be saved.";
-      if (/reached its reader limit/i.test(message)) setIsAtReaderLimit(true);
+      if (/reached its reader limit/i.test(message)) {
+        setIsAtReaderLimit(true);
+        await requestReaderPlace();
+      }
       throw error;
     }
-  }, [manuscript.accessLinkId, router]);
+  }, [manuscript.accessLinkId, requestReaderPlace, router]);
 
   const saveGeneralAnnotation = useCallback(async (input: { chapterId: string; comment: string }) => {
     try {
@@ -135,10 +152,13 @@ export function PublicReadingView({
       router.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : "The general annotation could not be saved.";
-      if (/reached its reader limit/i.test(message)) setIsAtReaderLimit(true);
+      if (/reached its reader limit/i.test(message)) {
+        setIsAtReaderLimit(true);
+        await requestReaderPlace();
+      }
       throw error;
     }
-  }, [manuscript.accessLinkId, router]);
+  }, [manuscript.accessLinkId, requestReaderPlace, router]);
 
   useEffect(() => {
     if (!isAuthenticated || annotationPanel || generalAnnotationPanel) return;
@@ -272,15 +292,7 @@ export function PublicReadingView({
   }
 
   async function askForPlace() {
-    setIsRequestingPlace(true);
-    try {
-      await createReaderPlaceRequest(manuscript.accessLinkId);
-      setHasRequestedPlace(true);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The place request could not be sent.");
-    } finally {
-      setIsRequestingPlace(false);
-    }
+    await requestReaderPlace();
   }
 
   function handleTextSelection() {

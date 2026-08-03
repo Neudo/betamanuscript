@@ -28,6 +28,13 @@ describe("reader-place-request email content", () => {
       .toContain("Review reader requests: https://app.example.com/dashboard/readers");
   });
 
+  it("describes the immediate reader-place alert without the former batch delay", () => {
+    const content = createReaderPlaceRequestEmailContent(input);
+
+    expect(content.html).toContain("This alert is sent when a reader asks for the next available place");
+    expect(content.html).not.toContain("six hours");
+  });
+
   it("escapes author-controlled manuscript titles in HTML", () => {
     expect(createReaderPlaceRequestEmailContent({ ...input, manuscriptTitle: "<draft & final>" }).html)
       .toContain("&lt;draft &amp; final&gt;");

@@ -60,13 +60,20 @@ export async function createPublicReaderGeneralAnnotation({
 }
 
 export async function createReaderPlaceRequest(accessLinkId: string) {
-  const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("create_reader_place_request", {
-    p_public_link_id: accessLinkId,
+  const response = await fetch("/api/reader/place-requests", {
+    body: JSON.stringify({ accessLinkId }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
   });
+  const payload = await response.json().catch(() => null) as {
+    error?: string;
+    ok?: boolean;
+    request?: { requestId: string; status: string };
+  } | null;
 
-  if (error) throw new Error(error.message);
-  if (!data?.[0]) throw new Error("The place request could not be created.");
+  if (!response.ok || !payload?.ok || !payload.request) {
+    throw new Error(payload?.error ?? "The place request could not be created.");
+  }
 
-  return data[0];
+  return payload.request;
 }

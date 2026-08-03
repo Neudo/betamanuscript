@@ -34,11 +34,13 @@ describe("public feedback draft", () => {
   it("restores a complete passage annotation draft", () => {
     expect(parsePendingPublicFeedback(JSON.stringify({
       comment: "The rhythm loses me here.",
+      displayName: "Alex Reader",
       draft: annotationDraft,
       kind: "annotation",
       tagId: "tag-1",
     }))).toEqual({
       comment: "The rhythm loses me here.",
+      displayName: "Alex Reader",
       draft: annotationDraft,
       kind: "annotation",
       tagId: "tag-1",
@@ -66,10 +68,12 @@ describe("public feedback draft", () => {
     expect(parsePendingPublicFeedback(JSON.stringify({
       chapterId: "chapter-1",
       comment: "The chapter ending works.",
+      displayName: "Alex Reader",
       kind: "general",
     }))).toEqual({
       chapterId: "chapter-1",
       comment: "The chapter ending works.",
+      displayName: "Alex Reader",
       kind: "general",
     });
   });

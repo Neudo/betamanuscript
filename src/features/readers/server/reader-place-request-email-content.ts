@@ -35,7 +35,7 @@ export function createReaderPlaceRequestEmailContent(input: ReaderPlaceRequestEm
     <h1 style="margin:0 0 20px;font-family:Georgia,serif;font-size:30px;font-weight:500;line-height:1.15;">${subject}.</h1>
     <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#4a4035;">Your reading round for <strong>${title}</strong> is full. A reader has asked you to release a place or accept them directly.</p>
     <p style="margin:0 0 28px;"><a href="${actionUrl}" style="display:inline-block;background:#7c1d1d;color:#fdf8f2;padding:13px 18px;text-decoration:none;font-size:14px;font-weight:600;">Review reader requests</a></p>
-    <p style="margin:0;color:#6b6456;font-size:13px;line-height:1.6;">We group these notifications and wait at least six hours before sending another email for the same reading round.</p>
+    <p style="margin:0;color:#6b6456;font-size:13px;line-height:1.6;">This alert is sent when a reader asks for the next available place in your reading round.</p>
   </body>
 </html>`,
     subject,
