@@ -109,6 +109,7 @@ export function InviteReaderDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
+          type="button"
           size="sm"
           variant={triggerVariant}
           className={triggerVariant === "outline" ? "border-primary text-primary-text" : undefined}

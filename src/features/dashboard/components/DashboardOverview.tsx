@@ -1,9 +1,11 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
+import { ArrowRight, ClipboardList, MessageSquare, Users } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
   type DashboardAnnotation,
   type DashboardOverviewData,
@@ -82,6 +84,11 @@ function DashboardContent({
     ["Chapters reached", `${data.chaptersReached} / ${data.chapters.length}`, "read by at least one reader"],
     ["Survey responses", String(data.surveyResponseCount), data.surveyResponseCount === 1 ? "reader response received" : "reader responses received"],
   ] as const;
+  const hasJoinedReader = data.readers.some((reader) => reader.status !== "pending");
+  const readersHref = `/dashboard/readers?manuscriptId=${encodeURIComponent(manuscriptId)}`;
+  const surveysHref = data.manuscriptVersionId
+    ? `/dashboard/surveys?manuscriptId=${encodeURIComponent(manuscriptId)}&versionId=${encodeURIComponent(data.manuscriptVersionId)}`
+    : `/dashboard/surveys?manuscriptId=${encodeURIComponent(manuscriptId)}`;
 
   return (
     <div className="max-w-[1100px] px-5 py-7 sm:px-8 sm:py-8">
@@ -96,6 +103,37 @@ function DashboardContent({
           <InviteReaderDialog manuscriptId={manuscriptId} triggerVariant="outline" />
         </div>
       </div>
+
+      {!hasJoinedReader ? (
+        <section className="mb-6 border border-primary/30 bg-primary/[0.035] p-5">
+          <div className="mb-5">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">Next step</p>
+            <Heading level={2} size="small" className="mt-1">Start collecting feedback</Heading>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="border border-foreground/10 bg-card p-4">
+              <Users className="h-4 w-4 text-primary-text" />
+              <p className="mt-3 text-sm font-medium">Invite readers or share a public link</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Add named beta readers or let anyone with your public link read this draft.
+              </p>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-primary text-primary-text">
+                <Link href={readersHref}>Manage readers <ArrowRight className="h-3.5 w-3.5" /></Link>
+              </Button>
+            </div>
+            <div className="border border-foreground/10 bg-card p-4">
+              <ClipboardList className="h-4 w-4 text-primary-text" />
+              <p className="mt-3 text-sm font-medium">Create surveys at the end of a chapter or book</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Add focused questions to complement passage-level feedback.
+              </p>
+              <Button asChild size="sm" variant="outline" className="mt-4 border-primary text-primary-text">
+                <Link href={surveysHref}>Create surveys <ArrowRight className="h-3.5 w-3.5" /></Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map(([label, value, detail]) => (

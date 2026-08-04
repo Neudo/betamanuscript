@@ -4,13 +4,14 @@ import {
   ArrowRight,
   ArrowUpRight,
   BookOpen,
+  Copy,
   FileText,
   ImagePlus,
+  Link2,
   Trash2,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   DragEvent,
   FormEvent,
@@ -46,6 +47,11 @@ import {
   useUploadManuscriptSourceMutation,
 } from "@/features/manuscript/hooks/use-manuscript-mutations";
 import { useManuscriptGenres } from "@/features/manuscript/hooks/use-manuscripts";
+import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
+import {
+  useDisablePublicReadingLink,
+  useEnablePublicReadingLink,
+} from "@/features/readers/hooks/use-readers";
 import {
   getSourceDocumentError,
   importSourceDocument,
@@ -59,6 +65,7 @@ import type {
 } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
+import { toast } from "sonner";
 
 type CreateManuscriptDialogProps = {
   children?: ReactNode;
@@ -75,13 +82,14 @@ export function CreateManuscriptDialog({
   onOpenChange,
   accountPlan = "free",
 }: CreateManuscriptDialogProps) {
-  const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const editor = useManuscriptDraft();
   const createMutation = useCreateManuscriptMutation();
   const coverMutation = useUploadManuscriptCoverMutation();
   const sourceMutation = useUploadManuscriptSourceMutation();
+  const enablePublicLinkMutation = useEnablePublicReadingLink();
+  const disablePublicLinkMutation = useDisablePublicReadingLink();
   const genresQuery = useManuscriptGenres(open);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
@@ -90,18 +98,23 @@ export function CreateManuscriptDialog({
   const [isParsingSource, setIsParsingSource] = useState(false);
   const sourceImportRun = useRef(0);
   const [createdManuscript, setCreatedManuscript] = useState<CreatedManuscript | null>(null);
+  const [publicLinkId, setPublicLinkId] = useState<string | null>(null);
   const stepTitle =
     editor.step === "info"
       ? "Upload your manuscript files"
       : editor.step === "structure"
         ? "Set up your book"
-        : "Beta reader settings";
+        : editor.step === "readers"
+          ? "Beta reader settings"
+          : "Share your manuscript";
   const stepDescription =
     editor.step === "info"
       ? "Start with the manuscript file: we will detect its chapters automatically."
       : editor.step === "structure"
         ? "Add the book details, then review the structure for this draft."
-        : "Choose how many readers can access this draft and what they will see.";
+        : editor.step === "readers"
+          ? "Choose how many readers can access this draft and what they will see."
+          : "Invite named readers or enable a public link for this draft.";
 
   function handleOpenChange(nextOpen: boolean) {
     if (controlledOpen === undefined) setInternalOpen(nextOpen);
@@ -111,6 +124,8 @@ export function CreateManuscriptDialog({
       createMutation.reset();
       coverMutation.reset();
       sourceMutation.reset();
+      enablePublicLinkMutation.reset();
+      disablePublicLinkMutation.reset();
       setCoverFile(null);
       setSourceFile(null);
       setImportedChapters(null);
@@ -118,6 +133,7 @@ export function CreateManuscriptDialog({
       setIsParsingSource(false);
       sourceImportRun.current += 1;
       setCreatedManuscript(null);
+      setPublicLinkId(null);
     }
   }
 
@@ -170,8 +186,13 @@ export function CreateManuscriptDialog({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (editor.step !== "readers") {
+    if (editor.step !== "readers" && editor.step !== "share") {
       if (editor.canContinue) editor.nextStep();
+      return;
+    }
+
+    if (editor.step === "share") {
+      handleOpenChange(false);
       return;
     }
 
@@ -197,12 +218,20 @@ export function CreateManuscriptDialog({
       }
 
       onCreated?.(manuscript);
-      router.replace(
-        `/dashboard/readers?manuscriptId=${encodeURIComponent(manuscript.manuscriptId)}`,
-      );
-      handleOpenChange(false);
+      editor.nextStep();
     } catch {
       // The mutation state renders the database error beneath the form.
+    }
+  }
+
+  async function copyPublicLink() {
+    if (!publicLinkId) return;
+
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/read/${publicLinkId}`);
+      toast.success("Public link copied.");
+    } catch {
+      // Clipboard permission is a browser concern; the link remains available in Readers.
     }
   }
 
@@ -269,11 +298,28 @@ export function CreateManuscriptDialog({
                 onChangePlan={() => handleOpenChange(false)}
               />
             ) : null}
+            {editor.step === "share" && createdManuscript ? (
+              <ShareManuscriptStep
+                manuscript={createdManuscript}
+                publicLinkId={publicLinkId}
+                isUpdatingPublicLink={enablePublicLinkMutation.isPending || disablePublicLinkMutation.isPending}
+                publicLinkError={enablePublicLinkMutation.error ?? disablePublicLinkMutation.error ?? null}
+                onCopyPublicLink={() => void copyPublicLink()}
+                onDisablePublicLink={() => disablePublicLinkMutation.mutate(
+                  createdManuscript.readingRoundId,
+                  { onSuccess: () => setPublicLinkId(null) },
+                )}
+                onEnablePublicLink={() => enablePublicLinkMutation.mutate(
+                  createdManuscript.readingRoundId,
+                  { onSuccess: (linkId) => setPublicLinkId(linkId) },
+                )}
+              />
+            ) : null}
           </div>
 
           <footer className="flex items-center justify-between border-t border-foreground/[0.08] bg-sidebar px-8 py-4">
             <div>
-              {editor.stepIndex > 0 ? (
+              {editor.stepIndex > 0 && editor.step !== "share" ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -305,6 +351,9 @@ export function CreateManuscriptDialog({
                     createMutation.isPending ||
                     coverMutation.isPending ||
                     sourceMutation.isPending
+                  )) ||
+                  (editor.step === "share" && (
+                    enablePublicLinkMutation.isPending || disablePublicLinkMutation.isPending
                   ))
                 }
                 className={cn(
@@ -325,7 +374,9 @@ export function CreateManuscriptDialog({
                         : coverMutation.isError || coverFile
                         ? "Retry cover upload"
                         : "Finish manuscript"
-                      : "Create manuscript"
+                    : "Create manuscript"
+                    : editor.step === "share"
+                      ? "Finish"
                     : "Continue"}
                 <ArrowRight className="h-3 w-3" />
               </Button>
@@ -738,6 +789,75 @@ function ReaderSettingsStep({
         <p className="mt-1 font-mono text-[9px] text-muted-foreground">
           Optional. Shown on the final page after a reader finishes the manuscript.
         </p>
+      </div>
+    </div>
+  );
+}
+
+function ShareManuscriptStep({
+  manuscript,
+  publicLinkError,
+  publicLinkId,
+  isUpdatingPublicLink,
+  onCopyPublicLink,
+  onDisablePublicLink,
+  onEnablePublicLink,
+}: {
+  manuscript: CreatedManuscript;
+  publicLinkError: Error | null;
+  publicLinkId: string | null;
+  isUpdatingPublicLink: boolean;
+  onCopyPublicLink: () => void;
+  onDisablePublicLink: () => void;
+  onEnablePublicLink: () => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="border-l-2 border-primary bg-primary/[0.035] px-4 py-3">
+        <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">Manuscript created</p>
+        <p className="mt-1 text-sm leading-6 text-foreground">
+          Choose how your first readers can access this draft. You can change both options later.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-start justify-between gap-4 border border-foreground/10 bg-sidebar/30 p-4">
+        <div className="max-w-sm">
+          <div className="flex items-center gap-2 text-primary-text">
+            <Link2 className="h-4 w-4" />
+            <p className="font-mono text-[9px] uppercase tracking-[0.16em]">Public reading link</p>
+          </div>
+          <p className="mt-2 text-sm text-foreground">
+            {publicLinkId ? "Enabled for this draft." : "Disabled — only invited readers can access this draft."}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            Anyone with the link can read. A free account is still required to leave feedback.
+          </p>
+        </div>
+        {publicLinkId ? (
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={onCopyPublicLink}>
+              <Copy className="h-3.5 w-3.5" />Copy link
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={onDisablePublicLink} disabled={isUpdatingPublicLink}>
+              Disable
+            </Button>
+          </div>
+        ) : (
+          <Button type="button" size="sm" onClick={onEnablePublicLink} disabled={isUpdatingPublicLink}>
+            <Link2 className="h-3.5 w-3.5" />Enable public link
+          </Button>
+        )}
+      </div>
+
+      {publicLinkError ? <p className="text-xs text-destructive">{publicLinkError.message}</p> : null}
+
+      <div className="flex flex-wrap items-start justify-between gap-4 border border-foreground/10 bg-card p-4">
+        <div className="max-w-sm">
+          <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-primary-text">Invite readers</p>
+          <p className="mt-2 text-sm text-foreground">Invite a specific reader and choose the chapters they can access.</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">You can send more invitations from the Readers page.</p>
+        </div>
+        <InviteReaderDialog manuscriptId={manuscript.manuscriptId} triggerVariant="outline" />
       </div>
     </div>
   );

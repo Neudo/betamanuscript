@@ -50,6 +50,7 @@ export type DashboardOverviewData = {
   lastActivityAt: string | null;
   maxReaders: number;
   mostAnnotatedChapter: DashboardChapter | null;
+  manuscriptVersionId: string | null;
   readers: DashboardReader[];
   readingRoundId: string | null;
   recentAnnotations: DashboardAnnotation[];
@@ -313,6 +314,7 @@ export async function getDashboardOverview(
     draftLabel: `Draft ${version.version_number}`,
     lastActivityAt,
     maxReaders: round?.max_readers ?? 0,
+    manuscriptVersionId: version.id,
     mostAnnotatedChapter,
     readers,
     readingRoundId: round?.id ?? null,
@@ -336,6 +338,7 @@ function createEmptyDashboard(title: string): DashboardOverviewData {
     draftLabel: "No draft",
     lastActivityAt: null,
     maxReaders: 0,
+    manuscriptVersionId: null,
     mostAnnotatedChapter: null,
     readers: [],
     readingRoundId: null,

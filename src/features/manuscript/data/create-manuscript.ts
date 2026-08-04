@@ -8,6 +8,7 @@ export const manuscriptWizardSteps: Array<{ id: ManuscriptWizardStep; label: str
   { id: "info", label: "Files" },
   { id: "structure", label: "Book setup" },
   { id: "readers", label: "Beta readers" },
+  { id: "share", label: "Share" },
 ];
 
 export const manuscriptWordCountOptions: Array<{
