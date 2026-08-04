@@ -203,8 +203,8 @@ function FeedbackExplorerContent({
             aria-pressed={feedbackScope === "active"}
             onClick={() => setFeedbackScope("active")}
             className={cn(
-              "flex w-full cursor-pointer items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-              feedbackScope === "active" && "bg-foreground/[0.06] text-primary-text",
+              "flex w-full cursor-pointer items-center justify-between border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+              feedbackScope === "active" && "border-primary bg-foreground/[0.06] text-primary-text",
             )}
           >
             <span>Active</span>
@@ -215,8 +215,8 @@ function FeedbackExplorerContent({
             aria-pressed={feedbackScope === "archived"}
             onClick={() => setFeedbackScope("archived")}
             className={cn(
-              "flex w-full cursor-pointer items-center justify-between gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-              feedbackScope === "archived" && "bg-foreground/[0.06] text-primary-text",
+              "flex w-full cursor-pointer items-center justify-between gap-2 border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+              feedbackScope === "archived" && "border-primary bg-foreground/[0.06] text-primary-text",
             )}
           >
             <span className="flex items-center gap-2"><Archive className="h-3.5 w-3.5" strokeWidth={1.5} />Archived</span>
@@ -235,9 +235,10 @@ function FeedbackExplorerContent({
                 selectedTagSlug: selectedTagSlug === tag.slug ? null : tag.slug,
               })}
               className={cn(
-                "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-                selectedTagSlug === tag.slug && "bg-foreground/[0.06] text-primary-text",
+                "flex w-full items-center justify-between border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+                selectedTagSlug === tag.slug && "border-primary text-primary-text",
               )}
+              style={{ backgroundColor: getAnnotationTagTint(tag, 12) }}
             >
               <span>{tag.label}</span>
               <span className="font-mono text-[9px] text-muted-foreground">{tag.count}</span>
@@ -257,8 +258,8 @@ function FeedbackExplorerContent({
                 selectedChapterId: selectedChapterId === chapter.id ? null : chapter.id,
               })}
               className={cn(
-                "flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-                selectedChapterId === chapter.id && "bg-foreground/[0.06] text-primary-text",
+                "flex w-full items-center justify-between border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+                selectedChapterId === chapter.id && "border-primary bg-foreground/[0.06] text-primary-text",
               )}
             >
               <span>Ch {chapter.position}</span>
@@ -279,8 +280,8 @@ function FeedbackExplorerContent({
                 selectedReaderId: selectedReaderId === reader.id ? null : reader.id,
               })}
               className={cn(
-                "flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-                selectedReaderId === reader.id && "bg-foreground/[0.06] text-primary-text",
+                "flex w-full items-center gap-2 border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+                selectedReaderId === reader.id && "border-primary bg-foreground/[0.06] text-primary-text",
               )}
             >
               <span className="grid h-5 w-5 place-items-center rounded-full font-mono text-[8px] font-semibold text-white" style={{ backgroundColor: reader.color }}>{reader.initials}</span>
@@ -300,8 +301,8 @@ function FeedbackExplorerContent({
               hideReadFeedback: !hideReadFeedback,
             })}
             className={cn(
-              "flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
-              hideReadFeedback && "bg-foreground/[0.06] text-primary-text",
+              "flex w-full cursor-pointer items-center gap-2 border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-foreground/[0.04]",
+              hideReadFeedback && "border-primary bg-foreground/[0.06] text-primary-text",
             )}
           >
             <EyeOff className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
@@ -465,7 +466,7 @@ function FilterGroup({
         <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
         {action}
       </div>
-      <div>{children}</div>
+      <div className="space-y-1.5">{children}</div>
     </section>
   );
 }
