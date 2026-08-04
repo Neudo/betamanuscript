@@ -1862,6 +1862,10 @@ export type Database = {
         Args: { p_feedback_id: string; p_feedback_kind: string }
         Returns: undefined
       }
+      delete_account_data: {
+        Args: { p_email: string; p_user_id: string }
+        Returns: undefined
+      }
       disable_public_reading_link: {
         Args: { p_reading_round_id: string }
         Returns: undefined

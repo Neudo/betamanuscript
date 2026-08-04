@@ -102,33 +102,35 @@ export function NotificationCenter({ profileId }: { profileId: string }) {
         {!notificationsQuery.isLoading && !notificationsQuery.isError && notifications.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">You&apos;re all caught up.</p>
         ) : null}
-        {notifications.map((notification) => {
-          const Icon = notificationIcons[notification.eventType];
+        <div className="max-h-[150px] overflow-y-auto">
+          {notifications.map((notification) => {
+            const Icon = notificationIcons[notification.eventType];
 
-          return (
-            <DropdownMenuItem key={notification.id} asChild className="p-0 focus:bg-foreground/[0.04]">
-              <Link
-                href={notification.href}
-                className="flex items-start gap-3 px-4 py-3"
-                onClick={() => {
-                  if (!notification.readAt) markRead.mutate([notification.id]);
-                }}
-              >
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center border border-foreground/10 bg-sidebar text-primary-text">
-                  <Icon className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-medium text-foreground">{notification.title}</span>
-                    <span className="shrink-0 font-mono text-[9px] text-muted-foreground">{formatNotificationTime(notification.createdAt)}</span>
+            return (
+              <DropdownMenuItem key={notification.id} asChild className="p-0 focus:bg-foreground/[0.04]">
+                <Link
+                  href={notification.href}
+                  className="flex items-start gap-3 px-4 py-3"
+                  onClick={() => {
+                    if (!notification.readAt) markRead.mutate([notification.id]);
+                  }}
+                >
+                  <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center border border-foreground/10 bg-sidebar text-primary-text">
+                    <Icon className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden="true" />
                   </span>
-                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{notification.body}</span>
-                </span>
-                {!notification.readAt ? <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}
-              </Link>
-            </DropdownMenuItem>
-          );
-        })}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-foreground">{notification.title}</span>
+                      <span className="shrink-0 font-mono text-[9px] text-muted-foreground">{formatNotificationTime(notification.createdAt)}</span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">{notification.body}</span>
+                  </span>
+                  {!notification.readAt ? <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

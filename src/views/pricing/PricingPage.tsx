@@ -75,6 +75,11 @@ const faqs = [
       "No. Your plan covers the workspace. Readers can use private invitations or shareable reading pages without paying. A private invitation uses a free account with the invited email address; a shareable page only needs an account when the reader saves feedback.",
   },
   {
+    question: "Do readers have to create an account?",
+    answer:
+      "No. If you enable a public reading page, anyone with the link can read your manuscript without an account. They need a free account only to leave feedback.",
+  },
+  {
     question: "Can I share a manuscript without inviting every reader?",
     answer:
       "Yes. Enable a shareable reading page for a reading round and anyone with the link can read it without an account. Feedback still requires a free account; on Free, a reader slot is only used when feedback is first saved.",

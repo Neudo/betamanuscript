@@ -38,19 +38,6 @@ export function ProductPreviewSection() {
               Readers annotate directly in the text. You see which passages repeated across
               readers, what landed, and what needs work — all in one place.
             </p>
-            <div className="space-y-2.5">
-              {[
-                { tag: "confusing" as TagKey },
-                { tag: "strong" as TagKey },
-                { tag: "pacing" as TagKey },
-                { tag: "missing" as TagKey },
-                { tag: "emotional" as TagKey },
-              ].map(({ tag }) => (
-                <div key={tag} className="flex items-center gap-2">
-                  <TagBadge tag={tag} />
-                </div>
-              ))}
-            </div>
           </div>
           <div className="space-y-3">
             {/* Annotation examples — styled as real marked-up text */}

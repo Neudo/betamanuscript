@@ -27,7 +27,7 @@ function ProductMockup() {
     >
       {/* Browser chrome */}
       <div
-        className="px-4 py-2.5 flex items-center gap-3 border-b"
+        className="hidden px-4 py-2.5 md:flex items-center gap-3 border-b"
         style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}
       >
         <div className="flex gap-1.5">
@@ -52,7 +52,7 @@ function ProductMockup() {
           <span className="text-sm font-semibold" style={{ fontFamily: SERIF, color: INK }}>
             The Last Cartographer
           </span>
-          <span className="text-[10px]" style={{ fontFamily: MONO, color: MUTED }}>
+          <span className="hidden text-[10px] md:inline" style={{ fontFamily: MONO, color: MUTED }}>
             Fictional demo · Draft 2 · 9 chapters · 5 readers · 64 annotations
           </span>
         </div>

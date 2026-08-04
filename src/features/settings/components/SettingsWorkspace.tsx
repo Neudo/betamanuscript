@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { profileSettingsSchema } from "@/features/account/schemas/profile-settin
 import type { WorkspaceAuthenticatedAccount } from "@/features/account/server/require-workspace-account";
 import type { AuthenticatedAccount } from "@/features/account/types";
 import { NotificationPreferencesForm } from "@/features/notifications/components/NotificationPreferencesForm";
+import { deleteAccount } from "@/features/settings/api/delete-account";
 import { exportAccountData } from "@/features/settings/api/export-account-data";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -523,5 +524,76 @@ function ExportAccountDataButton() {
 }
 
 function DeleteAccount() {
-  return <AlertDialog><AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="h-3.5 w-3.5" />Delete account</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete your BetaManuscript account?</AlertDialogTitle><AlertDialogDescription>This cannot be undone. Export anything you need before continuing.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction>Delete account</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>;
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+  const mutation = useMutation({
+    mutationFn: deleteAccount,
+    async onSuccess() {
+      setIsOpen(false);
+
+      try {
+        await createSupabaseBrowserClient().auth.signOut({ scope: "local" });
+      } finally {
+        router.replace("/");
+        router.refresh();
+      }
+    },
+    onError(error) {
+      toast.error(error instanceof Error ? error.message : "Unable to delete your account.");
+    },
+  });
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!mutation.isPending) {
+      setIsOpen(nextOpen);
+
+      if (!nextOpen) {
+        setConfirmation("");
+      }
+    }
+  }
+
+  return (
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm" disabled={mutation.isPending}>
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete account
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete your BetaManuscript account?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This cannot be undone. It permanently deletes your account, manuscripts, reader feedback, and uploaded files. Any active subscription is cancelled immediately. Export anything you need before continuing.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2">
+          <label htmlFor="delete-account-confirmation" className="text-sm font-medium">
+            Type DELETE to confirm
+          </label>
+          <Input
+            id="delete-account-confirmation"
+            value={confirmation}
+            onChange={(event) => setConfirmation(event.target.value)}
+            placeholder="DELETE"
+            autoComplete="off"
+            disabled={mutation.isPending}
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={mutation.isPending}>Cancel</AlertDialogCancel>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={confirmation !== "DELETE" || mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            {mutation.isPending ? "Deleting account..." : "Delete account"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
