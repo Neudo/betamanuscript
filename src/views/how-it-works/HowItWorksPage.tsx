@@ -3,18 +3,13 @@
 import {
   ArrowRight,
   BarChart2,
+  Link2,
+  Mail,
   Upload,
   Users,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { A11y, Autoplay } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
-import type { Swiper as SwiperInstance } from "swiper";
-
-import "swiper/css";
 
 import {
   BODY,
@@ -68,31 +63,10 @@ const steps = [
   },
 ] as const;
 
-const presentationSlides = [
-  {
-    label: "Manuscript",
-    src: "/images/slide-manuscript.jpg",
-  },
-  {
-    label: "Readers",
-    src: "/images/slide-reader.jpg",
-  },
-  {
-    label: "Feedback",
-    src: "/images/slide-feedback.jpg",
-  },
-  {
-    label: "Revision",
-    src: "/images/slide-survey.jpg",
-  },
-] as const;
-
 type StepPreviewKind = (typeof steps)[number]["preview"];
 
 export function HowItWorksPage() {
   const reduceMotion = useReducedMotion();
-  const [presentationSlider, setPresentationSlider] = useState<SwiperInstance | null>(null);
-  const [activePresentation, setActivePresentation] = useState(0);
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
@@ -144,13 +118,71 @@ export function HowItWorksPage() {
           </div>
         </section>
 
-        <ProductPresentationSlider
-          activeSlide={activePresentation}
-          onSlideChange={setActivePresentation}
-          onSliderReady={setPresentationSlider}
-          reduceMotion={Boolean(reduceMotion)}
-          slider={presentationSlider}
-        />
+        <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
+          <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.74fr_1.26fr] lg:gap-20">
+            <div>
+              <Eyebrow>Reader access</Eyebrow>
+              <Heading level={2} className="max-w-md text-balance">
+                Invite readers personally, or open a public reading link.
+              </Heading>
+              <p className="mt-6 max-w-md text-base leading-7" style={{ color: BODY }}>
+                Choose the sharing path that fits your beta round. Both give readers a focused place to read your draft.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <motion.article
+                className="border p-6 sm:p-7"
+                style={{ background: CARD, borderColor: "hsl(var(--ink) / 0.16)" }}
+                initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+                whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.52, ease: premiumEase }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
+                    <Mail className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                  </span>
+                  <span className="text-[10px] uppercase tracking-[0.18em]" style={{ color: MUTED, fontFamily: MONO }}>Email invitation</span>
+                </div>
+                <Heading level={3} size="section" className="mt-8 text-balance">
+                  Invite a reader you know.
+                </Heading>
+                <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>
+                  Send a personal invitation by email, then choose whether they read the whole draft or selected chapters for focused feedback.
+                </p>
+                <p className="mt-6 border-t pt-4 text-xs leading-5" style={{ borderColor: "hsl(var(--ink) / 0.12)", color: MUTED }}>
+                  Their feedback stays connected to their reading progress and survey responses.
+                </p>
+              </motion.article>
+
+              <motion.article
+                className="border p-6 sm:p-7"
+                style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.16)" }}
+                initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+                whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.52, delay: reduceMotion ? 0 : 0.08, ease: premiumEase }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: FOREST }}>
+                    <Link2 className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                  </span>
+                  <span className="text-[10px] uppercase tracking-[0.18em]" style={{ color: MUTED, fontFamily: MONO }}>Public reading link</span>
+                </div>
+                <Heading level={3} size="section" className="mt-8 text-balance">
+                  Share a draft more widely.
+                </Heading>
+                <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>
+                  Enable a public link when you want a wider group to read the draft. Anyone with the link can open and read it.
+                </p>
+                <p className="mt-6 border-t pt-4 text-xs leading-5" style={{ borderColor: "hsl(var(--ink) / 0.12)", color: MUTED }}>
+                  Readers create a free account only when they want to leave feedback.
+                </p>
+              </motion.article>
+            </div>
+          </div>
+        </section>
 
         <section id="flow" className="scroll-mt-20 border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
@@ -196,6 +228,20 @@ export function HowItWorksPage() {
                 </motion.li>
               ))}
             </ol>
+
+            <div className="mt-14 flex flex-col gap-5 border-t pt-8 sm:mt-16 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "hsl(var(--ink) / 0.16)" }}>
+              <p className="max-w-xl text-sm leading-6" style={{ color: BODY }}>
+                Start with the manuscript you have now. You can shape the reader round as you go.
+              </p>
+              <Link
+                href="/signup"
+                className="inline-flex min-h-11 shrink-0 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
+              >
+                Start your beta round
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -250,83 +296,6 @@ function Eyebrow({ children, centered = false, inverse = false }: { children: Re
       {children}
       {centered ? <span className="h-px w-8" style={{ background: lineColor }} /> : null}
     </p>
-  );
-}
-
-function ProductPresentationSlider({
-  activeSlide,
-  onSlideChange,
-  onSliderReady,
-  reduceMotion,
-  slider,
-}: {
-  activeSlide: number;
-  onSlideChange: (index: number) => void;
-  onSliderReady: (slider: SwiperInstance) => void;
-  reduceMotion: boolean;
-  slider: SwiperInstance | null;
-}) {
-  return (
-    <section className="hidden border-b px-6 py-10 md:block md:px-12 md:py-14" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: CARD }} aria-label="BetaManuscript product presentation">
-      <div className="mx-auto max-w-6xl">
-        <Heading level={2} size="page" className="mb-8 text-balance">
-          Everything you need for a structured beta round.
-        </Heading>
-        <div className="relative overflow-hidden border paper-shadow" style={{ borderColor: "hsl(var(--ink) / 0.16)", background: PAPER }}>
-          <Swiper
-            modules={[A11y, Autoplay]}
-            onSwiper={onSliderReady}
-            onSlideChange={(instance) => onSlideChange(instance.realIndex)}
-            loop
-            autoplay={reduceMotion ? false : { delay: 4800, disableOnInteraction: false, pauseOnMouseEnter: true }}
-            a11y={{
-              containerMessage: "BetaManuscript product presentation",
-              slideLabelMessage: "Slide {{index}} of {{slidesLength}}",
-            }}
-          >
-            {presentationSlides.map((slide, index) => (
-              <SwiperSlide key={slide.label}>
-                <div className="relative aspect-[143/65] min-h-52 bg-[#EDE8DC]">
-                  <Image
-                    alt={`BetaManuscript ${slide.label.toLowerCase()} workspace`}
-                    fill
-                    priority={index === 0}
-                    sizes="(min-width: 1200px) 1152px, (min-width: 768px) calc(100vw - 96px), calc(100vw - 48px)"
-                    src={slide.src}
-                    className="object-cover"
-                  />
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-
-          <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-3 pb-3 sm:px-5 sm:pb-5">
-            <div className="flex max-w-full gap-2 overflow-x-auto bg-[hsl(var(--inverse-background))] p-4">
-              {presentationSlides.map((slide, index) => {
-                const isActive = index === activeSlide;
-
-                return (
-                  <button
-                    key={slide.label}
-                    type="button"
-                    aria-pressed={isActive}
-                    onClick={() => slider?.slideToLoop(index)}
-                    className="inline-flex min-h-10 shrink-0 items-center border px-3 text-left text-[11px] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-primary"
-                    style={{
-                      borderColor: isActive ? OXBLOOD : "hsl(var(--ink) / 0.18)",
-                      background: isActive ? OXBLOOD : "hsl(var(--paper) / 0.94)",
-                      color: isActive ? INVERSE_FOREGROUND : INK,
-                    }}
-                  >
-                    <span>{slide.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
 

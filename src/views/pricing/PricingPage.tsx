@@ -99,7 +99,7 @@ const faqs = [
 const authorSignupHref = "/signup?next=%2Fdashboard%2Fsettings%3Fsection%3Dplan";
 
 export function PricingPage() {
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>("yearly");
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const isYearly = billingCycle === "yearly";
   const authorPrice = isYearly
