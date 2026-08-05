@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, ChevronUp, Copy, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Copy, Plus, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -141,6 +142,7 @@ export function SurveysWorkspace({ accountPlan }: { accountPlan: AccountPlan }) 
   const error = manuscriptsQuery.error ?? (manuscriptId ? surveysQuery.error : null);
 
   if (!isLoading && !error && manuscripts.length === 0) return <NoManuscriptState />;
+  if (isLoading) return <SurveysWorkspaceLoadingSkeleton />;
 
   return (
     <div className="min-h-full">
@@ -187,11 +189,7 @@ export function SurveysWorkspace({ accountPlan }: { accountPlan: AccountPlan }) 
           Surveys are shown to readers automatically - at the end of a chapter or after they finish the manuscript. Use them alongside annotations to collect structured, high-level feedback.
         </p>
 
-        {isLoading ? (
-          <div className="grid min-h-64 place-items-center border border-foreground/10 bg-card">
-            <LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : error ? (
+        {error ? (
           <p className="py-16 text-center text-sm text-muted-foreground">Unable to load surveys. Please refresh the page.</p>
         ) : !data?.readingRoundId ? (
           <EmptyState message="This manuscript does not have a reading round yet." />
@@ -227,6 +225,37 @@ export function SurveysWorkspace({ accountPlan }: { accountPlan: AccountPlan }) 
         onOpenChange={setPlanDialogOpen}
         title="Add unlimited surveys"
       />
+    </div>
+  );
+}
+
+export function SurveysWorkspaceLoadingSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading reader surveys" role="status" className="min-h-full">
+      <span className="sr-only">Loading reader surveys</span>
+      <header className="flex min-h-[88px] flex-col gap-5 border-b border-foreground/10 px-5 py-5 sm:px-8 md:flex-row md:items-center md:justify-between" aria-hidden="true">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-14 rounded-none bg-foreground/[0.07]" />
+          <Skeleton className="h-8 w-48 rounded-none bg-foreground/[0.07]" />
+        </div>
+        <div className="flex gap-2"><Skeleton className="h-9 w-28 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-9 w-24 rounded-none bg-foreground/[0.07]" /></div>
+      </header>
+      <div className="max-w-[1100px] p-5 sm:p-8" aria-hidden="true">
+        <div className="mb-6 max-w-4xl space-y-2">
+          <Skeleton className="h-4 w-full rounded-none bg-foreground/[0.07]" />
+          <Skeleton className="h-4 w-4/5 rounded-none bg-foreground/[0.07]" />
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }, (_, index) => (
+            <section key={index} className="border border-foreground/10 bg-card">
+              <div className="flex min-h-20 items-center justify-between gap-5 px-5 py-4">
+                <div className="min-w-0 space-y-2"><Skeleton className="h-4 w-44 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-28 rounded-none bg-foreground/[0.07]" /></div>
+                <div className="flex shrink-0 gap-2"><Skeleton className="h-8 w-8 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-8 w-8 rounded-none bg-foreground/[0.07]" /></div>
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

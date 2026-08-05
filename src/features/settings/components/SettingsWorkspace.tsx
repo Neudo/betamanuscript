@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { updateProfileSettings, uploadProfileAvatar } from "@/features/account/api/profile-settings";
@@ -202,6 +203,41 @@ export function SettingsWorkspace({
         </TabsContent>
       </div>
     </Tabs>
+  );
+}
+
+export function SettingsWorkspaceLoadingSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading settings" role="status" className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden">
+      <span className="sr-only">Loading settings</span>
+      <aside className="border-b border-foreground/10 bg-sidebar px-3 py-6 md:border-b-0 md:border-r" aria-hidden="true">
+        <Skeleton className="mb-4 ml-3 h-3 w-14 rounded-none bg-foreground/[0.07]" />
+        <div className="space-y-1">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="flex h-10 items-center gap-3 px-3"><Skeleton className="h-4 w-4 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-24 rounded-none bg-foreground/[0.07]" /></div>
+          ))}
+        </div>
+      </aside>
+      <section className="min-w-0" aria-hidden="true">
+        <header className="border-b border-foreground/10 px-5 py-5 sm:px-8">
+          <Skeleton className="mb-2 h-3 w-14 rounded-none bg-foreground/[0.07]" />
+          <Skeleton className="h-8 w-28 rounded-none bg-foreground/[0.07]" />
+        </header>
+        <div className="max-w-[920px] px-5 py-3 sm:px-8">
+          <div className="grid gap-4 border-b border-foreground/[0.08] py-5 sm:grid-cols-[230px_minmax(0,1fr)] sm:gap-8">
+            <div className="space-y-2"><Skeleton className="h-4 w-16 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-40 rounded-none bg-foreground/[0.07]" /></div>
+            <div className="flex items-center gap-5"><Skeleton className="h-16 w-16 rounded-none bg-foreground/[0.07]" /><div className="space-y-2"><Skeleton className="h-4 w-24 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-56 rounded-none bg-foreground/[0.07]" /></div></div>
+          </div>
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="grid gap-4 border-b border-foreground/[0.08] py-5 sm:grid-cols-[230px_minmax(0,1fr)] sm:gap-8">
+              <div className="space-y-2"><Skeleton className="h-4 w-24 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-44 rounded-none bg-foreground/[0.07]" /></div>
+              <Skeleton className={index === 1 ? "h-24 w-full rounded-none bg-foreground/[0.07]" : "h-10 w-full rounded-none bg-foreground/[0.07]"} />
+            </div>
+          ))}
+          <div className="flex justify-end py-5"><Skeleton className="h-9 w-24 rounded-none bg-foreground/[0.07]" /></div>
+        </div>
+      </section>
+    </div>
   );
 }
 

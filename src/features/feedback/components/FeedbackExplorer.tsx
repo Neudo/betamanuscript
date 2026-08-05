@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Check, Eye, EyeOff, LoaderCircle, Search, Trash2 } from "lucide-react";
+import { Archive, Check, Eye, EyeOff, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AccountPlan } from "@/features/account/types";
 import { getAnnotationTagColor, getAnnotationTagTint } from "@/features/annotations/lib/tag-colors";
@@ -75,6 +76,43 @@ export function FeedbackExplorer({
 
 function FeedbackNoManuscript() {
   return <NoManuscriptState />;
+}
+
+export function FeedbackExplorerLoadingSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading feedback"
+      role="status"
+      className="min-h-full md:grid md:h-full md:grid-cols-[210px_minmax(0,1fr)] md:overflow-hidden"
+    >
+      <span className="sr-only">Loading feedback</span>
+      <aside className="border-b border-foreground/10 bg-sidebar px-5 py-7 md:border-b-0 md:border-r" aria-hidden="true">
+        {Array.from({ length: 5 }, (_, groupIndex) => (
+          <section key={groupIndex} className="mb-7">
+            <Skeleton className="mb-3 h-3 w-16 rounded-none bg-foreground/[0.07]" />
+            <div className="space-y-2">
+              {Array.from({ length: groupIndex === 0 ? 2 : 3 }, (_, rowIndex) => (
+                <div key={rowIndex} className="flex items-center gap-2 px-2 py-1.5">
+                  {groupIndex === 3 ? <Skeleton className="h-5 w-5 shrink-0 rounded-full bg-foreground/[0.07]" /> : null}
+                  <Skeleton className="h-3 flex-1 rounded-none bg-foreground/[0.07]" />
+                  <Skeleton className="h-3 w-5 rounded-none bg-foreground/[0.07]" />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </aside>
+      <section className="min-w-0" aria-hidden="true">
+        <div className="flex flex-col gap-3 border-b border-foreground/10 px-5 py-4 sm:flex-row sm:items-center sm:px-7">
+          <Skeleton className="h-10 min-w-0 flex-1 rounded-none bg-foreground/[0.07]" />
+          <div className="flex gap-0"><Skeleton className="h-10 w-28 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-10 w-24 rounded-none bg-foreground/[0.07]" /></div>
+          <Skeleton className="h-3 w-20 self-end rounded-none bg-foreground/[0.07] sm:self-auto" />
+        </div>
+        <FeedbackRowsLoadingSkeleton />
+      </section>
+    </div>
+  );
 }
 
 function FeedbackExplorerContent({
@@ -159,6 +197,8 @@ function FeedbackExplorerContent({
   const emptyMessage = manuscriptId
     ? "No feedback on this manuscript yet."
     : "Create a manuscript to collect reader feedback.";
+
+  if (isLoading) return <FeedbackExplorerLoadingSkeleton />;
 
   function handleFeedbackSeen(annotation: FeedbackAnnotation) {
     if (!manuscriptId) return;
@@ -503,7 +543,7 @@ function FeedbackState({
   onToggleSeen: (annotation: FeedbackAnnotation) => void;
 }) {
   if (isLoading) {
-    return <div className="grid min-h-52 place-items-center"><LoaderCircle className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+    return <FeedbackRowsLoadingSkeleton />;
   }
 
   if (error) {
@@ -529,6 +569,22 @@ function FeedbackState({
           onDelete={onDelete}
           onToggleSeen={onToggleSeen}
         />
+      ))}
+    </div>
+  );
+}
+
+function FeedbackRowsLoadingSkeleton() {
+  return (
+    <div className="divide-y divide-foreground/[0.08] px-5 sm:px-7">
+      {Array.from({ length: 5 }, (_, index) => (
+        <article key={index} className="grid grid-cols-[30px_minmax(0,1fr)] gap-3 py-5">
+          <Skeleton className="h-7 w-7 rounded-full bg-foreground/[0.07]" />
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2"><Skeleton className="h-4 w-24 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-4 w-16 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-32 rounded-none bg-foreground/[0.07]" /></div>
+            <div className="space-y-2"><Skeleton className="h-3 w-full rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-4/5 rounded-none bg-foreground/[0.07]" /></div>
+          </div>
+        </article>
       ))}
     </div>
   );

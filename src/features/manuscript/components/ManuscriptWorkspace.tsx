@@ -7,6 +7,7 @@ import { type CSSProperties, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -149,12 +150,7 @@ export function ManuscriptWorkspace() {
   }
 
   if (manuscriptQuery.isLoading || manuscriptsQuery.isLoading) {
-    return (
-      <ManuscriptFullPageState
-        title="Loading manuscript"
-        description="Fetching your chapters and their current editorial state."
-      />
-    );
+    return <ManuscriptWorkspaceLoadingSkeleton />;
   }
 
   if (manuscriptQuery.isError) {
@@ -332,6 +328,7 @@ export function ManuscriptWorkspace() {
                   isUpdating={updateAnnotationSeen.isPending || updateGeneralCommentSeen.isPending}
                   onFocusedAnnotationDismiss={handleAnnotationFocusDismiss}
                   onFocusedGeneralCommentDismiss={handleGeneralCommentFocusDismiss}
+                  onAnnotationFocus={handleAnnotationFocus}
                   onShowAllTags={handleShowAllFeedbackTags}
                   onToggleGeneralCommentSeen={handleGeneralCommentSeen}
                   onToggleHideRead={() => setHideReadFeedback((hidden) => !hidden)}
@@ -425,6 +422,7 @@ export function ManuscriptWorkspace() {
             focusedGeneralCommentId={focusedGeneralCommentId}
             generalComments={visibleGeneralComments}
             isUpdating={updateAnnotationSeen.isPending || updateGeneralCommentSeen.isPending}
+            onAnnotationFocus={handleAnnotationFocus}
             onToggleGeneralCommentSeen={handleGeneralCommentSeen}
             onToggleSeen={handleAnnotationSeen}
             className="p-4"
@@ -433,6 +431,72 @@ export function ManuscriptWorkspace() {
               : "No feedback in this chapter yet."}
           />
         </ScrollArea>
+      </aside>
+    </div>
+  );
+}
+
+export function ManuscriptWorkspaceLoadingSkeleton() {
+  return (
+    <div
+      aria-busy="true"
+      aria-label="Loading manuscript workspace"
+      role="status"
+      className="min-h-[calc(100vh-3.5rem)] bg-background md:grid md:h-screen md:grid-cols-[minmax(0,1fr)_360px] md:overflow-hidden"
+    >
+      <span className="sr-only">Loading manuscript workspace</span>
+
+      <section className="min-w-0 md:flex md:min-h-0 md:flex-col" aria-hidden="true">
+        <header className="flex min-h-16 flex-col gap-3 border-b border-foreground/10 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <Skeleton className="h-9 w-full max-w-[17rem] rounded-none sm:w-64" />
+          <div className="grid w-full grid-cols-2 items-center gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+            <Skeleton className="col-span-2 h-3 w-20 sm:mr-2 sm:col-auto" />
+            <Skeleton className="h-9 w-full rounded-none sm:w-28" />
+            <Skeleton className="h-9 w-full rounded-none sm:w-[138px]" />
+          </div>
+        </header>
+
+        <div className="md:min-h-0 md:flex-1">
+          <article className="reader-copy mx-auto max-w-3xl px-5 py-10 sm:px-10 sm:py-14">
+            <Skeleton className="h-9 w-3/5 max-w-80 rounded-none" />
+            <div className="mt-10 space-y-10">
+              {["w-full", "w-[93%]", "w-[88%]", "w-[96%]", "w-[72%]", "w-[91%]", "w-[84%]", "w-[63%]"].map((width, index) => (
+                <Skeleton
+                  key={`${width}-${index}`}
+                  className={`h-5 ${width} rounded-none bg-foreground/[0.07]`}
+                />
+              ))}
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <aside className="hidden min-h-0 border-l border-foreground/10 bg-sidebar/45 md:flex md:flex-col" aria-hidden="true">
+        <div className="flex min-h-16 items-center justify-between gap-3 border-b border-foreground/10 px-5 py-3">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-20 rounded-none" />
+            <Skeleton className="h-3 w-14" />
+          </div>
+          <Skeleton className="h-8 w-24 rounded-none" />
+        </div>
+        <div className="space-y-3 p-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="border border-foreground/10 bg-card/65 p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-3 w-24 rounded-none" />
+                  <Skeleton className="h-3 w-16 rounded-none" />
+                </div>
+                <Skeleton className="h-3 w-8" />
+              </div>
+              <div className="mt-4 space-y-2">
+                <Skeleton className="h-3 w-full rounded-none" />
+                <Skeleton className="h-3 w-4/5 rounded-none" />
+              </div>
+            </div>
+          ))}
+        </div>
       </aside>
     </div>
   );
@@ -618,6 +682,7 @@ function AnnotationSheet({
   isUpdating,
   onFocusedAnnotationDismiss,
   onFocusedGeneralCommentDismiss,
+  onAnnotationFocus,
   onShowAllTags,
   onToggleGeneralCommentSeen,
   onToggleHideRead,
@@ -637,6 +702,7 @@ function AnnotationSheet({
   isUpdating: boolean;
   onFocusedAnnotationDismiss: () => void;
   onFocusedGeneralCommentDismiss: () => void;
+  onAnnotationFocus: (annotationId: string) => void;
   onShowAllTags: () => void;
   onToggleGeneralCommentSeen: (generalComment: ManuscriptWorkspaceGeneralComment) => void;
   onToggleHideRead: () => void;
@@ -690,6 +756,7 @@ function AnnotationSheet({
           focusedGeneralCommentId={focusedGeneralCommentId}
           generalComments={generalComments}
           isUpdating={isUpdating}
+          onAnnotationFocus={onAnnotationFocus}
           onToggleGeneralCommentSeen={onToggleGeneralCommentSeen}
           onToggleSeen={onToggleSeen}
           className="mt-6"
@@ -807,6 +874,7 @@ function FeedbackList({
   focusedGeneralCommentId,
   generalComments,
   isUpdating,
+  onAnnotationFocus,
   onToggleGeneralCommentSeen,
   onToggleSeen,
 }: {
@@ -817,6 +885,7 @@ function FeedbackList({
   focusedGeneralCommentId: string | null;
   generalComments: ManuscriptWorkspaceGeneralComment[];
   isUpdating: boolean;
+  onAnnotationFocus: (annotationId: string) => void;
   onToggleGeneralCommentSeen: (generalComment: ManuscriptWorkspaceGeneralComment) => void;
   onToggleSeen: (annotation: ManuscriptWorkspaceAnnotation) => void;
 }) {
@@ -913,43 +982,56 @@ function FeedbackList({
               annotation.id === focusedAnnotationId && "ring-2 ring-primary ring-offset-2",
             )}
           >
-            <div className="flex items-center gap-3">
-              <span
-                className={cn(
-                  "grid h-8 w-8 place-items-center rounded-full border text-xs text-foreground",
-                  isSeen && "grayscale",
-                )}
-                style={{ backgroundColor: "hsl(var(--muted))", borderColor: tagColor }}
-              >
-                {getInitials(annotation.readerName)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium">{annotation.readerName}</p>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "mt-1 gap-1.5 rounded-none font-mono text-[9px] uppercase",
-                    isSeen && "grayscale opacity-60",
-                  )}
-                  style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}
-                >
-                  <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tagColor }} aria-hidden />
-                  {annotation.tag.label}
-                </Badge>
-              </div>
-              <span className="font-mono text-[9px] text-muted-foreground">
-                {annotationDateFormat.format(new Date(annotation.createdAt))}
-              </span>
-            </div>
-            <blockquote
-              className={cn(
-                "mt-4 whitespace-pre-wrap border-l-2 pl-3 text-sm leading-6",
-                isSeen && "line-through",
-              )}
-              style={{ borderLeftColor: tagColor }}
+            <div
+              aria-label={`Show annotated passage from ${annotation.readerName}`}
+              className="cursor-pointer rounded-none outline-none transition-colors hover:bg-foreground/[0.025] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              role="button"
+              tabIndex={0}
+              onClick={() => onAnnotationFocus(annotation.id)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                onAnnotationFocus(annotation.id);
+              }}
             >
-              “{annotation.comment ?? annotation.quote}”
-            </blockquote>
+              <div className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    "grid h-8 w-8 place-items-center rounded-full border text-xs text-foreground",
+                    isSeen && "grayscale",
+                  )}
+                  style={{ backgroundColor: "hsl(var(--muted))", borderColor: tagColor }}
+                >
+                  {getInitials(annotation.readerName)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium">{annotation.readerName}</p>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "mt-1 gap-1.5 rounded-none font-mono text-[9px] uppercase",
+                      isSeen && "grayscale opacity-60",
+                    )}
+                    style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--foreground))" }}
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0" style={{ backgroundColor: tagColor }} aria-hidden />
+                    {annotation.tag.label}
+                  </Badge>
+                </div>
+                <span className="font-mono text-[9px] text-muted-foreground">
+                  {annotationDateFormat.format(new Date(annotation.createdAt))}
+                </span>
+              </div>
+              <blockquote
+                className={cn(
+                  "mt-4 whitespace-pre-wrap border-l-2 pl-3 text-sm leading-6",
+                  isSeen && "line-through",
+                )}
+                style={{ borderLeftColor: tagColor }}
+              >
+                “{annotation.comment ?? annotation.quote}”
+              </blockquote>
+            </div>
             <Button
               variant="ghost"
               size="sm"

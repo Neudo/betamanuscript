@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
   defaultAuthorNotificationPreferences,
@@ -76,6 +77,10 @@ export function NotificationPreferencesForm({ profileId }: { profileId: string }
     return <p className="py-5 text-sm text-destructive">{preferencesQuery.error.message}</p>;
   }
 
+  if (preferencesQuery.isLoading) {
+    return <NotificationPreferencesLoadingSkeleton />;
+  }
+
   return (
     <>
       <div className="divide-y divide-foreground/[0.08]">
@@ -126,5 +131,22 @@ export function NotificationPreferencesForm({ profileId }: { profileId: string }
         </div>
       </section>
     </>
+  );
+}
+
+function NotificationPreferencesLoadingSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading notification preferences" role="status">
+      <span className="sr-only">Loading notification preferences</span>
+      <div className="divide-y divide-foreground/[0.08]" aria-hidden="true">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className="grid gap-4 border-b border-foreground/[0.08] py-5 sm:grid-cols-[230px_minmax(0,1fr)] sm:gap-8">
+            <div className="space-y-2"><Skeleton className="h-4 w-32 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-48 rounded-none bg-foreground/[0.07]" /></div>
+            <Skeleton className="h-5 w-9 self-center rounded-full bg-foreground/[0.07]" />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end py-5" aria-hidden="true"><Skeleton className="h-9 w-32 rounded-none bg-foreground/[0.07]" /></div>
+    </div>
   );
 }

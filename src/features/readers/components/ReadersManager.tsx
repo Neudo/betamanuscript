@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -59,22 +60,20 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
   );
   const visibleManuscripts = selectedManuscript ? [selectedManuscript] : manuscripts;
 
+  if (manuscriptsQuery.isLoading) return <ReadersManagerLoadingSkeleton />;
+
   return (
     <div className="min-h-full">
       <PageHeader eyebrow="Readers" title="Beta readers" />
 
       <div className="max-w-[1100px] space-y-6 p-5 sm:p-8">
-        {manuscriptsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading readers…</p>
-        ) : null}
-
         {manuscriptsQuery.error ? (
           <Alert variant="destructive">
             <AlertDescription>{manuscriptsQuery.error.message}</AlertDescription>
           </Alert>
         ) : null}
 
-        {!manuscriptsQuery.isLoading && !manuscriptsQuery.error && manuscripts.length === 0 ? (
+        {!manuscriptsQuery.error && manuscripts.length === 0 ? (
           <Card className="border-dashed p-8 text-center">
             <Mail className="mx-auto h-5 w-5 text-muted-foreground" />
             <Heading level={2} size="subsection" className="mt-4">No manuscript yet</Heading>
@@ -118,6 +117,57 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
             </AlertDescription>
           </Alert>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function ReadersManagerLoadingSkeleton() {
+  return (
+    <div aria-busy="true" aria-label="Loading beta readers" role="status" className="min-h-full">
+      <span className="sr-only">Loading beta readers</span>
+      <header className="flex min-h-[88px] flex-col gap-5 border-b border-foreground/10 px-5 py-5 sm:px-8 md:flex-row md:items-center md:justify-between" aria-hidden="true">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-16 rounded-none bg-foreground/[0.07]" />
+          <Skeleton className="h-8 w-44 rounded-none bg-foreground/[0.07]" />
+        </div>
+      </header>
+      <div className="max-w-[1100px] space-y-4 p-5 sm:p-8" aria-hidden="true">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <Skeleton className="h-7 w-52 rounded-none bg-foreground/[0.07]" />
+          <Skeleton className="h-9 w-28 rounded-none bg-foreground/[0.07]" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className="border border-foreground/10 bg-card p-5">
+              <Skeleton className="h-3 w-28 rounded-none bg-foreground/[0.07]" />
+              <Skeleton className="mt-3 h-8 w-16 rounded-none bg-foreground/[0.07]" />
+            </div>
+          ))}
+        </div>
+        <section className="border border-foreground/10 bg-card p-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-32 rounded-none bg-foreground/[0.07]" />
+              <Skeleton className="h-4 w-60 rounded-none bg-foreground/[0.07]" />
+              <Skeleton className="h-3 w-full max-w-xl rounded-none bg-foreground/[0.07]" />
+            </div>
+            <Skeleton className="h-8 w-28 rounded-none bg-foreground/[0.07]" />
+          </div>
+        </section>
+        <section className="overflow-hidden border border-foreground/10 bg-card">
+          <div className="grid grid-cols-[minmax(11rem,1.4fr)_repeat(5,minmax(4rem,1fr))_7rem] gap-4 border-b border-foreground/10 bg-sidebar/70 px-4 py-3">
+            {Array.from({ length: 7 }, (_, index) => <Skeleton key={index} className="h-3 w-full rounded-none bg-foreground/[0.07]" />)}
+          </div>
+          <div className="divide-y divide-foreground/[0.07]">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="grid min-h-16 grid-cols-[minmax(11rem,1.4fr)_repeat(5,minmax(4rem,1fr))_7rem] items-center gap-4 px-4 py-3">
+                <div className="space-y-2"><Skeleton className="h-3 w-28 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-40 rounded-none bg-foreground/[0.07]" /></div>
+                {Array.from({ length: 6 }, (_, cellIndex) => <Skeleton key={cellIndex} className="h-3 w-full rounded-none bg-foreground/[0.07]" />)}
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

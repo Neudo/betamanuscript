@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   type DashboardAnnotation,
   type DashboardOverviewData,
@@ -42,7 +43,7 @@ export function DashboardOverview() {
   const isLoading = manuscriptsQuery.isPending || (!manuscriptId ? false : overviewQuery.isPending);
   const error = manuscriptsQuery.error ?? overviewQuery.error;
 
-  if (isLoading) return <DashboardLoading />;
+  if (isLoading) return <DashboardOverviewLoadingSkeleton />;
   if (error) return <DashboardMessage message="Unable to load your dashboard. Please refresh the page." />;
   if (!manuscriptId) return <NoManuscriptState />;
   if (!overviewQuery.data) return <DashboardMessage message="This manuscript is no longer available." />;
@@ -307,13 +308,104 @@ function ReaderProgress({ reader }: { reader: DashboardReader }) {
   );
 }
 
-function DashboardLoading() {
+export function DashboardOverviewLoadingSkeleton() {
   return (
-    <div className="max-w-[1100px] animate-pulse px-5 py-7 sm:px-8 sm:py-8">
-      <div className="h-3 w-16 bg-foreground/10" />
-      <div className="mt-3 h-8 w-72 max-w-full bg-foreground/10" />
-      <div className="mt-2 h-4 w-44 bg-foreground/10" />
-      <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-32 border border-foreground/10 bg-card" />)}</div>
+    <div
+      aria-busy="true"
+      aria-label="Loading dashboard overview"
+      role="status"
+      className="max-w-[1100px] px-5 py-7 sm:px-8 sm:py-8"
+    >
+      <span className="sr-only">Loading dashboard overview</span>
+      <div aria-hidden="true">
+        <div className="mb-8 flex items-start justify-between gap-5">
+          <div className="min-w-0 space-y-2">
+            <Skeleton className="h-3 w-16 rounded-none bg-foreground/[0.07]" />
+            <Skeleton className="h-9 w-72 max-w-full rounded-none bg-foreground/[0.07]" />
+            <Skeleton className="h-4 w-44 rounded-none bg-foreground/[0.07]" />
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Skeleton className="h-9 w-28 rounded-none bg-foreground/[0.07]" />
+            <Skeleton className="h-9 w-32 rounded-none bg-foreground/[0.07]" />
+          </div>
+        </div>
+
+        <section className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="min-h-32 border border-foreground/10 bg-card p-5">
+              <Skeleton className="h-3 w-24 rounded-none bg-foreground/[0.07]" />
+              <Skeleton className="mt-4 h-8 w-14 rounded-none bg-foreground/[0.07]" />
+              <Skeleton className="mt-2 h-3 w-20 rounded-none bg-foreground/[0.07]" />
+            </div>
+          ))}
+        </section>
+
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-6">
+            <section className="border border-foreground/10 bg-card p-5">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-32 rounded-none bg-foreground/[0.07]" />
+                  <Skeleton className="h-5 w-48 rounded-none bg-foreground/[0.07]" />
+                </div>
+                <Skeleton className="h-3 w-12 rounded-none bg-foreground/[0.07]" />
+              </div>
+              <div className="flex h-[165px] items-end justify-around gap-3 px-2">
+                {[32, 58, 76, 44, 92, 66].map((height, index) => (
+                  <Skeleton key={index} className="w-full max-w-10 rounded-none bg-foreground/[0.07]" style={{ height: `${height}%` }} />
+                ))}
+              </div>
+            </section>
+
+            <section className="border border-foreground/10 bg-card p-5">
+              <Skeleton className="mb-5 h-3 w-16 rounded-none bg-foreground/[0.07]" />
+              <div className="divide-y divide-foreground/[0.07]">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <div key={index} className="grid grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <Skeleton className="h-3 w-3 rounded-none bg-foreground/[0.07]" />
+                    <Skeleton className="h-3 w-full max-w-48 rounded-none bg-foreground/[0.07]" />
+                    <Skeleton className="h-3 w-20 rounded-none bg-foreground/[0.07]" />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="border border-foreground/10 bg-card">
+              <div className="flex items-center justify-between border-b border-foreground/10 px-5 py-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-28 rounded-none bg-foreground/[0.07]" />
+                  <Skeleton className="h-3 w-12 rounded-none bg-foreground/[0.07]" />
+                </div>
+                <Skeleton className="h-3 w-16 rounded-none bg-foreground/[0.07]" />
+              </div>
+              <div className="divide-y divide-foreground/[0.07]">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <div key={index} className="grid grid-cols-[28px_minmax(0,1fr)] gap-3 px-5 py-3.5">
+                    <Skeleton className="h-6 w-6 rounded-full bg-foreground/[0.07]" />
+                    <div className="space-y-2"><Skeleton className="h-3 w-40 rounded-none bg-foreground/[0.07]" /><Skeleton className="h-3 w-full rounded-none bg-foreground/[0.07]" /></div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-6">
+            {Array.from({ length: 3 }, (_, index) => (
+              <section key={index} className="border border-foreground/10 bg-card p-5">
+                <Skeleton className="mb-5 h-3 w-28 rounded-none bg-foreground/[0.07]" />
+                <div className="space-y-4">
+                  {Array.from({ length: index === 0 ? 4 : 3 }, (_, rowIndex) => (
+                    <div key={rowIndex} className="space-y-2">
+                      <div className="flex items-center gap-2.5"><Skeleton className="h-6 w-6 rounded-full bg-foreground/[0.07]" /><Skeleton className="h-3 flex-1 rounded-none bg-foreground/[0.07]" /></div>
+                      <Skeleton className="ml-8 h-2 w-[calc(100%_-_2rem)] rounded-none bg-foreground/[0.07]" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }
