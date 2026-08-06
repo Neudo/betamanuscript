@@ -185,7 +185,13 @@ function toCreateManuscriptPayload({
 }
 
 export async function getManuscripts(): Promise<ManuscriptSummary[]> {
-  const supabase = createSupabaseBrowserClient();
+  return getManuscriptsWithClient(createSupabaseBrowserClient());
+}
+
+export async function getManuscriptsWithClient(
+  client: SupabaseClient<Database>,
+): Promise<ManuscriptSummary[]> {
+  const supabase = client;
   const { data, error } = await supabase
     .from("manuscripts")
     .select(manuscriptSummarySelect)
