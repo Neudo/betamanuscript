@@ -964,7 +964,7 @@ function SourceDocumentUpload({
             Drag and drop a file here, or click to choose one.
           </span>
           <span className="text-center font-mono text-[9px]">
-            DOCX, TXT, Markdown · max 20 MB · chapters detected automatically
+            DOCX, PDF, TXT, Markdown · max 20 MB · chapters detected automatically
           </span>
         </button>
       )}

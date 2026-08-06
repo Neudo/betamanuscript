@@ -13,7 +13,7 @@ import {
 
 export const MAX_SOURCE_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024;
 export const MAX_IMPORTED_CHARACTER_COUNT = 1_000_000;
-export const sourceDocumentAccept = ".docx,.txt,.md,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+export const sourceDocumentAccept = ".docx,.pdf,.txt,.md,application/pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const MAX_CHAPTER_COUNT = 200;
 const MAX_BLOCK_CHARACTER_COUNT = 25_000;
@@ -99,6 +99,7 @@ const docxFontNamesBySpecificity = [...docxFontFamilyByName.entries()]
 const sourceDocumentMimeTypes = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   md: "text/markdown",
+  pdf: "application/pdf",
   txt: "text/plain",
 } as const;
 
@@ -149,7 +150,7 @@ export function getSourceDocumentMetadata(file: File): SourceDocumentMetadata | 
 export function getSourceDocumentError(file: File) {
   const metadata = getSourceDocumentMetadata(file);
   if (!metadata) {
-    return "Choose a DOCX, TXT, or Markdown file.";
+    return "Choose a DOCX, PDF, TXT, or Markdown file.";
   }
 
   if (file.size > MAX_SOURCE_DOCUMENT_SIZE_BYTES) {
@@ -173,7 +174,9 @@ export async function importSourceDocument(file: File): Promise<ImportedManuscri
 
   const paragraphs = metadata.extension === "docx"
     ? await extractDocxParagraphs(file)
-    : extractPlainTextParagraphs(await file.text());
+    : metadata.extension === "pdf"
+      ? await extractPdfParagraphs(file)
+      : extractPlainTextParagraphs(await file.text());
   const characterCount = paragraphs.reduce((total, paragraph) => total + paragraph.text.length, 0);
 
   if (characterCount === 0) {
@@ -229,6 +232,189 @@ function extractPlainTextParagraphs(text: string): DocumentParagraph[] {
 
   flushParagraph();
   return paragraphs;
+}
+
+type PdfTextItem = {
+  fontName: string;
+  hasEOL: boolean;
+  str: string;
+  transform: number[];
+};
+
+type PdfTextStyle = {
+  fontFamily?: string;
+};
+
+type PdfTextContent = {
+  items: unknown[];
+  styles: Record<string, PdfTextStyle>;
+};
+
+type PdfParagraph = DocumentParagraph & {
+  fontSize: number;
+};
+
+async function extractPdfParagraphs(file: File): Promise<DocumentParagraph[]> {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  if (typeof window !== "undefined") {
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+      import.meta.url,
+    ).toString();
+  }
+
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+    stopAtErrors: true,
+  });
+
+  try {
+    const pdf = await loadingTask.promise;
+    if (pdf.numPages > 500) {
+      throw new Error("The PDF must contain 500 pages or fewer.");
+    }
+
+    const paragraphs: PdfParagraph[] = [];
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const textContent = await page.getTextContent();
+      paragraphs.push(...extractPdfPageParagraphs(textContent));
+      page.cleanup();
+    }
+
+    return classifyPdfHeadings(paragraphs);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("The PDF must")) throw error;
+
+    const errorName = error instanceof Error ? error.name : "";
+    if (errorName === "PasswordException") {
+      throw new Error("Password-protected PDFs are not supported.");
+    }
+
+    throw new Error("The PDF could not be read. Upload a text-based PDF instead of a scanned image.");
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
+export function extractPdfPageParagraphs(textContent: PdfTextContent): PdfParagraph[] {
+  const paragraphs: PdfParagraph[] = [];
+  let paragraphRuns: ManuscriptRichTextRun[] = [];
+  let lineRuns: ManuscriptRichTextRun[] = [];
+  let paragraphFontSize = 0;
+  let lineFontSize = 0;
+
+  function flushLine() {
+    if (lineRuns.length === 0) return;
+
+    if (paragraphRuns.length > 0) paragraphRuns.push({ text: " " });
+    paragraphRuns.push(...lineRuns);
+    paragraphFontSize = Math.max(paragraphFontSize, lineFontSize);
+    lineRuns = [];
+    lineFontSize = 0;
+  }
+
+  function flushParagraph() {
+    flushLine();
+    if (paragraphRuns.length === 0) return;
+
+    const richContent = normalizeRichTextWhitespace(createRichText(paragraphRuns));
+    const text = getRichTextContent(richContent);
+    if (text) {
+      paragraphs.push({ fontSize: paragraphFontSize, richContent, text });
+    }
+
+    paragraphRuns = [];
+    paragraphFontSize = 0;
+  }
+
+  for (const item of textContent.items) {
+    if (!isPdfTextItem(item)) continue;
+    if (!item.str) {
+      flushParagraph();
+      continue;
+    }
+
+    const marks = getPdfTextMarks(item, textContent.styles[item.fontName]);
+    lineRuns.push({ ...(marks ? { marks } : {}), text: item.str });
+    lineFontSize = Math.max(lineFontSize, getPdfFontSize(item));
+
+    if (item.hasEOL) flushLine();
+  }
+
+  flushParagraph();
+  return paragraphs;
+}
+
+function isPdfTextItem(item: unknown): item is PdfTextItem {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+
+  const candidate = item as Partial<PdfTextItem>;
+  return typeof candidate.fontName === "string"
+    && typeof candidate.hasEOL === "boolean"
+    && typeof candidate.str === "string"
+    && Array.isArray(candidate.transform);
+}
+
+function getPdfTextMarks(
+  item: PdfTextItem,
+  style: PdfTextStyle | undefined,
+): ManuscriptTextMarks | undefined {
+  const fontName = item.fontName.toLowerCase();
+  const fontFamily = classifyPdfFontFamily(style?.fontFamily);
+  const marks: ManuscriptTextMarks = {
+    ...(fontName.includes("bold") || fontName.includes("black") ? { bold: true } : {}),
+    ...(fontFamily ? { fontFamily } : {}),
+    ...(fontName.includes("italic") || fontName.includes("oblique") ? { italic: true } : {}),
+  };
+
+  return Object.keys(marks).length > 0 ? marks : undefined;
+}
+
+function classifyPdfFontFamily(fontFamily: string | undefined): ManuscriptFontFamily | undefined {
+  if (!fontFamily) return undefined;
+
+  const normalizedFontFamily = fontFamily.toLowerCase();
+  if (normalizedFontFamily.includes("sans-serif") || normalizedFontFamily.includes("sans serif")) {
+    return "sans-serif";
+  }
+
+  return normalizedFontFamily.includes("serif") ? "serif" : undefined;
+}
+
+function getPdfFontSize(item: PdfTextItem) {
+  const horizontalScale = Number(item.transform[0]) || 0;
+  const verticalScale = Number(item.transform[1]) || 0;
+  const fontSize = Math.hypot(horizontalScale, verticalScale);
+
+  return fontSize || Math.abs(Number(item.transform[3]) || 0);
+}
+
+function classifyPdfHeadings(paragraphs: PdfParagraph[]): DocumentParagraph[] {
+  const bodyFontSize = getPdfMedianFontSize(paragraphs);
+
+  return paragraphs.map(({ fontSize, richContent, text }) => ({
+    richContent,
+    text,
+    ...(fontSize >= bodyFontSize * 1.4 && fontSize <= bodyFontSize * 2.5
+      ? { style: "pdf-heading-1" }
+      : {}),
+  }));
+}
+
+function getPdfMedianFontSize(paragraphs: PdfParagraph[]) {
+  const fontSizes = paragraphs
+    .filter((paragraph) => paragraph.fontSize > 0)
+    .map((paragraph) => paragraph.fontSize)
+    .sort((left, right) => left - right);
+
+  if (fontSizes.length === 0) return 0;
+
+  const middleIndex = Math.floor(fontSizes.length / 2);
+  return fontSizes.length % 2 === 0
+    ? (fontSizes[middleIndex - 1] + fontSizes[middleIndex]) / 2
+    : fontSizes[middleIndex];
 }
 
 async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
@@ -330,7 +516,7 @@ function getChapterTitle(paragraph: DocumentParagraph) {
   if (!text || text.length > 500) return null;
 
   return getExplicitChapterTitle(text)
-    ?? (paragraph.style && /^(heading|titre)[ _-]?[12]$/i.test(paragraph.style.replace(/\s+/g, "")) ? text : null)
+    ?? (paragraph.style && /^(heading|titre|pdf-heading)[ _-]?[12]$/i.test(paragraph.style.replace(/\s+/g, "")) ? text : null)
     ?? (paragraph.style?.startsWith("markdown-heading-") ? text : null);
 }
 

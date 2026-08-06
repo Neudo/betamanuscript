@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { classifyDocxFontFamily } from "./source-document";
+import {
+  classifyDocxFontFamily,
+  extractPdfPageParagraphs,
+  getSourceDocumentMetadata,
+} from "./source-document";
 
 describe("DOCX font family classification", () => {
   it("distinguishes Roboto Serif from Roboto", () => {
@@ -27,5 +31,49 @@ describe("DOCX font family classification", () => {
 
   it("leaves unknown fonts unclassified", () => {
     expect(classifyDocxFontFamily("A Writer's Private Typeface")).toBeUndefined();
+  });
+});
+
+describe("PDF source documents", () => {
+  it("accepts PDFs as source documents", () => {
+    expect(getSourceDocumentMetadata({ name: "Talina's Work.PDF" } as File)).toEqual({
+      extension: "pdf",
+      mimeType: "application/pdf",
+    });
+  });
+
+  it("reassembles PDF lines into formatted paragraphs", () => {
+    const [paragraph] = extractPdfPageParagraphs({
+      items: [
+        {
+          fontName: "body-font",
+          hasEOL: true,
+          str: "The first line",
+          transform: [12, 0, 0, 12, 72, 700],
+        },
+        {
+          fontName: "body-font",
+          hasEOL: false,
+          str: "continues here.",
+          transform: [12, 0, 0, 12, 72, 683],
+        },
+      ],
+      styles: {
+        "body-font": { fontFamily: "sans-serif" },
+      },
+    });
+
+    expect(paragraph?.text).toBe("The first line continues here.");
+    expect(paragraph?.richContent.runs).toEqual([
+      {
+        marks: { fontFamily: "sans-serif" },
+        text: "The first line",
+      },
+      { text: " " },
+      {
+        marks: { fontFamily: "sans-serif" },
+        text: "continues here.",
+      },
+    ]);
   });
 });

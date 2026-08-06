@@ -385,11 +385,11 @@ export function DraftVersionSwitcher({
                 className="h-auto w-full justify-start rounded-none border-dashed px-3 py-3 text-left text-xs"
               >
                 <FileText className="h-4 w-4" strokeWidth={1.25} />
-                Upload DOCX, TXT, or Markdown file
+                Upload DOCX, PDF, TXT, or Markdown file
               </Button>
             )}
             <p className="text-[11px] leading-5 text-muted-foreground">
-              An uploaded file replaces the copied chapter text in this draft. DOCX, TXT, and Markdown up to 20 MB are supported.
+              An uploaded file replaces the copied chapter text in this draft. DOCX, PDF, TXT, and Markdown up to 20 MB are supported.
             </p>
             {sourceImportError ? <p className="text-xs text-destructive">{sourceImportError}</p> : null}
           </div>
