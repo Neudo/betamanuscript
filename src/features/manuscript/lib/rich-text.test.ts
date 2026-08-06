@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   createRichText,
   getRichTextContent,
+  manuscriptFontFamilyStacks,
+  marksToStyle,
   normalizeRichText,
   normalizeRichTextWhitespace,
   sliceRichText,
@@ -63,6 +65,11 @@ describe("manuscript rich text", () => {
       ],
       version: 1,
     });
+  });
+
+  it("renders each supported font category with the matching bundled font stack", () => {
+    expect(marksToStyle({ fontFamily: "serif" }).fontFamily).toBe(manuscriptFontFamilyStacks.serif);
+    expect(marksToStyle({ fontFamily: "sans-serif" }).fontFamily).toBe(manuscriptFontFamilyStacks["sans-serif"]);
   });
 
   it("keeps line breaks as explicit rendering boundaries", () => {

@@ -1750,6 +1750,13 @@ export type Database = {
           reading_round_id: string
         }[]
       }
+      create_manuscript_draft_version_from_source: {
+        Args: { p_imported_chapters: Json; p_source_version_id: string }
+        Returns: {
+          manuscript_version_id: string
+          reading_round_id: string
+        }[]
+      }
       create_manuscript_reader_invitation: {
         Args: {
           p_manuscript_id: string
@@ -1863,6 +1870,10 @@ export type Database = {
       }
       delete_manuscript: {
         Args: { p_manuscript_id: string }
+        Returns: undefined
+      }
+      delete_manuscript_draft_version: {
+        Args: { p_manuscript_version_id: string }
         Returns: undefined
       }
       delete_archived_feedback: {

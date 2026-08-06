@@ -15,8 +15,10 @@ import {
   createRichText,
   createRichTextDocument,
   getRichTextContent,
+  manuscriptFontFamilyStacks,
   marksToStyle,
   normalizeMarks,
+  type ManuscriptFontFamily,
   type ManuscriptRichTextDocument,
   type ManuscriptRichTextRun,
   type ManuscriptTextMarks,
@@ -65,15 +67,8 @@ export function RichTextEditor({ disabled = false, id, onChange, value }: RichTe
     }
 
     const range = selection.getRangeAt(0);
-    if (!editor.contains(range.commonAncestorContainer)) {
-      setHasSelection(false);
-      return;
-    }
-
-    const startBlock = getBlockElement(range.startContainer, editor);
-    const endBlock = getBlockElement(range.endContainer, editor);
     const selectionText = selection.toString();
-    if (!startBlock || startBlock !== endBlock || !selectionText) {
+    if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer) || !selectionText) {
       setHasSelection(false);
       return;
     }
@@ -120,6 +115,13 @@ export function RichTextEditor({ disabled = false, id, onChange, value }: RichTe
     emitChange();
   }
 
+  function applyFontFamily(fontFamily: ManuscriptFontFamily) {
+    if (disabled || !restoreSelection()) return;
+    document.execCommand("styleWithCSS", false, "true");
+    document.execCommand("fontName", false, manuscriptFontFamilyStacks[fontFamily]);
+    emitChange();
+  }
+
   function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
     event.preventDefault();
     const text = event.clipboardData.getData("text/plain");
@@ -146,6 +148,22 @@ export function RichTextEditor({ disabled = false, id, onChange, value }: RichTe
         </ToolbarButton>
         <ToolbarButton label="Italic" onClick={() => runNativeCommand("italic")} disabled={disabled || !hasSelection}>
           <Italic className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          label="Serif"
+          onClick={() => applyFontFamily("serif")}
+          disabled={disabled || !hasSelection}
+          className="w-auto px-2 font-serif text-xs"
+        >
+          Serif
+        </ToolbarButton>
+        <ToolbarButton
+          label="Sans serif"
+          onClick={() => applyFontFamily("sans-serif")}
+          disabled={disabled || !hasSelection}
+          className="w-auto px-2 font-sans text-[10px]"
+        >
+          Sans
         </ToolbarButton>
       </div>
       <div
@@ -176,8 +194,10 @@ function ToolbarButton({
   disabled,
   label,
   onClick,
+  className,
 }: {
   children: ReactNode;
+  className?: string;
   disabled: boolean;
   label: string;
   onClick: () => void;
@@ -192,7 +212,7 @@ function ToolbarButton({
       title={label}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
-      className="h-7 w-7 rounded-none"
+      className={cn("h-7 w-7 rounded-none", className)}
     >
       {children}
     </Button>
@@ -263,7 +283,7 @@ function readNodeRuns(
 }
 
 function getElementMarks(element: HTMLElement, inheritedMarks: ManuscriptTextMarks | undefined) {
-  const fontFamily = getEditorFontFamily(element.style.fontFamily);
+  const fontFamily = getEditorFontFamily(element.style.fontFamily || element.getAttribute("face") || "");
 
   return normalizeMarks({
     ...inheritedMarks,
@@ -282,10 +302,4 @@ function getEditorFontFamily(fontFamily: string) {
     return "sans-serif" as const;
   }
   return undefined;
-}
-
-function getBlockElement(node: Node, editor: HTMLDivElement) {
-  const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
-  const block = element?.closest("[data-rich-text-block]");
-  return block instanceof HTMLElement && editor.contains(block) ? block : null;
 }

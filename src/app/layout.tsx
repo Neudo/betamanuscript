@@ -9,11 +9,13 @@ import { Providers } from "./providers";
 
 const inter = Inter({
   subsets: ["latin"],
+  style: ["normal", "italic"],
   variable: "--font-inter",
 });
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
+  style: ["normal", "italic"],
   variable: "--font-eb-garamond",
 });
 

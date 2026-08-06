@@ -566,12 +566,29 @@ export async function createManuscript({
 }
 
 export async function createManuscriptDraftVersion(
-  sourceVersionId: string,
+  {
+    sourceVersionId,
+    importedChapters,
+  }: {
+    sourceVersionId: string;
+    importedChapters?: ImportedManuscriptChapter[];
+  },
 ): Promise<CreatedManuscriptDraftVersion> {
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("create_manuscript_draft_version", {
-    p_source_version_id: sourceVersionId,
-  });
+  const { data, error } = importedChapters
+    ? await supabase.rpc("create_manuscript_draft_version_from_source", {
+      p_imported_chapters: importedChapters.map((chapter) => ({
+        blocks: chapter.blocks.map((block) => ({
+          content: block.content,
+          kind: block.kind,
+        })),
+        title: chapter.title,
+      })) as Json,
+      p_source_version_id: sourceVersionId,
+    })
+    : await supabase.rpc("create_manuscript_draft_version", {
+      p_source_version_id: sourceVersionId,
+    });
 
   if (error) throw new Error(error.message);
 
@@ -585,7 +602,9 @@ export async function createManuscriptDraftVersion(
     readingRoundId: created.reading_round_id,
   };
 
-  const sourceChapters = await getManuscriptVersionRichContent(supabase, sourceVersionId);
+  const sourceChapters = importedChapters
+    ? importedChapters.map((chapter) => ({ blocks: chapter.blocks }))
+    : await getManuscriptVersionRichContent(supabase, sourceVersionId);
   await setManuscriptVersionRichContent(
     supabase,
     draftVersion.manuscriptVersionId,
@@ -929,6 +948,41 @@ export async function deleteManuscript(manuscriptId: string) {
 
   const { error: deleteError } = await supabase.rpc("delete_manuscript", {
     p_manuscript_id: manuscriptId,
+  });
+
+  if (deleteError) throw new Error(deleteError.message);
+}
+
+export async function deleteManuscriptDraftVersion(manuscriptVersionId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { data: assetRows, error: assetsError } = await supabase
+    .from("manuscript_assets")
+    .select("storage_bucket, storage_path")
+    .eq("manuscript_version_id", manuscriptVersionId);
+
+  if (assetsError) throw new Error(assetsError.message);
+
+  const assetPathsByBucket = new Map<string, string[]>();
+  for (const asset of (assetRows ?? []) as ManuscriptAssetStorageRow[]) {
+    if (
+      asset.storage_bucket !== MANUSCRIPT_COVERS_BUCKET
+      && asset.storage_bucket !== MANUSCRIPT_SOURCES_BUCKET
+    ) {
+      throw new Error("This draft has an unsupported file attachment.");
+    }
+
+    const paths = assetPathsByBucket.get(asset.storage_bucket) ?? [];
+    paths.push(asset.storage_path);
+    assetPathsByBucket.set(asset.storage_bucket, paths);
+  }
+
+  for (const [bucket, paths] of assetPathsByBucket) {
+    const { error: storageError } = await supabase.storage.from(bucket).remove(paths);
+    if (storageError) throw new Error(storageError.message);
+  }
+
+  const { error: deleteError } = await supabase.rpc("delete_manuscript_draft_version", {
+    p_manuscript_version_id: manuscriptVersionId,
   });
 
   if (deleteError) throw new Error(deleteError.message);

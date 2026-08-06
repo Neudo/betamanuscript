@@ -13,6 +13,7 @@ import {
   createManuscriptDraftVersion,
   createManuscript,
   deleteManuscriptChapter,
+  deleteManuscriptDraftVersion,
   deleteManuscript,
   updateManuscriptChapter,
   updateManuscriptSettings,
@@ -112,6 +113,19 @@ export function useDeleteManuscriptMutation() {
 
   return useMutation<void, Error, string>({
     mutationFn: deleteManuscript,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: manuscriptKeys.all,
+      });
+    },
+  });
+}
+
+export function useDeleteManuscriptDraftVersionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: deleteManuscriptDraftVersion,
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: manuscriptKeys.all,

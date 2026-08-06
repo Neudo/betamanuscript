@@ -1,5 +1,10 @@
 export type ManuscriptFontFamily = "sans-serif" | "serif";
 
+export const manuscriptFontFamilyStacks = {
+  "sans-serif": "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+  serif: "var(--font-eb-garamond), Georgia, serif",
+} as const satisfies Record<ManuscriptFontFamily, string>;
+
 export type ManuscriptTextMarks = {
   bold?: true;
   fontFamily?: ManuscriptFontFamily;
@@ -213,11 +218,7 @@ export function marksToStyle(marks: ManuscriptTextMarks | undefined) {
   if (!marks) return {};
 
   return {
-    fontFamily: marks.fontFamily === "serif"
-      ? "var(--font-eb-garamond), Georgia, serif"
-      : marks.fontFamily === "sans-serif"
-        ? "var(--font-inter), ui-sans-serif, system-ui, sans-serif"
-        : undefined,
+    fontFamily: marks.fontFamily ? manuscriptFontFamilyStacks[marks.fontFamily] : undefined,
     fontStyle: marks.italic ? "italic" : undefined,
     fontWeight: marks.bold ? 700 : undefined,
   };
