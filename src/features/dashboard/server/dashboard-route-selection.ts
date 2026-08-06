@@ -1,0 +1,17 @@
+import "server-only";
+
+export type DashboardRouteSearchParams = {
+  manuscriptId?: string | string[];
+  versionId?: string | string[];
+};
+
+function firstSearchParam(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : value?.[0] ?? null;
+}
+
+export function getDashboardRouteSelection(params: DashboardRouteSearchParams) {
+  return {
+    manuscriptId: firstSearchParam(params.manuscriptId),
+    manuscriptVersionId: firstSearchParam(params.versionId),
+  };
+}

@@ -1,4 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { Database } from "@/lib/supabase/database.types";
 import type {
   ManuscriptSurvey,
   ManuscriptSurveysData,
@@ -94,7 +97,19 @@ export async function getManuscriptSurveys(
   manuscriptId: string,
   manuscriptVersionId: string | null = null,
 ): Promise<ManuscriptSurveysData | null> {
-  const supabase = createSupabaseBrowserClient();
+  return getManuscriptSurveysWithClient(
+    createSupabaseBrowserClient(),
+    manuscriptId,
+    manuscriptVersionId,
+  );
+}
+
+export async function getManuscriptSurveysWithClient(
+  client: SupabaseClient<Database>,
+  manuscriptId: string,
+  manuscriptVersionId: string | null = null,
+): Promise<ManuscriptSurveysData | null> {
+  const supabase = client;
   const { data: versionRows, error: versionError } = await supabase
     .from("manuscript_versions")
     .select("id, title, version_number")
@@ -339,7 +354,7 @@ async function getSurvey(surveyId: string): Promise<ManuscriptSurvey> {
 }
 
 async function hydrateSurveys(
-  supabase: ReturnType<typeof createSupabaseBrowserClient>,
+  supabase: SupabaseClient<Database>,
   surveys: SurveyRow[],
 ): Promise<ManuscriptSurvey[]> {
   if (surveys.length === 0) return [];

@@ -225,6 +225,7 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["chapter_block_kind"]
           position: number
+          rich_content: Json
           updated_at: string
         }
         Insert: {
@@ -235,6 +236,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["chapter_block_kind"]
           position: number
+          rich_content?: Json
           updated_at?: string
         }
         Update: {
@@ -245,6 +247,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["chapter_block_kind"]
           position?: number
+          rich_content?: Json
           updated_at?: string
         }
         Relationships: [
@@ -1858,6 +1861,10 @@ export type Database = {
         Args: { p_chapter_id: string }
         Returns: undefined
       }
+      delete_manuscript: {
+        Args: { p_manuscript_id: string }
+        Returns: undefined
+      }
       delete_archived_feedback: {
         Args: { p_feedback_id: string; p_feedback_kind: string }
         Returns: undefined
@@ -1994,6 +2001,20 @@ export type Database = {
           p_chapter_id: string
           p_content: string
           p_title: string
+        }
+        Returns: undefined
+      }
+      set_manuscript_chapter_rich_content: {
+        Args: {
+          p_blocks: Json
+          p_chapter_id: string
+        }
+        Returns: undefined
+      }
+      set_manuscript_version_rich_content: {
+        Args: {
+          p_chapters: Json
+          p_manuscript_version_id: string
         }
         Returns: undefined
       }

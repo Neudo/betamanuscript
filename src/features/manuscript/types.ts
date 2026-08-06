@@ -23,6 +23,7 @@ export type ImportedManuscriptChapter = {
   blocks: Array<{
     content: string;
     kind: "paragraph";
+    richContent: import("@/features/manuscript/lib/rich-text").ManuscriptRichText;
   }>;
   title: string;
 };
@@ -74,6 +75,7 @@ export type ManuscriptWorkspaceBlock = {
   kind: ManuscriptBlockKind;
   content: string;
   position: number;
+  richContent: import("@/features/manuscript/lib/rich-text").ManuscriptRichText;
 };
 
 export type ManuscriptWorkspaceAnnotation = {

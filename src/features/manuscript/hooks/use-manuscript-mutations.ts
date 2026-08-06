@@ -161,10 +161,11 @@ function useInvalidateManuscriptAfterChapterChange<TVariables extends { manuscri
 
 export function useCreateManuscriptChapterMutation() {
   return useInvalidateManuscriptAfterChapterChange<CreateChapterVariables>(
-    ({ content, manuscriptVersionId, readerAssignmentIds, title }) => createManuscriptChapter({
+    ({ content, manuscriptVersionId, readerAssignmentIds, richBlocks, title }) => createManuscriptChapter({
       content,
       manuscriptVersionId,
       readerAssignmentIds,
+      richBlocks,
       title,
     }),
   );
@@ -172,7 +173,12 @@ export function useCreateManuscriptChapterMutation() {
 
 export function useUpdateManuscriptChapterMutation() {
   return useInvalidateManuscriptAfterChapterChange<UpdateChapterVariables>(
-    ({ chapterId, content, title }) => updateManuscriptChapter({ chapterId, content, title }),
+    ({ chapterId, content, richBlocks, title }) => updateManuscriptChapter({
+      chapterId,
+      content,
+      richBlocks,
+      title,
+    }),
   );
 }
 

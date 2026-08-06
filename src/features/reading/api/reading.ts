@@ -2,6 +2,10 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Json } from "@/lib/supabase/database.types";
 import type { SocialPlatform } from "@/features/account/domain/social-links";
 import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
+import {
+  normalizeRichText,
+  type ManuscriptRichText,
+} from "@/features/manuscript/lib/rich-text";
 
 export type ReaderManuscriptListItem = {
   assignmentId: string;
@@ -340,6 +344,7 @@ export type ReaderManuscript = ReaderManuscriptListItem & {
       content: string;
       id: string;
       position: number;
+      richContent: ManuscriptRichText;
     }>;
     generalComment: ReaderChapterGeneralComment | null;
     id: string;
@@ -374,7 +379,7 @@ export async function getReaderManuscript(
   const { data: blockRows, error: blocksError } = chapterIds.length > 0
     ? await supabase
       .from("chapter_blocks")
-      .select("id, chapter_id, position, content")
+      .select("id, chapter_id, position, content, rich_content")
       .in("chapter_id", chapterIds)
       .is("archived_at", null)
       .order("position", { ascending: true })
@@ -473,6 +478,7 @@ export async function getReaderManuscript(
       content: block.content,
       id: block.id,
       position: block.position,
+      richContent: normalizeRichText(block.rich_content, block.content),
     });
     blocksByChapter.set(block.chapter_id, blocks);
   }

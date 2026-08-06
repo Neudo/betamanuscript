@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown, Plus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import type { AccountPlan } from "@/features/account/types";
 import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
 import { PlanRequiredDialog } from "@/features/manuscript/components/PlanRequiredDialog";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import type { CreatedManuscript } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 
 type ManuscriptSwitcherProps = {
@@ -41,16 +42,6 @@ export function ManuscriptSwitcher({
     accountPlan === "pro" ||
     (!manuscriptsQuery.isLoading && manuscripts.length === 0);
 
-  useEffect(() => {
-    if (selectedManuscriptId || !activeManuscript) return;
-
-    const nextSearchParams = new URLSearchParams(searchParams.toString());
-    nextSearchParams.set("manuscriptId", activeManuscript.id);
-    router.replace(`${pathname}?${nextSearchParams.toString()}`, {
-      scroll: false,
-    });
-  }, [activeManuscript, pathname, router, searchParams, selectedManuscriptId]);
-
   function selectManuscript(manuscriptId: string) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.set("manuscriptId", manuscriptId);
@@ -70,6 +61,17 @@ export function ManuscriptSwitcher({
     }
 
     setPlanDialogOpen(true);
+  }
+
+  function handleManuscriptCreated(manuscript: CreatedManuscript) {
+    const nextSearchParams = new URLSearchParams({
+      manuscriptId: manuscript.manuscriptId,
+      versionId: manuscript.manuscriptVersionId,
+    });
+
+    router.replace(`/dashboard/manuscript?${nextSearchParams.toString()}`, {
+      scroll: false,
+    });
   }
 
   return (
@@ -168,6 +170,7 @@ export function ManuscriptSwitcher({
       <CreateManuscriptDialog
         accountPlan={accountPlan}
         open={createOpen}
+        onCreated={handleManuscriptCreated}
         onOpenChange={setCreateOpen}
       />
       <PlanRequiredDialog

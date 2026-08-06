@@ -28,6 +28,7 @@ import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnot
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
 import { ReaderChapterGeneralCommentSheet } from "@/features/reading/components/ReaderChapterGeneralCommentSheet";
 import { PublicFeedbackAuthDialog } from "@/features/reading/components/PublicFeedbackAuthDialog";
+import { RichText } from "@/features/manuscript/components/RichText";
 import type { ReaderAnnotation, ReaderAnnotationDraft } from "@/features/reading/api/reading";
 import type { PublicReaderManuscript } from "@/features/reading/server/public-reading";
 import { cn } from "@/lib/utils";
@@ -425,7 +426,14 @@ function PublicReaderAnnotatedBlock({
   return (
     <p data-reader-block-id={block.id}>
       {segments.map((segment) => {
-        if (!segment.group) return segment.content;
+        const [segmentStart, segmentEnd] = segment.group
+          ? [segment.group.start, segment.group.end]
+          : getTextSegmentRange(segment.key);
+        const start = segmentStart;
+        const end = segmentEnd;
+        if (!segment.group) {
+          return <RichText key={segment.key} content={block.content} richContent={block.richContent} start={start} end={end} />;
+        }
 
         const { annotations, color, hasMultipleTags } = segment.group;
         const count = annotations.length;
@@ -453,7 +461,7 @@ function PublicReaderAnnotatedBlock({
             }}
             aria-label={`${count} annotation${count > 1 ? "s" : ""} tagged ${tagLabel}. Open annotation.`}
           >
-            {segment.content}
+            <RichText content={block.content} richContent={block.richContent} start={start} end={end} />
             {count > 1 ? (
               <span
                 className="ml-1 inline-flex h-4 min-w-4 translate-y-[-0.45em] items-center justify-center rounded-full px-1 align-super font-mono text-[8px] leading-none text-white"
@@ -468,4 +476,9 @@ function PublicReaderAnnotatedBlock({
       })}
     </p>
   );
+}
+
+function getTextSegmentRange(key: string): [number, number] {
+  const [, start, end] = key.split(":").map(Number);
+  return [start, end];
 }

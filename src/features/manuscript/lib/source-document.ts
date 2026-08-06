@@ -1,4 +1,15 @@
 import type { ImportedManuscriptChapter } from "@/features/manuscript/types";
+import {
+  createPlainRichText,
+  createRichText,
+  getRichTextContent,
+  normalizeRichTextWhitespace,
+  splitLongRichText,
+  type ManuscriptFontFamily,
+  type ManuscriptRichText,
+  type ManuscriptRichTextRun,
+  type ManuscriptTextMarks,
+} from "@/features/manuscript/lib/rich-text";
 
 export const MAX_SOURCE_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024;
 export const MAX_IMPORTED_CHARACTER_COUNT = 1_000_000;
@@ -7,6 +18,83 @@ export const sourceDocumentAccept = ".docx,.txt,.md,text/plain,text/markdown,app
 const MAX_CHAPTER_COUNT = 200;
 const MAX_BLOCK_CHARACTER_COUNT = 25_000;
 const wordprocessingNamespace = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const drawingNamespace = "http://schemas.openxmlformats.org/drawingml/2006/main";
+
+const docxFontFamilies = {
+  serif: [
+    "baskerville",
+    "american typewriter",
+    "bodoni",
+    "book antiqua",
+    "bookman",
+    "cambria",
+    "caslon",
+    "charis",
+    "constantia",
+    "cormorant",
+    "didot",
+    "droid serif",
+    "eb garamond",
+    "garamond",
+    "gentium",
+    "georgia",
+    "libre baskerville",
+    "merriweather",
+    "minion",
+    "noto serif",
+    "palatino",
+    "playfair",
+    "playfair display",
+    "roboto serif",
+    "robotoserif",
+    "sabon",
+    "serif",
+    "source serif",
+    "times",
+    "times new roman",
+  ],
+  "sans-serif": [
+    "arial",
+    "aptos",
+    "avenir",
+    "calibri",
+    "century gothic",
+    "chillax",
+    "franklin gothic",
+    "futura",
+    "gill sans",
+    "helvetica",
+    "inter",
+    "lato",
+    "montserrat",
+    "muli",
+    "noto sans",
+    "open sans",
+    "proxima nova",
+    "roboto",
+    "sans serif",
+    "sans-serif",
+    "segoe",
+    "segoe ui",
+    "sf pro",
+    "source sans",
+    "tahoma",
+    "trebuchet",
+    "trebuchet ms",
+    "ubuntu",
+    "univers",
+    "verdana",
+    "work sans",
+  ],
+} as const satisfies Record<ManuscriptFontFamily, readonly string[]>;
+
+const docxFontFamilyByName = new Map<string, ManuscriptFontFamily>(
+  (Object.entries(docxFontFamilies) as Array<[ManuscriptFontFamily, readonly string[]]>)
+    .flatMap(([fontFamily, fontNames]) => fontNames.map((fontName) => [fontName, fontFamily] as const)),
+);
+
+const docxFontNamesBySpecificity = [...docxFontFamilyByName.entries()]
+  .sort(([leftName], [rightName]) => rightName.length - leftName.length);
 
 const sourceDocumentMimeTypes = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -17,8 +105,30 @@ const sourceDocumentMimeTypes = {
 type SourceDocumentExtension = keyof typeof sourceDocumentMimeTypes;
 
 type DocumentParagraph = {
+  richContent: ManuscriptRichText;
   style?: string;
   text: string;
+};
+
+type DocxThemeFontSet = {
+  complexScript?: string;
+  eastAsia?: string;
+  latin?: string;
+};
+
+type DocxFontContext = {
+  defaultMarks?: ManuscriptTextMarks;
+  styleMarks: Map<string, ManuscriptTextMarks>;
+  themeFonts: {
+    major: DocxThemeFontSet;
+    minor: DocxThemeFontSet;
+  };
+};
+
+type DocxMarkOverrides = {
+  bold?: boolean;
+  fontFamily?: ManuscriptFontFamily;
+  italic?: boolean;
 };
 
 export type SourceDocumentMetadata = {
@@ -92,7 +202,7 @@ function extractPlainTextParagraphs(text: string): DocumentParagraph[] {
 
   function flushParagraph() {
     const paragraph = currentLines.join(" ").replace(/\s+/g, " ").trim();
-    if (paragraph) paragraphs.push({ text: paragraph });
+    if (paragraph) paragraphs.push({ richContent: createPlainRichText(paragraph), text: paragraph });
     currentLines = [];
   }
 
@@ -107,7 +217,8 @@ function extractPlainTextParagraphs(text: string): DocumentParagraph[] {
     if (markdownHeading) {
       flushParagraph();
       paragraphs.push({
-        style: `markdown-heading-${markdownHeading[1].length}`,
+        richContent: createPlainRichText(markdownHeading[2].trim()),
+        style: "markdown-heading-" + markdownHeading[1].length,
         text: markdownHeading[2].trim(),
       });
       continue;
@@ -121,7 +232,12 @@ function extractPlainTextParagraphs(text: string): DocumentParagraph[] {
 }
 
 async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
-  const documentXml = await readZipEntry(await file.arrayBuffer(), "word/document.xml");
+  const archive = await file.arrayBuffer();
+  const [documentXml, stylesXml, themeXml] = await Promise.all([
+    readZipEntry(archive, "word/document.xml"),
+    readOptionalZipEntry(archive, "word/styles.xml"),
+    readOptionalZipEntry(archive, "word/theme/theme1.xml"),
+  ]);
   const document = new DOMParser().parseFromString(
     new TextDecoder().decode(documentXml),
     "application/xml",
@@ -131,13 +247,19 @@ async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
     throw new Error("The DOCX document could not be parsed.");
   }
 
+  const fontContext = getDocxFontContext(stylesXml, themeXml);
+
   return Array.from(document.getElementsByTagNameNS(wordprocessingNamespace, "p"))
     .map((paragraph) => {
-      const text = Array.from(paragraph.getElementsByTagNameNS(wordprocessingNamespace, "t"))
-        .map((node) => node.textContent ?? "")
-        .join("")
-        .replace(/\s+/g, " ")
-        .trim();
+      const paragraphMarks = getDocxParagraphMarks(paragraph, fontContext);
+      const richContent = normalizeRichTextWhitespace(createRichText(
+        Array.from(paragraph.getElementsByTagNameNS(wordprocessingNamespace, "r"))
+          .flatMap((run) => getDocxRunText(run).map((text) => ({
+            marks: getDocxRunMarks(run, paragraphMarks, fontContext),
+            text,
+          }))),
+      ));
+      const text = getRichTextContent(richContent);
       const style = paragraph
         .getElementsByTagNameNS(wordprocessingNamespace, "pStyle")[0]
         ?.getAttributeNS(wordprocessingNamespace, "val")
@@ -146,7 +268,7 @@ async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
           ?.getAttribute("w:val")
         ?? undefined;
 
-      return { style, text };
+      return { richContent, style, text };
     })
     .filter((paragraph) => paragraph.text.length > 0);
 }
@@ -169,7 +291,7 @@ function detectChapters(paragraphs: DocumentParagraph[]): ImportedManuscriptChap
 
   const firstHeadingIndex = headings[0]?.index ?? -1;
   if (firstHeadingIndex === -1) {
-    return removeEmptyChapters([toChapter("Chapter 1", paragraphs.map((paragraph) => paragraph.text))]);
+    return removeEmptyChapters([toChapter("Chapter 1", paragraphs.map((paragraph) => paragraph.richContent))]);
   }
 
   return splitIntoChapters(paragraphs, headings);
@@ -184,7 +306,7 @@ function splitIntoChapters(
 
   const chapters: ImportedManuscriptChapter[] = [];
   let currentTitle = firstHeading.title;
-  let currentParagraphs: string[] = [];
+  let currentParagraphs: ManuscriptRichText[] = [];
   let nextHeadingIndex = 1;
 
   for (let index = firstHeading.index + 1; index < paragraphs.length; index += 1) {
@@ -195,7 +317,7 @@ function splitIntoChapters(
       currentParagraphs = [];
       nextHeadingIndex += 1;
     } else {
-      currentParagraphs.push(paragraphs[index].text);
+      currentParagraphs.push(paragraphs[index].richContent);
     }
   }
 
@@ -223,11 +345,12 @@ function getExplicitChapterTitle(text: string) {
   return null;
 }
 
-function toChapter(title: string, paragraphs: string[]): ImportedManuscriptChapter {
+function toChapter(title: string, paragraphs: ManuscriptRichText[]): ImportedManuscriptChapter {
   return {
-    blocks: paragraphs.flatMap((paragraph) => splitLongParagraph(paragraph).map((content) => ({
-      content,
+    blocks: paragraphs.flatMap((paragraph) => splitLongRichText(paragraph, MAX_BLOCK_CHARACTER_COUNT).map((richContent) => ({
+      content: getRichTextContent(richContent),
       kind: "paragraph" as const,
+      richContent,
     }))),
     title,
   };
@@ -241,21 +364,234 @@ function countWords(text: string) {
   return text.match(/[\p{L}\p{N}]+(?:[’'][\p{L}\p{N}]+)*/gu)?.length ?? 0;
 }
 
-function splitLongParagraph(paragraph: string): string[] {
-  if (paragraph.length <= MAX_BLOCK_CHARACTER_COUNT) return [paragraph];
+function getDocxRunText(run: Element): string[] {
+  return Array.from(run.childNodes).flatMap((child) => {
+    if (child.nodeType !== Node.ELEMENT_NODE) return [];
+    const element = child as Element;
+    if (element.namespaceURI !== wordprocessingNamespace) return [];
+    if (element.localName === "t") return [element.textContent ?? ""];
+    if (element.localName === "tab") return ["\t"];
+    if (element.localName === "br" || element.localName === "cr") return ["\n"];
+    return [];
+  });
+}
 
-  const chunks: string[] = [];
-  let remaining = paragraph;
+function getDocxFontContext(
+  stylesXml: ArrayBuffer | null,
+  themeXml: ArrayBuffer | null,
+): DocxFontContext {
+  const stylesDocument = parseOptionalDocxXml(stylesXml);
+  const themeDocument = parseOptionalDocxXml(themeXml);
+  const themeFonts = getDocxThemeFonts(themeDocument);
+  const baseContext: DocxFontContext = {
+    styleMarks: new Map(),
+    themeFonts,
+  };
+  const documentDefaults = stylesDocument?.getElementsByTagNameNS(wordprocessingNamespace, "docDefaults")[0];
+  const defaultRunProperties = documentDefaults
+    ? getDocxChild(getDocxChild(documentDefaults, "rPrDefault"), "rPr")
+    : undefined;
+  const defaultMarks = getDocxMarksFromProperties(defaultRunProperties, undefined, baseContext);
+  const styleMarks = getDocxStyleMarks(stylesDocument, { ...baseContext, defaultMarks });
 
-  while (remaining.length > MAX_BLOCK_CHARACTER_COUNT) {
-    const boundary = remaining.lastIndexOf(" ", MAX_BLOCK_CHARACTER_COUNT);
-    const splitAt = boundary > 0 ? boundary : MAX_BLOCK_CHARACTER_COUNT;
-    chunks.push(remaining.slice(0, splitAt).trim());
-    remaining = remaining.slice(splitAt).trim();
+  return {
+    defaultMarks,
+    styleMarks,
+    themeFonts,
+  };
+}
+
+function parseOptionalDocxXml(xml: ArrayBuffer | null) {
+  if (!xml) return null;
+
+  const document = new DOMParser().parseFromString(
+    new TextDecoder().decode(xml),
+    "application/xml",
+  );
+  return document.getElementsByTagName("parsererror").length > 0 ? null : document;
+}
+
+function getDocxThemeFonts(themeDocument: Document | null): DocxFontContext["themeFonts"] {
+  const fontScheme = themeDocument?.getElementsByTagNameNS(drawingNamespace, "fontScheme")[0];
+
+  return {
+    major: getDocxThemeFontSet(getXmlChild(fontScheme, drawingNamespace, "majorFont")),
+    minor: getDocxThemeFontSet(getXmlChild(fontScheme, drawingNamespace, "minorFont")),
+  };
+}
+
+function getDocxThemeFontSet(element: Element | undefined): DocxThemeFontSet {
+  return {
+    complexScript: getXmlChild(element, drawingNamespace, "cs")?.getAttribute("typeface") ?? undefined,
+    eastAsia: getXmlChild(element, drawingNamespace, "ea")?.getAttribute("typeface") ?? undefined,
+    latin: getXmlChild(element, drawingNamespace, "latin")?.getAttribute("typeface") ?? undefined,
+  };
+}
+
+function getDocxStyleMarks(
+  stylesDocument: Document | null,
+  context: DocxFontContext,
+) {
+  const styleMarks = new Map<string, ManuscriptTextMarks>();
+  if (!stylesDocument) return styleMarks;
+
+  for (const style of Array.from(stylesDocument.getElementsByTagNameNS(wordprocessingNamespace, "style"))) {
+    const styleId = getWordAttribute(style, "styleId");
+    const runProperties = getDocxChild(style, "rPr");
+    if (!styleId || !runProperties) continue;
+
+    const marks = getDocxMarksFromProperties(runProperties, context.defaultMarks, context);
+    if (marks) styleMarks.set(styleId, marks);
   }
 
-  if (remaining) chunks.push(remaining);
-  return chunks;
+  return styleMarks;
+}
+
+function getDocxParagraphMarks(paragraph: Element, context: DocxFontContext) {
+  const paragraphProperties = getDocxChild(paragraph, "pPr");
+  const styleId = getWordAttribute(getDocxChild(paragraphProperties, "pStyle"), "val");
+  const inheritedMarks = styleId
+    ? context.styleMarks.get(styleId) ?? context.defaultMarks
+    : context.defaultMarks;
+
+  return getDocxMarksFromProperties(
+    getDocxChild(paragraphProperties, "rPr"),
+    inheritedMarks,
+    context,
+  );
+}
+
+function getDocxRunMarks(
+  run: Element,
+  inheritedMarks: ManuscriptTextMarks | undefined,
+  context: DocxFontContext,
+): ManuscriptRichTextRun["marks"] {
+  return getDocxMarksFromProperties(getDocxChild(run, "rPr"), inheritedMarks, context);
+}
+
+function getDocxMarksFromProperties(
+  runProperties: Element | undefined,
+  inheritedMarks: ManuscriptTextMarks | undefined,
+  context: DocxFontContext,
+): ManuscriptTextMarks | undefined {
+  if (!runProperties) return inheritedMarks;
+
+  const characterStyleId = getWordAttribute(getDocxChild(runProperties, "rStyle"), "val");
+  const styleMarks = characterStyleId
+    ? context.styleMarks.get(characterStyleId) ?? inheritedMarks
+    : inheritedMarks;
+  const overrides: DocxMarkOverrides = {
+    bold: getDocxToggle(runProperties, "b", "bCs"),
+    fontFamily: getDocxFontFamily(runProperties, context),
+    italic: getDocxToggle(runProperties, "i", "iCs"),
+  };
+
+  return mergeDocxMarks(styleMarks, overrides);
+}
+
+function mergeDocxMarks(
+  inheritedMarks: ManuscriptTextMarks | undefined,
+  overrides: DocxMarkOverrides,
+): ManuscriptTextMarks | undefined {
+  const marks: ManuscriptTextMarks = {
+    ...((overrides.bold ?? inheritedMarks?.bold) ? { bold: true } : {}),
+    ...(overrides.fontFamily ?? inheritedMarks?.fontFamily
+      ? { fontFamily: overrides.fontFamily ?? inheritedMarks?.fontFamily }
+      : {}),
+    ...((overrides.italic ?? inheritedMarks?.italic) ? { italic: true } : {}),
+  };
+
+  return Object.keys(marks).length > 0 ? marks : undefined;
+}
+
+function getDocxToggle(
+  runProperties: Element,
+  primaryName: string,
+  complexScriptName: string,
+) {
+  const element = getDocxChild(runProperties, primaryName)
+    ?? getDocxChild(runProperties, complexScriptName);
+  return element ? isDocxToggleEnabled(element) : undefined;
+}
+
+function getDocxFontFamily(
+  runProperties: Element,
+  context: DocxFontContext,
+): ManuscriptFontFamily | undefined {
+  const fonts = getDocxChild(runProperties, "rFonts");
+  if (!fonts) return undefined;
+
+  const directFontName = ["ascii", "hAnsi", "cs", "eastAsia"]
+    .map((attribute) => getWordAttribute(fonts, attribute))
+    .find(Boolean);
+  const themeFontName = ["asciiTheme", "hAnsiTheme", "csTheme", "eastAsiaTheme"]
+    .map((attribute) => getWordAttribute(fonts, attribute))
+    .find(Boolean);
+
+  return classifyDocxFontFamily(
+    directFontName ?? resolveDocxThemeFont(themeFontName, context.themeFonts),
+  );
+}
+
+function resolveDocxThemeFont(
+  themeName: string | undefined,
+  themeFonts: DocxFontContext["themeFonts"],
+) {
+  if (!themeName) return undefined;
+
+  const normalizedName = themeName.toLowerCase();
+  const fontSet = normalizedName.startsWith("major") ? themeFonts.major
+    : normalizedName.startsWith("minor") ? themeFonts.minor
+      : undefined;
+  if (!fontSet) return undefined;
+
+  return normalizedName.includes("bidi")
+    ? fontSet.complexScript ?? fontSet.latin
+    : normalizedName.includes("eastasia")
+      ? fontSet.eastAsia ?? fontSet.latin
+      : fontSet.latin;
+}
+
+export function classifyDocxFontFamily(fontName: string | undefined): ManuscriptFontFamily | undefined {
+  if (!fontName) return undefined;
+
+  const normalizedName = fontName
+    .replace(/([a-z])([A-Z])/gu, "$1 $2")
+    .replace(/["']/g, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase();
+
+  return docxFontFamilyByName.get(normalizedName)
+    ?? docxFontNamesBySpecificity.find(([knownFontName]) => (
+      normalizedName.startsWith(knownFontName + " ")
+    ))?.[1];
+}
+
+function getDocxChild(parent: Element | undefined, localName: string) {
+  return Array.from(parent?.children ?? []).find((child) => (
+    child.namespaceURI === wordprocessingNamespace && child.localName === localName
+  ));
+}
+
+function getXmlChild(parent: Element | undefined, namespace: string, localName: string) {
+  return Array.from(parent?.children ?? []).find((child) => (
+    child.namespaceURI === namespace && child.localName === localName
+  ));
+}
+
+function isDocxToggleEnabled(element: Element | undefined) {
+  if (!element) return false;
+  const value = getWordAttribute(element, "val")?.toLowerCase();
+  return value !== "0" && value !== "false" && value !== "off" && value !== "none";
+}
+
+function getWordAttribute(element: Element | undefined, name: string): string | undefined {
+  return element?.getAttributeNS(wordprocessingNamespace, name)
+    ?? element?.getAttribute("w:" + name)
+    ?? element?.getAttribute(name)
+    ?? undefined;
 }
 
 async function readZipEntry(zip: ArrayBuffer, targetPath: string): Promise<ArrayBuffer> {
@@ -298,6 +634,14 @@ async function readZipEntry(zip: ArrayBuffer, targetPath: string): Promise<Array
   }
 
   throw new Error("The DOCX document body could not be found.");
+}
+
+async function readOptionalZipEntry(zip: ArrayBuffer, targetPath: string) {
+  try {
+    return await readZipEntry(zip, targetPath);
+  } catch {
+    return null;
+  }
 }
 
 function findEndOfCentralDirectory(view: DataView) {

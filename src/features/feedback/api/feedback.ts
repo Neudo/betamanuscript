@@ -1,4 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import type { Database } from "@/lib/supabase/database.types";
 import type { FeedbackAnnotation } from "@/features/feedback/types";
 
 type ManuscriptVersionRow = {
@@ -67,7 +70,19 @@ export async function getManuscriptFeedback(
   manuscriptId: string,
   manuscriptVersionId: string | null = null,
 ): Promise<FeedbackAnnotation[]> {
-  const supabase = createSupabaseBrowserClient();
+  return getManuscriptFeedbackWithClient(
+    createSupabaseBrowserClient(),
+    manuscriptId,
+    manuscriptVersionId,
+  );
+}
+
+export async function getManuscriptFeedbackWithClient(
+  client: SupabaseClient<Database>,
+  manuscriptId: string,
+  manuscriptVersionId: string | null = null,
+): Promise<FeedbackAnnotation[]> {
+  const supabase = client;
 
   const { data: versionRows, error: versionError } = await supabase
     .from("manuscript_versions")

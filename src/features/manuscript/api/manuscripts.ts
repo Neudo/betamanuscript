@@ -1,5 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import type { Json } from "@/lib/supabase/database.types";
+import type { Database, Json } from "@/lib/supabase/database.types";
 import {
   MANUSCRIPT_COVERS_BUCKET,
   MANUSCRIPT_SOURCES_BUCKET,
@@ -19,6 +21,10 @@ import type {
   ManuscriptWorkspaceVersion,
   ManuscriptWordCountBand,
 } from "@/features/manuscript/types";
+import {
+  normalizeRichText,
+  type ManuscriptRichTextBlock,
+} from "@/features/manuscript/lib/rich-text";
 
 type ManuscriptSummaryRow = {
   id: string;
@@ -72,6 +78,7 @@ type ChapterBlockRow = {
   id: string;
   kind: ManuscriptWorkspaceBlock["kind"];
   position: number;
+  rich_content: Json;
 };
 
 type AnnotationRow = {
@@ -177,6 +184,7 @@ function toCreateManuscriptPayload({
         blocks: chapter.blocks.map((block) => ({
           content: block.content,
           kind: block.kind,
+          rich_content: block.richContent,
         })),
         title: chapter.title,
       })),
@@ -209,7 +217,19 @@ export async function getManuscript(
   manuscriptId: string,
   manuscriptVersionId: string | null = null,
 ): Promise<ManuscriptWorkspaceData | null> {
-  const supabase = createSupabaseBrowserClient();
+  return getManuscriptWithClient(
+    createSupabaseBrowserClient(),
+    manuscriptId,
+    manuscriptVersionId,
+  );
+}
+
+export async function getManuscriptWithClient(
+  client: SupabaseClient<Database>,
+  manuscriptId: string,
+  manuscriptVersionId: string | null = null,
+): Promise<ManuscriptWorkspaceData | null> {
+  const supabase = client;
   const { data: manuscript, error: manuscriptError } = await supabase
     .from("manuscripts")
     .select("id, internal_title")
@@ -327,7 +347,7 @@ export async function getManuscript(
   const [blocksResult, annotationsResult, generalCommentsResult] = await Promise.all([
     supabase
       .from("chapter_blocks")
-      .select("id, chapter_id, position, kind, content")
+      .select("id, chapter_id, position, kind, content, rich_content")
       .in("chapter_id", chapterIds)
       .is("archived_at", null)
       .order("position", { ascending: true }),
@@ -400,6 +420,7 @@ export async function getManuscript(
       id: block.id,
       kind: block.kind,
       position: block.position,
+      richContent: normalizeRichText(block.rich_content, block.content),
     });
     blocksByChapterId.set(block.chapter_id, chapterBlocks);
   }
@@ -527,11 +548,21 @@ export async function createManuscript({
     throw new Error("The manuscript was created but no identifier was returned.");
   }
 
-  return {
+  const manuscript = {
     manuscriptId: created.manuscript_id,
     manuscriptVersionId: created.manuscript_version_id,
     readingRoundId: created.reading_round_id,
   };
+
+  if (importedChapters) {
+    await setManuscriptVersionRichContent(
+      supabase,
+      manuscript.manuscriptVersionId,
+      importedChapters.map((chapter) => ({ blocks: chapter.blocks })),
+    );
+  }
+
+  return manuscript;
 }
 
 export async function createManuscriptDraftVersion(
@@ -549,10 +580,19 @@ export async function createManuscriptDraftVersion(
     throw new Error("The draft version was created but no identifier was returned.");
   }
 
-  return {
+  const draftVersion = {
     manuscriptVersionId: created.manuscript_version_id,
     readingRoundId: created.reading_round_id,
   };
+
+  const sourceChapters = await getManuscriptVersionRichContent(supabase, sourceVersionId);
+  await setManuscriptVersionRichContent(
+    supabase,
+    draftVersion.manuscriptVersionId,
+    sourceChapters,
+  );
+
+  return draftVersion;
 }
 
 export async function updateManuscriptDraftVersionTitle({
@@ -601,6 +641,7 @@ export type CreateManuscriptChapterInput = {
   content: string;
   manuscriptVersionId: string;
   readerAssignmentIds?: string[];
+  richBlocks: ManuscriptRichTextBlock[];
   title: string;
 };
 
@@ -652,6 +693,7 @@ export async function createManuscriptChapter({
   content,
   manuscriptVersionId,
   readerAssignmentIds = [],
+  richBlocks,
   title,
 }: CreateManuscriptChapterInput) {
   const supabase = createSupabaseBrowserClient();
@@ -665,18 +707,21 @@ export async function createManuscriptChapter({
   if (error) throw new Error(error.message);
   if (!data) throw new Error("The chapter was created but no identifier was returned.");
 
+  await setManuscriptChapterRichContent(supabase, data, richBlocks);
   return data;
 }
 
 export type UpdateManuscriptChapterInput = {
   chapterId: string;
   content: string;
+  richBlocks: ManuscriptRichTextBlock[];
   title: string;
 };
 
 export async function updateManuscriptChapter({
   chapterId,
   content,
+  richBlocks,
   title,
 }: UpdateManuscriptChapterInput) {
   const supabase = createSupabaseBrowserClient();
@@ -687,6 +732,78 @@ export async function updateManuscriptChapter({
   });
 
   if (error) throw new Error(error.message);
+  await setManuscriptChapterRichContent(supabase, chapterId, richBlocks);
+}
+
+async function setManuscriptChapterRichContent(
+  supabase: SupabaseClient<Database>,
+  chapterId: string,
+  blocks: ManuscriptRichTextBlock[],
+) {
+  const { error } = await supabase.rpc("set_manuscript_chapter_rich_content", {
+    p_blocks: blocks.map((block) => ({
+      content: block.content,
+      rich_content: block.richContent,
+    })) as Json,
+    p_chapter_id: chapterId,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+async function setManuscriptVersionRichContent(
+  supabase: SupabaseClient<Database>,
+  manuscriptVersionId: string,
+  chapters: Array<{ blocks: ManuscriptRichTextBlock[] }>,
+) {
+  const { error } = await supabase.rpc("set_manuscript_version_rich_content", {
+    p_chapters: chapters.map((chapter) => ({
+      blocks: chapter.blocks.map((block) => ({
+        content: block.content,
+        rich_content: block.richContent,
+      })),
+    })) as Json,
+    p_manuscript_version_id: manuscriptVersionId,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+async function getManuscriptVersionRichContent(
+  supabase: SupabaseClient<Database>,
+  manuscriptVersionId: string,
+): Promise<Array<{ blocks: ManuscriptRichTextBlock[] }>> {
+  const { data: chapterRows, error: chaptersError } = await supabase
+    .from("manuscript_chapters")
+    .select("id, position")
+    .eq("manuscript_version_id", manuscriptVersionId)
+    .order("position", { ascending: true });
+
+  if (chaptersError) throw new Error(chaptersError.message);
+  const chapterIds = (chapterRows ?? []).map((chapter) => chapter.id);
+  if (chapterIds.length === 0) return [];
+
+  const { data: blockRows, error: blocksError } = await supabase
+    .from("chapter_blocks")
+    .select("chapter_id, position, content, rich_content")
+    .in("chapter_id", chapterIds)
+    .order("position", { ascending: true });
+
+  if (blocksError) throw new Error(blocksError.message);
+
+  const blocksByChapterId = new Map<string, ManuscriptRichTextBlock[]>();
+  for (const block of blockRows ?? []) {
+    const blocks = blocksByChapterId.get(block.chapter_id) ?? [];
+    blocks.push({
+      content: block.content,
+      richContent: normalizeRichText(block.rich_content, block.content),
+    });
+    blocksByChapterId.set(block.chapter_id, blocks);
+  }
+
+  return (chapterRows ?? []).map((chapter) => ({
+    blocks: blocksByChapterId.get(chapter.id) ?? [],
+  }));
 }
 
 export async function deleteManuscriptChapter(chapterId: string) {
@@ -810,15 +927,9 @@ export async function deleteManuscript(manuscriptId: string) {
     }
   }
 
-  const { data: deletedManuscript, error: deleteError } = await supabase
-    .from("manuscripts")
-    .delete()
-    .eq("id", manuscriptId)
-    .select("id")
-    .maybeSingle();
+  const { error: deleteError } = await supabase.rpc("delete_manuscript", {
+    p_manuscript_id: manuscriptId,
+  });
 
   if (deleteError) throw new Error(deleteError.message);
-  if (!deletedManuscript) {
-    throw new Error("This manuscript could not be found or deleted.");
-  }
 }

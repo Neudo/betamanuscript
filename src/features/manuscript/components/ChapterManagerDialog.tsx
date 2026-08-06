@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/features/manuscript/components/RichTextEditor";
 import {
   useCreateManuscriptChapterMutation,
   useDeleteManuscriptChapterMutation,
@@ -44,6 +44,11 @@ import type {
   ManuscriptWorkspaceChapter,
   ManuscriptWorkspaceData,
 } from "@/features/manuscript/types";
+import {
+  createRichTextDocument,
+  getRichTextDocumentContent,
+  type ManuscriptRichTextDocument,
+} from "@/features/manuscript/lib/rich-text";
 
 type ChapterManagerDialogProps = {
   manuscript: ManuscriptWorkspaceData;
@@ -68,7 +73,7 @@ export function ChapterManagerDialog({
   const [chapterToDelete, setChapterToDelete] = useState<ManuscriptWorkspaceChapter | null>(null);
   const [pendingChapterUpdate, setPendingChapterUpdate] = useState<PendingChapterUpdate | null>(null);
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState<ManuscriptRichTextDocument>({ blocks: [] });
   const [readerAssignmentIds, setReaderAssignmentIds] = useState<Set<string> | null>(null);
   const createChapter = useCreateManuscriptChapterMutation();
   const updateChapter = useUpdateManuscriptChapterMutation();
@@ -86,7 +91,7 @@ export function ChapterManagerDialog({
   function resetEditor() {
     setEditingChapter(null);
     setTitle("");
-    setContent("");
+    setContent({ blocks: [] });
     setReaderAssignmentIds(null);
     setPendingChapterUpdate(null);
   }
@@ -109,7 +114,7 @@ export function ChapterManagerDialog({
     createChapter.reset();
     updateChapter.reset();
     setTitle(`Chapter ${manuscript.chapters.length + 1}`);
-    setContent("");
+    setContent({ blocks: [] });
     setReaderAssignmentIds(null);
     setEditingChapter("new");
   }
@@ -118,7 +123,7 @@ export function ChapterManagerDialog({
     createChapter.reset();
     updateChapter.reset();
     setTitle(chapter.title);
-    setContent(chapter.blocks.map((block) => block.content).join("\n\n"));
+    setContent(createRichTextDocument(chapter.blocks));
     setReaderAssignmentIds(null);
     setEditingChapter(chapter);
   }
@@ -141,15 +146,16 @@ export function ChapterManagerDialog({
         if (!manuscript.version) return;
 
         const chapterId = await createChapter.mutateAsync({
-          content,
+          content: getRichTextDocumentContent(content),
           manuscriptId: manuscript.id,
           manuscriptVersionId: manuscript.version.id,
           readerAssignmentIds: [...selectedReaderAssignmentIds],
+          richBlocks: content.blocks,
           title,
         });
         if (typeof chapterId === "string") onChapterSelected(chapterId);
       } else {
-        const impact = getChapterEditImpact(editingChapter, content);
+        const impact = getChapterEditImpact(editingChapter, getRichTextDocumentContent(content));
         if (impact.inlineFeedbackCount > 0 || impact.generalFeedbackCount > 0) {
           setPendingChapterUpdate({ chapter: editingChapter, ...impact });
           return;
@@ -167,8 +173,9 @@ export function ChapterManagerDialog({
   async function saveChapterUpdate(chapter: ManuscriptWorkspaceChapter) {
     await updateChapter.mutateAsync({
       chapterId: chapter.id,
-      content,
+      content: getRichTextDocumentContent(content),
       manuscriptId: manuscript.id,
+      richBlocks: content.blocks,
       title,
     });
     onChapterSelected(chapter.id);
@@ -230,7 +237,7 @@ export function ChapterManagerDialog({
                 <div>
                   <DialogTitle>{editingChapter === "new" ? "Add a chapter" : "Edit chapter"}</DialogTitle>
                   <DialogDescription className="mt-1 leading-6">
-                    Separate paragraphs with a blank line. Your readers will see each paragraph in its own block.
+                    Select a passage to format it. Press Enter to begin a new paragraph; readers can annotate each paragraph independently.
                   </DialogDescription>
                 </div>
               </div>
@@ -251,13 +258,11 @@ export function ChapterManagerDialog({
               </div>
               <div>
                 <Label htmlFor="chapter-content" className="mb-1.5 block text-xs font-medium">Chapter content</Label>
-                <Textarea
+                <RichTextEditor
                   id="chapter-content"
                   value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  placeholder="Paste or write the chapter text here."
-                  rows={14}
-                  className="min-h-72 resize-y rounded-none border-foreground/20 bg-background font-serif text-base leading-7 shadow-none"
+                  onChange={setContent}
+                  disabled={isSaving}
                 />
                 <p className="mt-1.5 font-mono text-[9px] text-muted-foreground">
                   You can leave this empty and add the text later.

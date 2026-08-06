@@ -49,6 +49,7 @@ import {
   useManuscripts,
 } from "@/features/manuscript/hooks/use-manuscripts";
 import { ChapterManagerDialog } from "@/features/manuscript/components/ChapterManagerDialog";
+import { RichText } from "@/features/manuscript/components/RichText";
 import {
   ManuscriptFullPageState,
   NoManuscriptState,
@@ -92,6 +93,12 @@ type FeedbackTagFilter = {
   slug: string;
 };
 
+type FeedbackFiltersState = {
+  hideReadFeedback: boolean;
+  hiddenFeedbackTagSlugs: string[];
+  scope: string;
+};
+
 function useDesktopLayout() {
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -107,6 +114,24 @@ function useDesktopLayout() {
   return isDesktop;
 }
 
+function useScopedFeedbackFilters(scope: string) {
+  const [filters, setFilters] = useState<FeedbackFiltersState>(() => ({
+    hideReadFeedback: false,
+    hiddenFeedbackTagSlugs: [],
+    scope,
+  }));
+
+  if (filters.scope !== scope) {
+    setFilters({
+      hideReadFeedback: false,
+      hiddenFeedbackTagSlugs: [],
+      scope,
+    });
+  }
+
+  return [filters, setFilters] as const;
+}
+
 export function ManuscriptWorkspace() {
   const pathname = usePathname();
   const router = useRouter();
@@ -119,31 +144,14 @@ export function ManuscriptWorkspace() {
   const manuscriptsQuery = useManuscripts();
   const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
   const manuscriptQuery = useManuscript(manuscriptId, selectedVersionIdFromUrl);
-  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
-  const [hiddenFeedbackTagSlugs, setHiddenFeedbackTagSlugs] = useState<string[]>([]);
-  const [hideReadFeedback, setHideReadFeedback] = useState(false);
+  const [feedbackFilters, setFeedbackFilters] = useScopedFeedbackFilters(
+    `${manuscriptId ?? "none"}:${selectedVersionIdFromUrl ?? "latest"}`,
+  );
+  const { hiddenFeedbackTagSlugs, hideReadFeedback } = feedbackFilters;
   const updateChapterStatus = useUpdateChapterStatusMutation();
   const updateAnnotationSeen = useUpdateAnnotationSeenMutation();
   const updateGeneralCommentSeen = useUpdateGeneralCommentSeenMutation();
   const isDesktopLayout = useDesktopLayout();
-
-  useEffect(() => {
-    const loadedVersionId = manuscriptQuery.data?.version?.id;
-    if (!loadedVersionId || loadedVersionId === selectedVersionIdFromUrl) return;
-
-    const nextSearchParams = new URLSearchParams(searchParams.toString());
-    nextSearchParams.set("versionId", loadedVersionId);
-    router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
-  }, [manuscriptQuery.data?.version?.id, pathname, router, searchParams, selectedVersionIdFromUrl]);
-
-  useEffect(() => {
-    setSelectedChapterId(null);
-  }, [selectedVersionIdFromUrl]);
-
-  useEffect(() => {
-    setHiddenFeedbackTagSlugs([]);
-    setHideReadFeedback(false);
-  }, [manuscriptId, selectedVersionIdFromUrl]);
 
   if (!manuscriptId && !manuscriptsQuery.isLoading) {
     return <NoManuscriptState />;
@@ -175,7 +183,7 @@ export function ManuscriptWorkspace() {
   const workspace = manuscript;
 
   const selectedChapter = manuscript.chapters.find(
-    (chapter) => chapter.id === (selectedChapterId ?? selectedChapterIdFromUrl),
+    (chapter) => chapter.id === selectedChapterIdFromUrl,
   ) ?? manuscript.chapters[0];
   const completeCount = manuscript.chapters.filter(
     (chapter) => chapter.editorialStatus === "complete",
@@ -248,7 +256,6 @@ export function ManuscriptWorkspace() {
   }
 
   function handleChapterSelect(chapterId: string) {
-    setSelectedChapterId(chapterId);
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("annotationId");
     nextSearchParams.delete("generalCommentId");
@@ -283,15 +290,19 @@ export function ManuscriptWorkspace() {
   }
 
   function handleFeedbackTagVisibility(tagSlug: string) {
-    setHiddenFeedbackTagSlugs((hiddenTags) => (
-      hiddenTags.includes(tagSlug)
-        ? hiddenTags.filter((slug) => slug !== tagSlug)
-        : [...hiddenTags, tagSlug]
-    ));
+    setFeedbackFilters((filters) => ({
+      ...filters,
+      hiddenFeedbackTagSlugs: filters.hiddenFeedbackTagSlugs.includes(tagSlug)
+        ? filters.hiddenFeedbackTagSlugs.filter((slug) => slug !== tagSlug)
+        : [...filters.hiddenFeedbackTagSlugs, tagSlug],
+    }));
   }
 
   function handleShowAllFeedbackTags() {
-    setHiddenFeedbackTagSlugs([]);
+    setFeedbackFilters((filters) => ({
+      ...filters,
+      hiddenFeedbackTagSlugs: [],
+    }));
   }
 
   return (
@@ -331,7 +342,10 @@ export function ManuscriptWorkspace() {
                   onAnnotationFocus={handleAnnotationFocus}
                   onShowAllTags={handleShowAllFeedbackTags}
                   onToggleGeneralCommentSeen={handleGeneralCommentSeen}
-                  onToggleHideRead={() => setHideReadFeedback((hidden) => !hidden)}
+                  onToggleHideRead={() => setFeedbackFilters((filters) => ({
+                    ...filters,
+                    hideReadFeedback: !filters.hideReadFeedback,
+                  }))}
                   onToggleSeen={handleAnnotationSeen}
                   onToggleTag={handleFeedbackTagVisibility}
                   triggerClassName="w-full sm:w-auto"
@@ -411,7 +425,10 @@ export function ManuscriptWorkspace() {
             hiddenTagSlugs={hiddenTagSlugsForChapter}
             hideReadFeedback={hideReadFeedback}
             onShowAllTags={handleShowAllFeedbackTags}
-            onToggleHideRead={() => setHideReadFeedback((hidden) => !hidden)}
+            onToggleHideRead={() => setFeedbackFilters((filters) => ({
+              ...filters,
+              hideReadFeedback: !filters.hideReadFeedback,
+            }))}
             onToggleTag={handleFeedbackTagVisibility}
           />
         </div>
@@ -594,14 +611,14 @@ function ChapterBlock({
   }
 
   if (block.kind === "heading") {
-    return <Heading level={3} className="pt-3"><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></Heading>;
+    return <Heading level={3} className="pt-3"><AnnotatedChapterText content={block.content} richContent={block.richContent} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></Heading>;
   }
 
   if (block.kind === "blockquote") {
-    return <blockquote className="border-l-2 border-primary/40 pl-5 italic"><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></blockquote>;
+    return <blockquote className="border-l-2 border-primary/40 pl-5 italic"><AnnotatedChapterText content={block.content} richContent={block.richContent} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></blockquote>;
   }
 
-  return <p><AnnotatedChapterText content={block.content} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></p>;
+  return <p><AnnotatedChapterText content={block.content} richContent={block.richContent} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></p>;
 }
 
 function AnnotatedChapterText({
@@ -609,16 +626,25 @@ function AnnotatedChapterText({
   content,
   focusedAnnotationId,
   onAnnotationFocus,
+  richContent,
 }: {
   annotations: ManuscriptWorkspaceAnnotation[];
   content: string;
   focusedAnnotationId: string | null;
   onAnnotationFocus: (annotationId: string) => void;
+  richContent: ManuscriptWorkspaceBlock["richContent"];
 }) {
   const segments = getTextAnnotationSegments(content, annotations);
 
   return segments.map((segment) => {
-    if (!segment.group) return segment.content;
+    const [segmentStart, segmentEnd] = segment.group
+      ? [segment.group.start, segment.group.end]
+      : getTextSegmentRange(segment.key);
+    const start = segmentStart;
+    const end = segmentEnd;
+    if (!segment.group) {
+      return <RichText key={segment.key} content={content} richContent={richContent} start={start} end={end} />;
+    }
 
     const { annotations: groupedAnnotations, color, hasMultipleTags } = segment.group;
     const count = groupedAnnotations.length;
@@ -654,7 +680,7 @@ function AnnotatedChapterText({
           onAnnotationFocus(groupedAnnotations[0].id);
         }}
       >
-        {segment.content}
+        <RichText content={content} richContent={richContent} start={start} end={end} />
         {count > 1 ? (
           <span
             className="ml-1 inline-flex h-4 min-w-4 translate-y-[-0.45em] items-center justify-center rounded-full px-1 align-super font-mono text-[8px] leading-none text-white"
@@ -667,6 +693,11 @@ function AnnotatedChapterText({
       </mark>
     );
   });
+}
+
+function getTextSegmentRange(key: string): [number, number] {
+  const [, start, end] = key.split(":").map(Number);
+  return [start, end];
 }
 
 function AnnotationSheet({

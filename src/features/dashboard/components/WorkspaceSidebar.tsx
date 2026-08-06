@@ -22,7 +22,7 @@ import type { AuthenticatedAccount } from "@/features/account/types";
 import { ManuscriptSwitcher } from "@/features/manuscript/components/ManuscriptSwitcher";
 import { DraftVersionSwitcher } from "@/features/manuscript/components/DraftVersionSwitcher";
 import { ManuscriptSettingsDialog } from "@/features/manuscript/components/ManuscriptSettingsDialog";
-import { useManuscript } from "@/features/manuscript/hooks/use-manuscripts";
+import { useManuscript, useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
 import { NotificationCenter } from "@/features/notifications/components/NotificationCenter";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +50,9 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   const searchParams = useSearchParams();
   const selectedManuscriptId = searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
-  const manuscriptQuery = useManuscript(selectedManuscriptId, selectedVersionId);
+  const manuscriptsQuery = useManuscripts();
+  const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
+  const manuscriptQuery = useManuscript(manuscriptId, selectedVersionId);
   const manuscript = manuscriptQuery.data;
   const canAccessReaderWorkspace = account.role !== null && canRead(account.role);
   const canAccessWriterWorkspace = account.role === "super_admin"
@@ -59,11 +61,11 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   const settingsHref = isReaderRoute ? "/reader/settings" : withSelectedManuscript("/dashboard/settings");
 
   function withSelectedManuscript(href: string) {
-    if (!selectedManuscriptId) return href;
+    if (!manuscriptId) return href;
 
     const [path, query = ""] = href.split("?");
     const nextSearchParams = new URLSearchParams(query);
-    nextSearchParams.set("manuscriptId", selectedManuscriptId);
+    nextSearchParams.set("manuscriptId", manuscriptId);
     if (selectedVersionId) nextSearchParams.set("versionId", selectedVersionId);
     return `${path}?${nextSearchParams.toString()}`;
   }

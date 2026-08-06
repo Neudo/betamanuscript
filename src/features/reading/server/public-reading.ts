@@ -4,6 +4,10 @@ import { createHash } from "node:crypto";
 
 import { socialPlatforms, type SocialPlatform } from "@/features/account/domain/social-links";
 import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
+import {
+  normalizeRichText,
+  type ManuscriptRichText,
+} from "@/features/manuscript/lib/rich-text";
 import type {
   ReaderAnnotation,
   ReaderAnnotationTag,
@@ -31,6 +35,7 @@ export type PublicReaderManuscript = {
       content: string;
       id: string;
       position: number;
+      richContent: ManuscriptRichText;
     }>;
     generalComment: ReaderChapterGeneralComment | null;
     id: string;
@@ -234,7 +239,7 @@ export async function getPublicReadingAccess(
   const { data: blocks, error: blocksError } = options.includeReadingContent && chapterIds.length > 0
     ? await admin
       .from("chapter_blocks")
-      .select("id, chapter_id, position, content")
+      .select("id, chapter_id, position, content, rich_content")
       .in("chapter_id", chapterIds)
       .is("archived_at", null)
       .order("position", { ascending: true })
@@ -318,6 +323,7 @@ export async function getPublicReadingAccess(
     content: string;
     id: string;
     position: number;
+    richContent: ManuscriptRichText;
   }>>();
   for (const block of blocks ?? []) {
     const chapterBlocks = blocksByChapter.get(block.chapter_id) ?? [];
@@ -325,6 +331,7 @@ export async function getPublicReadingAccess(
       content: block.content,
       id: block.id,
       position: block.position,
+      richContent: normalizeRichText(block.rich_content, block.content),
     });
     blocksByChapter.set(block.chapter_id, chapterBlocks);
   }

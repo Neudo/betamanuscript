@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -181,7 +183,13 @@ function toManagedReader(
 }
 
 export async function getManuscriptReaders(): Promise<ManuscriptReaders[]> {
-  const supabase = createSupabaseBrowserClient();
+  return getManuscriptReadersWithClient(createSupabaseBrowserClient());
+}
+
+export async function getManuscriptReadersWithClient(
+  client: SupabaseClient<Database>,
+): Promise<ManuscriptReaders[]> {
+  const supabase = client;
   const { data, error } = await supabase
     .from("manuscripts")
     .select(`

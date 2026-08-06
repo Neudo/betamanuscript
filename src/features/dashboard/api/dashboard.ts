@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -125,7 +127,19 @@ export async function getDashboardOverview(
   manuscriptId: string,
   manuscriptVersionId: string | null = null,
 ): Promise<DashboardOverviewData | null> {
-  const supabase = createSupabaseBrowserClient();
+  return getDashboardOverviewWithClient(
+    createSupabaseBrowserClient(),
+    manuscriptId,
+    manuscriptVersionId,
+  );
+}
+
+export async function getDashboardOverviewWithClient(
+  client: SupabaseClient<Database>,
+  manuscriptId: string,
+  manuscriptVersionId: string | null = null,
+): Promise<DashboardOverviewData | null> {
+  const supabase = client;
   const { data: manuscriptData, error: manuscriptError } = await supabase
     .from("manuscripts")
     .select("id, internal_title")
