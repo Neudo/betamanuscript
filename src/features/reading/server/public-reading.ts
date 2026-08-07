@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { cache } from "react";
 
 import { socialPlatforms, type SocialPlatform } from "@/features/account/domain/social-links";
 import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
@@ -57,6 +58,7 @@ export type PublicReaderManuscript = {
 
 export type PublicReadingAccess = {
   isAuthenticated: boolean;
+  latestChapterId: string | null;
   manuscript: PublicReaderManuscript;
   readerAssignmentId: string | null;
 };
@@ -121,10 +123,10 @@ export function publicReadingFingerprint(input: {
     .digest("hex");
 }
 
-export async function getPublicReadingAccess(
+export const getPublicReadingAccess = cache(async function getPublicReadingAccess(
   accessLinkId: string,
   fingerprintHash: string,
-  options: { includeReadingContent?: boolean } = {},
+  includeReadingContent = false,
 ): Promise<PublicReadingAccess | null> {
   if (!isUuid(accessLinkId)) return null;
 
@@ -183,7 +185,7 @@ export async function getPublicReadingAccess(
 
   const manuscriptRecord = manuscript as ManuscriptRow;
   const [chaptersResult, tagsResult, viewerResult, coverResult, genreRowsResult, author] = await Promise.all([
-    options.includeReadingContent
+    includeReadingContent
       ? admin
         .from("manuscript_chapters")
         .select("id, position, title")
@@ -191,7 +193,7 @@ export async function getPublicReadingAccess(
         .is("archived_at", null)
         .order("position", { ascending: true })
       : Promise.resolve({ data: [], error: null }),
-    options.includeReadingContent
+    includeReadingContent
       ? admin
         .from("manuscript_annotation_tags")
         .select("id, slug, label, color")
@@ -221,6 +223,18 @@ export async function getPublicReadingAccess(
 
   if (chaptersResult.error || tagsResult.error || coverResult.error || genreRowsResult.error) return null;
 
+  const { data: latestProgress, error: latestProgressError } = viewerResult.assignmentId
+    ? await admin
+      .from("chapter_reading_progress")
+      .select("chapter_id")
+      .eq("reader_assignment_id", viewerResult.assignmentId)
+      .order("last_read_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    : { data: null, error: null };
+
+  if (latestProgressError) return null;
+
   const genreSlugs = (genreRowsResult.data ?? []).map((genre) => genre.genre_slug);
   const { data: genres, error: genresError } = genreSlugs.length > 0
     ? await admin.from("genres").select("label, slug").in("slug", genreSlugs)
@@ -236,7 +250,7 @@ export async function getPublicReadingAccess(
 
   const chapters = chaptersResult.data ?? [];
   const chapterIds = chapters.map((chapter) => chapter.id);
-  const { data: blocks, error: blocksError } = options.includeReadingContent && chapterIds.length > 0
+  const { data: blocks, error: blocksError } = includeReadingContent && chapterIds.length > 0
     ? await admin
       .from("chapter_blocks")
       .select("id, chapter_id, position, content, rich_content")
@@ -372,9 +386,10 @@ export async function getPublicReadingAccess(
       versionNumber: manuscriptVersion.version_number,
     },
     isAuthenticated: viewerResult.isAuthenticated,
+    latestChapterId: latestProgress?.chapter_id ?? null,
     readerAssignmentId: viewerResult.assignmentId,
   };
-}
+});
 
 async function getPublicAuthor(profileId: string): Promise<PublicReaderManuscript["author"]> {
   const admin = createSupabaseAdminClient();

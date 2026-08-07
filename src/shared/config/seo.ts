@@ -10,8 +10,9 @@ type PublicMetadataInput = {
   title: string;
 };
 
-export function createNoIndexMetadata(title: string): Metadata {
+export function createNoIndexMetadata(title: string, description?: string): Metadata {
   return {
+    ...(description ? { description } : {}),
     title,
     robots: {
       follow: false,
@@ -23,6 +24,23 @@ export function createNoIndexMetadata(title: string): Metadata {
       index: false,
     },
   };
+}
+
+export function createSharedManuscriptMetadata(manuscript: {
+  logline: string | null;
+  title: string;
+} | null): Metadata {
+  if (!manuscript) {
+    return createNoIndexMetadata("Shared manuscript | BetaManuscript");
+  }
+
+  const title = normalizeMetadataText(manuscript.title) || "Shared manuscript";
+  const logline = normalizeMetadataText(manuscript.logline);
+  const description = logline
+    ? truncateMetadataText(logline, 160)
+    : `Read ${title} on BetaManuscript.`;
+
+  return createNoIndexMetadata(`${title} | BetaManuscript`, description);
 }
 
 export function createPublicMetadata({
@@ -59,4 +77,14 @@ export function createPublicMetadata({
       title,
     },
   };
+}
+
+function normalizeMetadataText(value: string | null) {
+  return value?.replace(/\s+/g, " ").trim() ?? "";
+}
+
+function truncateMetadataText(value: string, maxLength: number) {
+  if (value.length <= maxLength) return value;
+
+  return `${value.slice(0, maxLength - 1).trimEnd()}…`;
 }
