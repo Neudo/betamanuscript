@@ -4,8 +4,10 @@ import {
   classifyDocxFontFamily,
   extractPdfPageParagraphs,
   getExplicitChapterTitle,
+  groupDocxParagraphs,
   getSourceDocumentMetadata,
 } from "./source-document";
+import { createPlainRichText, createRichText } from "./rich-text";
 
 describe("DOCX font family classification", () => {
   it("distinguishes Roboto Serif from Roboto", () => {
@@ -47,6 +49,40 @@ describe("explicit chapter titles", () => {
 
   it("does not mistake an ordinary parenthetical sentence for a chapter", () => {
     expect(getExplicitChapterTitle("They discussed chapter 2 (Remnants) over dinner.")).toBeNull();
+  });
+});
+
+describe("DOCX paragraph grouping", () => {
+  it("keeps consecutive Word lines inside one rendered paragraph until a blank Word paragraph", () => {
+    const grouped = groupDocxParagraphs([
+      { richContent: createPlainRichText("“Well, that’s stupid. We don’t even have theirs!”"), text: "“Well, that’s stupid. We don’t even have theirs!”" },
+      { richContent: createRichText([{ marks: { italic: true }, text: "“For once we agree.”" }, { text: " Ember giggled." }]), text: "“For once we agree.” Ember giggled." },
+      { richContent: createPlainRichText("“Alright, all that before the meeting in, um.”"), text: "“Alright, all that before the meeting in, um.”" },
+      { richContent: createPlainRichText(""), text: "" },
+      { richContent: createPlainRichText("A new prose paragraph."), text: "A new prose paragraph." },
+    ]);
+
+    expect(grouped).toHaveLength(2);
+    expect(grouped[0]?.text).toBe("“Well, that’s stupid. We don’t even have theirs!”\n“For once we agree.” Ember giggled.\n“Alright, all that before the meeting in, um.”");
+    expect(grouped[0]?.richContent.runs).toEqual([
+      { text: "“Well, that’s stupid. We don’t even have theirs!”\n" },
+      { marks: { italic: true }, text: "“For once we agree.”" },
+      { text: " Ember giggled.\n“Alright, all that before the meeting in, um.”" },
+    ]);
+    expect(grouped[1]?.text).toBe("A new prose paragraph.");
+  });
+
+  it("keeps chapter titles separate from the prose that follows", () => {
+    const grouped = groupDocxParagraphs([
+      { richContent: createPlainRichText("Chapter 1"), text: "Chapter 1" },
+      { richContent: createPlainRichText("The first line."), text: "The first line." },
+      { richContent: createPlainRichText("The next line."), text: "The next line." },
+    ]);
+
+    expect(grouped.map((paragraph) => paragraph.text)).toEqual([
+      "Chapter 1",
+      "The first line.\nThe next line.",
+    ]);
   });
 });
 

@@ -523,7 +523,10 @@ export function ManuscriptWorkspace() {
         ) : null}
 
         <ScrollArea className="md:min-h-0 md:flex-1">
-          <article className="reader-copy mx-auto max-w-3xl px-5 py-10 sm:px-10 sm:py-14">
+          <article className={cn(
+            "reader-copy mx-auto max-w-3xl px-5 pt-10 sm:px-10 sm:pt-14",
+            isEditing ? "pb-40 sm:pb-32" : "pb-10 sm:pb-14",
+          )}>
             <Heading level={2}>{selectedChapter.title}</Heading>
             {isEditing && editingDocument ? (
               <div className="mt-10">
@@ -532,6 +535,17 @@ export function ManuscriptWorkspace() {
                   value={editingDocument}
                   onChange={setEditingDocument}
                   disabled={updateManuscriptChapter.isPending}
+                  footerAction={(
+                    <Button
+                      type="button"
+                      size="lg"
+                      disabled={!hasUnsavedChanges || updateManuscriptChapter.isPending}
+                      onClick={requestSaveEditingChanges}
+                      className="h-11 w-full min-w-[11.5rem] rounded-none px-5 shadow-[0_8px_18px_rgba(28,24,18,0.18)] sm:w-auto"
+                    >
+                      {updateManuscriptChapter.isPending ? "Saving…" : "Save changes"}
+                    </Button>
+                  )}
                   variant="workspace"
                 />
               </div>
@@ -599,20 +613,6 @@ export function ManuscriptWorkspace() {
           />
         </ScrollArea>
       </aside>
-
-      {isEditing ? (
-        <div className="fixed bottom-5 right-5 z-30 md:right-[calc(360px+1.25rem)]">
-          <Button
-            type="button"
-            size="lg"
-            disabled={!hasUnsavedChanges || updateManuscriptChapter.isPending}
-            onClick={requestSaveEditingChanges}
-            className="h-11 rounded-none px-5 shadow-[0_10px_24px_rgba(28,24,18,0.2)]"
-          >
-            {updateManuscriptChapter.isPending ? "Saving…" : "Save changes"}
-          </Button>
-        </div>
-      ) : null}
 
       <AlertDialog open={isEditing && isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
         <AlertDialogContent className="rounded-none border-foreground/15 bg-card">

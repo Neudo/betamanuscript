@@ -27,6 +27,10 @@
     --ring: 0 62% 30%;
     --sidebar: 42 27% 90%;
     --surface: 38 38% 96%;
+    --editor-footer: 35 25% 84%;
+    --editor-footer-foreground: 33 22% 9%;
+    --editor-footer-muted: 30 10% 38%;
+    --editor-footer-border: 34 19% 74%;
     --success: 143 29% 40%;
     --warning: 31 55% 47%;
     --ink: 33 22% 9%;
@@ -90,6 +94,10 @@
     --ring: 3 88% 78%;
     --sidebar: 30 19% 18%;
     --surface: 30 17% 24%;
+    --editor-footer: 30 17% 26%;
+    --editor-footer-foreground: 38 31% 90%;
+    --editor-footer-muted: 36 19% 72%;
+    --editor-footer-border: 31 15% 42%;
     --success: 143 27% 60%;
     --warning: 31 48% 64%;
     --ink: 38 31% 90%;

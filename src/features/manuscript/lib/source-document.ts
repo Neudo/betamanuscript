@@ -446,7 +446,7 @@ async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
 
   const fontContext = getDocxFontContext(stylesXml, themeXml);
 
-  return Array.from(document.getElementsByTagNameNS(wordprocessingNamespace, "p"))
+  return groupDocxParagraphs(Array.from(document.getElementsByTagNameNS(wordprocessingNamespace, "p"))
     .map((paragraph) => {
       const paragraphMarks = getDocxParagraphMarks(paragraph, fontContext);
       const richContent = normalizeRichTextWhitespace(createRichText(
@@ -466,8 +466,62 @@ async function extractDocxParagraphs(file: File): Promise<DocumentParagraph[]> {
         ?? undefined;
 
       return { richContent, style, text };
-    })
-    .filter((paragraph) => paragraph.text.length > 0);
+    }));
+}
+
+export function groupDocxParagraphs(paragraphs: DocumentParagraph[]): DocumentParagraph[] {
+  const groupedParagraphs: DocumentParagraph[] = [];
+  let currentParagraph: DocumentParagraph | null = null;
+
+  function flushCurrentParagraph() {
+    if (!currentParagraph || !currentParagraph.text.trim()) return;
+    groupedParagraphs.push(currentParagraph);
+    currentParagraph = null;
+  }
+
+  for (const paragraph of paragraphs) {
+    // In many manuscripts, each visual line is its own Word paragraph while
+    // an empty Word paragraph marks the real prose break. Keep adjacent lines
+    // in one rich-text block so the reader gets <br>, not a stack of <p>s.
+    if (!paragraph.text.trim()) {
+      flushCurrentParagraph();
+      continue;
+    }
+
+    // A chapter label or a non-body style remains a distinct block even when
+    // the source author did not place an empty line immediately after it.
+    if (isDocxStructuralParagraph(paragraph)) {
+      flushCurrentParagraph();
+      groupedParagraphs.push(paragraph);
+      continue;
+    }
+
+    if (!currentParagraph) {
+      currentParagraph = paragraph;
+      continue;
+    }
+
+    const richContent = createRichText([
+      ...currentParagraph.richContent.runs,
+      { text: "\n" },
+      ...paragraph.richContent.runs,
+    ]);
+    currentParagraph = {
+      richContent,
+      style: currentParagraph.style,
+      text: getRichTextContent(richContent),
+    };
+  }
+
+  flushCurrentParagraph();
+  return groupedParagraphs;
+}
+
+function isDocxStructuralParagraph(paragraph: DocumentParagraph) {
+  if (getChapterTitle(paragraph)) return true;
+
+  const normalizedStyle = paragraph.style?.replace(/[\s_-]+/g, "").toLowerCase();
+  return Boolean(normalizedStyle && !["body", "bodytext", "normal", "textbody"].includes(normalizedStyle));
 }
 
 function detectChapters(paragraphs: DocumentParagraph[]): ImportedManuscriptChapter[] {

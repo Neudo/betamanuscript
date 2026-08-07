@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 
 type RichTextEditorProps = {
   disabled?: boolean;
+  footerAction?: ReactNode;
   id: string;
   onChange: (document: ManuscriptRichTextDocument) => void;
   value: ManuscriptRichTextDocument;
@@ -40,6 +41,7 @@ type SelectionSnapshot = {
 
 export function RichTextEditor({
   disabled = false,
+  footerAction,
   id,
   onChange,
   value,
@@ -137,6 +139,62 @@ export function RichTextEditor({
   }
 
   const isWorkspaceEditor = variant === "workspace";
+  const workspaceToolbarItemClassName = isWorkspaceEditor
+    ? "text-[hsl(var(--editor-footer-foreground))] hover:text-[hsl(var(--editor-footer-foreground))]"
+    : undefined;
+  const formattingToolbar = (
+    <div
+      className={cn(
+        "flex min-h-10 flex-1 flex-wrap items-center gap-x-1 gap-y-1 transition-opacity",
+        isWorkspaceEditor
+          ? "px-0 py-0 sm:px-0"
+          : "border-b border-foreground/10 bg-muted/[0.16] px-2 py-1.5",
+        !hasSelection && "opacity-55",
+      )}
+      aria-label="Selected text formatting"
+      aria-live="polite"
+      role="toolbar"
+    >
+      <span className={cn(
+        "mr-1 hidden min-w-[70px] font-mono text-[9px] uppercase tracking-widest sm:inline-block",
+        isWorkspaceEditor ? "text-[hsl(var(--editor-footer-muted))]" : "text-muted-foreground",
+      )}>
+        {hasSelection ? "Selection" : "Select text"}
+      </span>
+      <ToolbarButton
+        label="Bold"
+        onClick={() => runNativeCommand("bold")}
+        disabled={disabled || !hasSelection}
+        className={workspaceToolbarItemClassName}
+      >
+        <Bold className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Italic"
+        onClick={() => runNativeCommand("italic")}
+        disabled={disabled || !hasSelection}
+        className={workspaceToolbarItemClassName}
+      >
+        <Italic className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Serif"
+        onClick={() => applyFontFamily("serif")}
+        disabled={disabled || !hasSelection}
+        className={cn("w-auto px-2 font-serif text-xs", workspaceToolbarItemClassName)}
+      >
+        Serif
+      </ToolbarButton>
+      <ToolbarButton
+        label="Sans serif"
+        onClick={() => applyFontFamily("sans-serif")}
+        disabled={disabled || !hasSelection}
+        className={cn("w-auto px-2 font-sans text-[10px]", workspaceToolbarItemClassName)}
+      >
+        Sans
+      </ToolbarButton>
+    </div>
+  );
 
   return (
     <div className={cn(
@@ -144,42 +202,7 @@ export function RichTextEditor({
         ? "border-y border-foreground/10 bg-background/35"
         : "overflow-hidden border border-foreground/20 bg-background",
     )}>
-      <div
-        className={cn(
-          "flex min-h-10 flex-wrap items-center gap-x-1 gap-y-1 border-b border-foreground/10 bg-muted/[0.16] px-2 py-1.5 transition-opacity",
-          isWorkspaceEditor && "bg-sidebar/45",
-          !hasSelection && "opacity-55",
-        )}
-        aria-label="Selected text formatting"
-        aria-live="polite"
-        role="toolbar"
-      >
-        <span className="mr-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-          {hasSelection ? "Selection" : "Select text"}
-        </span>
-        <ToolbarButton label="Bold" onClick={() => runNativeCommand("bold")} disabled={disabled || !hasSelection}>
-          <Bold className="h-3.5 w-3.5" />
-        </ToolbarButton>
-        <ToolbarButton label="Italic" onClick={() => runNativeCommand("italic")} disabled={disabled || !hasSelection}>
-          <Italic className="h-3.5 w-3.5" />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Serif"
-          onClick={() => applyFontFamily("serif")}
-          disabled={disabled || !hasSelection}
-          className="w-auto px-2 font-serif text-xs"
-        >
-          Serif
-        </ToolbarButton>
-        <ToolbarButton
-          label="Sans serif"
-          onClick={() => applyFontFamily("sans-serif")}
-          disabled={disabled || !hasSelection}
-          className="w-auto px-2 font-sans text-[10px]"
-        >
-          Sans
-        </ToolbarButton>
-      </div>
+      {isWorkspaceEditor ? null : formattingToolbar}
       <div
         id={id}
         ref={editorRef}
@@ -202,6 +225,18 @@ export function RichTextEditor({
           disabled && "cursor-not-allowed bg-muted/[0.14] text-muted-foreground",
         )}
       />
+      {isWorkspaceEditor ? (
+        <footer className="fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--editor-footer-border))] bg-[hsl(var(--editor-footer))] text-[hsl(var(--editor-footer-foreground))] shadow-[0_-10px_24px_rgba(28,24,18,0.16)] backdrop-blur-sm md:left-[220px] md:right-[360px]">
+          <div className="mx-auto flex max-w-screen-2xl flex-col gap-2 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5">
+            {formattingToolbar}
+            {footerAction ? (
+              <div className="w-full shrink-0 sm:w-auto">
+                {footerAction}
+              </div>
+            ) : null}
+          </div>
+        </footer>
+      ) : null}
     </div>
   );
 }
