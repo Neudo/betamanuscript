@@ -147,6 +147,40 @@
 }
 
 @layer components {
+  @keyframes focus-reading-surface-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes focus-reading-copy-in {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes focus-reading-exit-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .annotation-highlight {
     background-color: var(--annotation-highlight-background);
   }
@@ -157,6 +191,26 @@
 
   .dark .annotation-highlight--focused {
     background-color: var(--annotation-highlight-focus-dark);
+  }
+
+  .focus-reading-surface {
+    animation: focus-reading-surface-in 180ms ease-out both;
+  }
+
+  .focus-reading-copy {
+    animation: focus-reading-copy-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .focus-reading-exit {
+    animation: focus-reading-exit-in 260ms ease-out 80ms both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .focus-reading-surface,
+    .focus-reading-copy,
+    .focus-reading-exit {
+      animation: none;
+    }
   }
 }
 

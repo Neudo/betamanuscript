@@ -1,11 +1,22 @@
 "use client";
 
-import { Check, ChevronDown, EyeOff, MessageSquareText, Tags } from "lucide-react";
+import { Check, ChevronDown, EyeOff, Maximize2, MessageSquareText, PencilLine, Tags, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type CSSProperties, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -41,6 +52,7 @@ import { getAnnotationTagColor } from "@/features/annotations/lib/tag-colors";
 import { getBlockAnnotationRanges } from "@/features/annotations/lib/multi-block-annotations";
 import {
   useUpdateAnnotationSeenMutation,
+  useUpdateManuscriptChapterMutation,
   useUpdateChapterStatusMutation,
   useUpdateGeneralCommentSeenMutation,
 } from "@/features/manuscript/hooks/use-manuscript-mutations";
@@ -48,7 +60,7 @@ import {
   useManuscript,
   useManuscripts,
 } from "@/features/manuscript/hooks/use-manuscripts";
-import { ChapterManagerDialog } from "@/features/manuscript/components/ChapterManagerDialog";
+import { RichTextEditor } from "@/features/manuscript/components/RichTextEditor";
 import { RichText } from "@/features/manuscript/components/RichText";
 import {
   ManuscriptFullPageState,
@@ -61,6 +73,11 @@ import type {
   ManuscriptWorkspaceChapter,
   ManuscriptWorkspaceGeneralComment,
 } from "@/features/manuscript/types";
+import {
+  createRichTextDocument,
+  getRichTextDocumentContent,
+  type ManuscriptRichTextDocument,
+} from "@/features/manuscript/lib/rich-text";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -97,6 +114,11 @@ type FeedbackFiltersState = {
   hideReadFeedback: boolean;
   hiddenFeedbackTagSlugs: string[];
   scope: string;
+};
+
+type ChapterEditImpact = {
+  generalFeedbackCount: number;
+  inlineFeedbackCount: number;
 };
 
 function useDesktopLayout() {
@@ -151,7 +173,39 @@ export function ManuscriptWorkspace() {
   const updateChapterStatus = useUpdateChapterStatusMutation();
   const updateAnnotationSeen = useUpdateAnnotationSeenMutation();
   const updateGeneralCommentSeen = useUpdateGeneralCommentSeenMutation();
+  const updateManuscriptChapter = useUpdateManuscriptChapterMutation();
   const isDesktopLayout = useDesktopLayout();
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [editingDocument, setEditingDocument] = useState<ManuscriptRichTextDocument | null>(null);
+  const [initialEditingDocument, setInitialEditingDocument] = useState<ManuscriptRichTextDocument | null>(null);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [pendingChapterUpdate, setPendingChapterUpdate] = useState<ChapterEditImpact | null>(null);
+
+  useEffect(() => {
+    if (!isFocusMode) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsFocusMode(false);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFocusMode]);
+
+  useEffect(() => {
+    if (!isFocusMode) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+    };
+  }, [isFocusMode]);
 
   if (!manuscriptId && !manuscriptsQuery.isLoading) {
     return <NoManuscriptState />;
@@ -185,6 +239,10 @@ export function ManuscriptWorkspace() {
   const selectedChapter = manuscript.chapters.find(
     (chapter) => chapter.id === selectedChapterIdFromUrl,
   ) ?? manuscript.chapters[0];
+  const isEditing = editingChapterId === selectedChapter?.id && editingDocument !== null;
+  const hasUnsavedChanges = editingDocument !== null
+    && initialEditingDocument !== null
+    && JSON.stringify(editingDocument) !== JSON.stringify(initialEditingDocument);
   const completeCount = manuscript.chapters.filter(
     (chapter) => chapter.editorialStatus === "complete",
   ).length;
@@ -192,12 +250,8 @@ export function ManuscriptWorkspace() {
     return (
       <ManuscriptFullPageState
         title={manuscript.title}
-        description="This version has no chapters yet. Add one now, or import a source document when you create the next version."
-      >
-        <div className="mt-5 flex flex-wrap justify-center">
-          <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
-        </div>
-      </ManuscriptFullPageState>
+        description="This version has no chapters yet. Add one from the Draft section in the workspace sidebar, or import a source document when you create the next version."
+      />
     );
   }
 
@@ -235,6 +289,67 @@ export function ManuscriptWorkspace() {
       manuscriptVersionId: workspace.version?.id ?? "",
       status,
     });
+  }
+
+  function startEditing() {
+    updateManuscriptChapter.reset();
+    const document = createRichTextDocument(selectedChapter.blocks);
+    setEditingChapterId(selectedChapter.id);
+    setEditingDocument(document);
+    setInitialEditingDocument(document);
+    setPendingChapterUpdate(null);
+  }
+
+  function leaveEditing() {
+    setEditingChapterId(null);
+    setEditingDocument(null);
+    setInitialEditingDocument(null);
+    setPendingChapterUpdate(null);
+    setIsDiscardDialogOpen(false);
+    updateManuscriptChapter.reset();
+  }
+
+  function requestLeaveEditing() {
+    if (updateManuscriptChapter.isPending) return;
+    if (hasUnsavedChanges) {
+      setIsDiscardDialogOpen(true);
+      return;
+    }
+
+    leaveEditing();
+  }
+
+  async function persistEditingChanges() {
+    if (!editingDocument || !hasUnsavedChanges || editingChapterId !== selectedChapter.id) return;
+
+    try {
+      await updateManuscriptChapter.mutateAsync({
+        chapterId: selectedChapter.id,
+        content: getRichTextDocumentContent(editingDocument),
+        manuscriptId: workspace.id,
+        richBlocks: editingDocument.blocks,
+        title: selectedChapter.title,
+      });
+      setInitialEditingDocument(editingDocument);
+      setPendingChapterUpdate(null);
+    } catch {
+      // The mutation state renders the database error above the manuscript.
+    }
+  }
+
+  function requestSaveEditingChanges() {
+    if (!editingDocument || !hasUnsavedChanges || editingChapterId !== selectedChapter.id || updateManuscriptChapter.isPending) return;
+
+    const impact = getChapterEditImpact(
+      selectedChapter,
+      getRichTextDocumentContent(editingDocument),
+    );
+    if (impact.inlineFeedbackCount > 0 || impact.generalFeedbackCount > 0) {
+      setPendingChapterUpdate(impact);
+      return;
+    }
+
+    void persistEditingChanges();
   }
 
   function handleAnnotationSeen(annotation: ManuscriptWorkspaceAnnotation) {
@@ -312,6 +427,7 @@ export function ManuscriptWorkspace() {
           <ChapterSwitcher
             chapters={manuscript.chapters}
             completeCount={completeCount}
+            disabled={isEditing}
             onChapterSelect={handleChapterSelect}
             selectedChapter={selectedChapter}
           />
@@ -320,7 +436,31 @@ export function ManuscriptWorkspace() {
               {wordCountFormat.format(selectedChapter.wordCount)} words
             </span>
             <div className="min-w-0 [&_button]:w-full sm:[&_button]:w-auto">
-              <ChapterManagerDialog manuscript={manuscript} onChapterSelected={handleChapterSelect} />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={updateManuscriptChapter.isPending}
+                onClick={isEditing ? requestLeaveEditing : startEditing}
+                className="rounded-none"
+              >
+                {isEditing ? <X className="h-3.5 w-3.5" /> : <PencilLine className="h-3.5 w-3.5" />}
+                {isEditing ? "Exit edit mode" : "Edit text"}
+              </Button>
+            </div>
+            <div className="min-w-0 [&_button]:w-full sm:[&_button]:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isEditing}
+                onClick={() => setIsFocusMode(true)}
+                title="Focus mode — press Escape to exit"
+                className="rounded-none"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+                Focus mode
+              </Button>
             </div>
             {!isDesktopLayout ? (
               <div>
@@ -355,7 +495,7 @@ export function ManuscriptWorkspace() {
             <Select
               value={selectedChapter.editorialStatus}
               onValueChange={(value) => handleStatusChange(value as ChapterEditorialStatus)}
-              disabled={updateChapterStatus.isPending}
+              disabled={updateChapterStatus.isPending || isEditing}
             >
               <SelectTrigger
                 className={cn(
@@ -376,16 +516,26 @@ export function ManuscriptWorkspace() {
           </div>
         </header>
 
-        {(updateChapterStatus.isError || updateAnnotationSeen.isError || updateGeneralCommentSeen.isError) ? (
+        {(updateChapterStatus.isError || updateAnnotationSeen.isError || updateGeneralCommentSeen.isError || updateManuscriptChapter.isError) ? (
           <p className="border-b border-destructive/20 bg-destructive/5 px-5 py-3 text-xs text-destructive">
-            {(updateChapterStatus.error ?? updateAnnotationSeen.error ?? updateGeneralCommentSeen.error)?.message}
+            {(updateChapterStatus.error ?? updateAnnotationSeen.error ?? updateGeneralCommentSeen.error ?? updateManuscriptChapter.error)?.message}
           </p>
         ) : null}
 
         <ScrollArea className="md:min-h-0 md:flex-1">
           <article className="reader-copy mx-auto max-w-3xl px-5 py-10 sm:px-10 sm:py-14">
             <Heading level={2}>{selectedChapter.title}</Heading>
-            {selectedChapter.blocks.length > 0 ? (
+            {isEditing && editingDocument ? (
+              <div className="mt-10">
+                <RichTextEditor
+                  id={`chapter-editor-${selectedChapter.id}`}
+                  value={editingDocument}
+                  onChange={setEditingDocument}
+                  disabled={updateManuscriptChapter.isPending}
+                  variant="workspace"
+                />
+              </div>
+            ) : selectedChapter.blocks.length > 0 ? (
               <div className="mt-10 space-y-6 font-display text-[20px] leading-8 text-foreground/90 sm:text-[22px] sm:leading-9">
                 {selectedChapter.blocks.map((block) => (
                   <ChapterBlock
@@ -449,6 +599,82 @@ export function ManuscriptWorkspace() {
           />
         </ScrollArea>
       </aside>
+
+      {isEditing ? (
+        <div className="fixed bottom-5 right-5 z-30 md:right-[calc(360px+1.25rem)]">
+          <Button
+            type="button"
+            size="lg"
+            disabled={!hasUnsavedChanges || updateManuscriptChapter.isPending}
+            onClick={requestSaveEditingChanges}
+            className="h-11 rounded-none px-5 shadow-[0_10px_24px_rgba(28,24,18,0.2)]"
+          >
+            {updateManuscriptChapter.isPending ? "Saving…" : "Save changes"}
+          </Button>
+        </div>
+      ) : null}
+
+      <AlertDialog open={isEditing && isDiscardDialogOpen} onOpenChange={setIsDiscardDialogOpen}>
+        <AlertDialogContent className="rounded-none border-foreground/15 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The chapter will return to its last saved version.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={leaveEditing} className="rounded-none">
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isEditing && Boolean(pendingChapterUpdate)} onOpenChange={(open) => {
+        if (!updateManuscriptChapter.isPending && !open) setPendingChapterUpdate(null);
+      }}>
+        <AlertDialogContent className="rounded-none border-foreground/15 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive affected feedback?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingChapterUpdate?.inlineFeedbackCount ? (
+                <>
+                  {pendingChapterUpdate.inlineFeedbackCount} inline {pendingChapterUpdate.inlineFeedbackCount === 1 ? "feedback entry" : "feedback entries"} will be archived because {pendingChapterUpdate.inlineFeedbackCount === 1 ? "its selected passage no longer exists" : "their selected passages no longer exist"}.
+                </>
+              ) : null}
+              {pendingChapterUpdate?.inlineFeedbackCount && pendingChapterUpdate.generalFeedbackCount ? " " : null}
+              {pendingChapterUpdate?.generalFeedbackCount ? (
+                <>
+                  {pendingChapterUpdate.generalFeedbackCount} general {pendingChapterUpdate.generalFeedbackCount === 1 ? "annotation" : "annotations"} will also be archived because this chapter is being fully replaced.
+                </>
+              ) : null}
+              {" "}Archived feedback remains available only on the Feedback page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateManuscriptChapter.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updateManuscriptChapter.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                void persistEditingChanges();
+              }}
+              className="rounded-none"
+            >
+              {updateManuscriptChapter.isPending ? "Saving…" : "Save and archive feedback"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {isFocusMode ? (
+        <FocusReadingMode
+          blocks={selectedChapter.blocks}
+          onExit={() => setIsFocusMode(false)}
+          title={selectedChapter.title}
+        />
+      ) : null}
     </div>
   );
 }
@@ -522,11 +748,13 @@ export function ManuscriptWorkspaceLoadingSkeleton() {
 function ChapterSwitcher({
   chapters,
   completeCount,
+  disabled = false,
   onChapterSelect,
   selectedChapter,
 }: {
   chapters: ManuscriptWorkspaceChapter[];
   completeCount: number;
+  disabled?: boolean;
   onChapterSelect: (chapterId: string) => void;
   selectedChapter: ManuscriptWorkspaceChapter;
 }) {
@@ -537,6 +765,7 @@ function ChapterSwitcher({
           <Button
             type="button"
             variant="ghost"
+            disabled={disabled}
             className="h-9 min-w-0 max-w-full justify-start gap-3 rounded-none border border-foreground/15 bg-background px-3 text-left hover:bg-foreground/[0.04] data-[state=open]:bg-foreground/[0.06]"
             aria-label="Choose chapter"
           >
@@ -619,6 +848,89 @@ function ChapterBlock({
   }
 
   return <p><AnnotatedChapterText content={block.content} richContent={block.richContent} annotations={annotations} focusedAnnotationId={focusedAnnotationId} onAnnotationFocus={onAnnotationFocus} /></p>;
+}
+
+function FocusReadingMode({
+  blocks,
+  onExit,
+  title,
+}: {
+  blocks: ManuscriptWorkspaceBlock[];
+  onExit: () => void;
+  title: string;
+}) {
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Focus reading mode"
+      className="focus-reading-surface fixed inset-0 z-[var(--layer-tooltip)] isolate overflow-y-auto overscroll-contain bg-background"
+    >
+      <p className="sr-only">Focus mode. Press Escape to return to the manuscript workspace.</p>
+      <Button
+        type="button"
+        variant="default"
+        size="sm"
+        onClick={onExit}
+        autoFocus
+        className="focus-reading-exit fixed right-4 top-4 z-10 rounded-none shadow-[0_8px_18px_rgba(28,24,18,0.16)] sm:right-6 sm:top-6"
+      >
+        <X className="h-3.5 w-3.5" />
+        Exit focus mode
+      </Button>
+      <article className="focus-reading-copy reader-copy mx-auto max-w-[760px] px-5 py-12 sm:px-10 sm:py-20">
+        <Heading level={1} size="section" className="mb-10 sm:mb-14">
+          {title}
+        </Heading>
+        <div className="space-y-6 font-display text-[20px] leading-8 text-foreground/90 sm:text-[22px] sm:leading-9">
+          {blocks.map((block) => (
+            <ChapterBlock
+              key={block.id}
+              block={block}
+              annotations={[]}
+              focusedAnnotationId={null}
+              onAnnotationFocus={() => undefined}
+            />
+          ))}
+        </div>
+      </article>
+    </div>,
+    document.body,
+  );
+}
+
+function getChapterEditImpact(chapter: ManuscriptWorkspaceChapter, nextContent: string): ChapterEditImpact {
+  const currentContent = chapter.blocks.map((block) => block.content).join("\n\n");
+  const normalizedCurrentContent = normalizeChapterContent(currentContent);
+  const normalizedNextContent = normalizeChapterContent(nextContent);
+
+  if (normalizedCurrentContent === normalizedNextContent) {
+    return { generalFeedbackCount: 0, inlineFeedbackCount: 0 };
+  }
+
+  const inlineFeedbackCount = chapter.annotations.filter((annotation) => (
+    !normalizedNextContent.includes(annotation.quote)
+  )).length;
+  const currentBlocks = chapter.blocks.map((block) => block.content).filter(Boolean);
+  const isCompleteReplacement = currentBlocks.length > 0 && currentBlocks.every((block) => (
+    !normalizedNextContent.includes(block)
+  ));
+
+  return {
+    generalFeedbackCount: isCompleteReplacement ? chapter.generalComments.length : 0,
+    inlineFeedbackCount,
+  };
+}
+
+function normalizeChapterContent(content: string) {
+  return content
+    .replace(/\r\n?/g, "\n")
+    .split(/\n[\t ]*\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function AnnotatedChapterText({

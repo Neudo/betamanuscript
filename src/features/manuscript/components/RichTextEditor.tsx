@@ -30,6 +30,7 @@ type RichTextEditorProps = {
   id: string;
   onChange: (document: ManuscriptRichTextDocument) => void;
   value: ManuscriptRichTextDocument;
+  variant?: "dialog" | "workspace";
 };
 
 type SelectionSnapshot = {
@@ -37,7 +38,13 @@ type SelectionSnapshot = {
   selectionText: string;
 };
 
-export function RichTextEditor({ disabled = false, id, onChange, value }: RichTextEditorProps) {
+export function RichTextEditor({
+  disabled = false,
+  id,
+  onChange,
+  value,
+  variant = "dialog",
+}: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const latestValueRef = useRef("");
   const selectionRef = useRef<SelectionSnapshot | null>(null);
@@ -129,11 +136,18 @@ export function RichTextEditor({ disabled = false, id, onChange, value }: RichTe
     emitChange();
   }
 
+  const isWorkspaceEditor = variant === "workspace";
+
   return (
-    <div className="overflow-hidden border border-foreground/20 bg-background">
+    <div className={cn(
+      isWorkspaceEditor
+        ? "border-y border-foreground/10 bg-background/35"
+        : "overflow-hidden border border-foreground/20 bg-background",
+    )}>
       <div
         className={cn(
           "flex min-h-10 flex-wrap items-center gap-x-1 gap-y-1 border-b border-foreground/10 bg-muted/[0.16] px-2 py-1.5 transition-opacity",
+          isWorkspaceEditor && "bg-sidebar/45",
           !hasSelection && "opacity-55",
         )}
         aria-label="Selected text formatting"
@@ -180,8 +194,11 @@ export function RichTextEditor({ disabled = false, id, onChange, value }: RichTe
         onKeyUp={storeSelection}
         onPaste={handlePaste}
         className={cn(
-          "rich-text-editor min-h-72 whitespace-pre-wrap px-3 py-3 font-serif text-base leading-7 text-foreground outline-none",
+          "rich-text-editor whitespace-pre-wrap outline-none",
           "empty:before:pointer-events-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground",
+          isWorkspaceEditor
+            ? "min-h-[28rem] space-y-6 px-0 py-8 font-display text-[20px] leading-8 text-foreground/90 sm:text-[22px] sm:leading-9"
+            : "min-h-72 px-3 py-3 font-serif text-base leading-7 text-foreground",
           disabled && "cursor-not-allowed bg-muted/[0.14] text-muted-foreground",
         )}
       />

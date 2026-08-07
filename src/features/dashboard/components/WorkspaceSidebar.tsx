@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { WorkspaceAccountMenu } from "@/features/account/components/WorkspaceAccountMenu";
 import { canRead, canWrite } from "@/features/account/domain/user-role";
 import type { AuthenticatedAccount } from "@/features/account/types";
+import { ChapterManagerDialog } from "@/features/manuscript/components/ChapterManagerDialog";
 import { ManuscriptSwitcher } from "@/features/manuscript/components/ManuscriptSwitcher";
 import { DraftVersionSwitcher } from "@/features/manuscript/components/DraftVersionSwitcher";
 import { ManuscriptSettingsDialog } from "@/features/manuscript/components/ManuscriptSettingsDialog";
@@ -80,6 +81,15 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
     onNavigate?.();
   }
 
+  function handleChapterSelected(chapterId: string) {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.set("chapterId", chapterId);
+    nextSearchParams.delete("annotationId");
+    nextSearchParams.delete("generalCommentId");
+    router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
+    onNavigate?.();
+  }
+
   function handleManuscriptDeleted() {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("manuscriptId");
@@ -114,25 +124,35 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
       ) : null}
 
       {canAccessWriterWorkspace && manuscript ? (
-        <div className="mx-3 mb-3">
-          <p className="mb-2 px-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-            Current draft
-          </p>
-          <DraftVersionSwitcher
-            activeVersionId={manuscript.version?.id ?? null}
-            className="w-full"
-            onVersionChange={handleVersionChange}
-            versions={manuscript.versions}
-          />
-          <ManuscriptSettingsDialog
-            accountPlan={account.plan}
-            manuscript={manuscript}
-            onDeleted={handleManuscriptDeleted}
-            triggerClassName="mt-2 w-full"
-            triggerLabel="Edit manuscript"
-          />
-          <div className="mt-3 border-t border-foreground/10" />
-        </div>
+        <>
+          <div className="mx-3 mb-3">
+            <ManuscriptSettingsDialog
+              accountPlan={account.plan}
+              manuscript={manuscript}
+              onDeleted={handleManuscriptDeleted}
+              triggerClassName="w-full"
+              triggerLabel="Edit manuscript"
+            />
+          </div>
+
+          <div className="mx-3 mb-3 border-t border-foreground/10 pt-3">
+            <p className="mb-2 px-0.5 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+              Draft
+            </p>
+            <DraftVersionSwitcher
+              activeVersionId={manuscript.version?.id ?? null}
+              className="w-full"
+              onVersionChange={handleVersionChange}
+              versions={manuscript.versions}
+            />
+            <ChapterManagerDialog
+              manuscript={manuscript}
+              onChapterSelected={handleChapterSelected}
+              triggerClassName="mt-2 w-full"
+            />
+            <div className="mt-3 border-t border-foreground/10" />
+          </div>
+        </>
       ) : null}
 
       <nav className="mt-2 flex-1 space-y-0.5 px-3" aria-label="Workspace navigation">

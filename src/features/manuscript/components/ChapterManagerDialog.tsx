@@ -49,29 +49,28 @@ import {
   getRichTextDocumentContent,
   type ManuscriptRichTextDocument,
 } from "@/features/manuscript/lib/rich-text";
+import { cn } from "@/lib/utils";
 
 type ChapterManagerDialogProps = {
+  disabled?: boolean;
   manuscript: ManuscriptWorkspaceData;
   onChapterSelected: (chapterId: string) => void;
+  triggerClassName?: string;
 };
 
 type EditingChapter = ManuscriptWorkspaceChapter | "new" | null;
-type PendingChapterUpdate = {
-  chapter: ManuscriptWorkspaceChapter;
-  generalFeedbackCount: number;
-  inlineFeedbackCount: number;
-};
 
 const wordCountFormat = new Intl.NumberFormat("en-US");
 
 export function ChapterManagerDialog({
+  disabled = false,
   manuscript,
   onChapterSelected,
+  triggerClassName,
 }: ChapterManagerDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<EditingChapter>(null);
   const [chapterToDelete, setChapterToDelete] = useState<ManuscriptWorkspaceChapter | null>(null);
-  const [pendingChapterUpdate, setPendingChapterUpdate] = useState<PendingChapterUpdate | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState<ManuscriptRichTextDocument>({ blocks: [] });
   const [readerAssignmentIds, setReaderAssignmentIds] = useState<Set<string> | null>(null);
@@ -93,7 +92,6 @@ export function ChapterManagerDialog({
     setTitle("");
     setContent({ blocks: [] });
     setReaderAssignmentIds(null);
-    setPendingChapterUpdate(null);
   }
 
   function handleOpenChange(nextOpen: boolean) {
@@ -103,7 +101,6 @@ export function ChapterManagerDialog({
     if (!nextOpen) {
       resetEditor();
       setChapterToDelete(null);
-      setPendingChapterUpdate(null);
       createChapter.reset();
       updateChapter.reset();
       deleteChapter.reset();
@@ -123,7 +120,6 @@ export function ChapterManagerDialog({
     createChapter.reset();
     updateChapter.reset();
     setTitle(chapter.title);
-    setContent(createRichTextDocument(chapter.blocks));
     setReaderAssignmentIds(null);
     setEditingChapter(chapter);
   }
@@ -154,15 +150,7 @@ export function ChapterManagerDialog({
           title,
         });
         if (typeof chapterId === "string") onChapterSelected(chapterId);
-      } else {
-        const impact = getChapterEditImpact(editingChapter, getRichTextDocumentContent(content));
-        if (impact.inlineFeedbackCount > 0 || impact.generalFeedbackCount > 0) {
-          setPendingChapterUpdate({ chapter: editingChapter, ...impact });
-          return;
-        }
-
-        await saveChapterUpdate(editingChapter);
-      }
+      } else await saveChapterUpdate(editingChapter);
 
       resetEditor();
     } catch {
@@ -171,25 +159,16 @@ export function ChapterManagerDialog({
   }
 
   async function saveChapterUpdate(chapter: ManuscriptWorkspaceChapter) {
+    const currentContent = createRichTextDocument(chapter.blocks);
+
     await updateChapter.mutateAsync({
       chapterId: chapter.id,
-      content: getRichTextDocumentContent(content),
+      content: getRichTextDocumentContent(currentContent),
       manuscriptId: manuscript.id,
-      richBlocks: content.blocks,
+      richBlocks: currentContent.blocks,
       title,
     });
     onChapterSelected(chapter.id);
-  }
-
-  async function handleConfirmedChapterUpdate() {
-    if (!pendingChapterUpdate) return;
-
-    try {
-      await saveChapterUpdate(pendingChapterUpdate.chapter);
-      resetEditor();
-    } catch {
-      // The mutation state renders the database error beside the editor.
-    }
   }
 
   async function handleDelete() {
@@ -213,7 +192,12 @@ export function ChapterManagerDialog({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="rounded-none">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          className={cn("rounded-none", triggerClassName)}
+        >
           <PencilLine className="h-3.5 w-3.5" />
           Manage chapters
         </Button>
@@ -235,9 +219,11 @@ export function ChapterManagerDialog({
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <div>
-                  <DialogTitle>{editingChapter === "new" ? "Add a chapter" : "Edit chapter"}</DialogTitle>
+                  <DialogTitle>{editingChapter === "new" ? "Add a chapter" : "Rename chapter"}</DialogTitle>
                   <DialogDescription className="mt-1 leading-6">
-                    Select a passage to format it. Press Enter to begin a new paragraph; readers can annotate each paragraph independently.
+                    {editingChapter === "new"
+                      ? "Write the first text now, or leave it empty and return to edit it in the workspace."
+                      : "Edit the chapter text directly from the workspace, where its reader feedback stays in context."}
                   </DialogDescription>
                 </div>
               </div>
@@ -256,18 +242,20 @@ export function ChapterManagerDialog({
                   className="rounded-none border-foreground/20 bg-background shadow-none"
                 />
               </div>
-              <div>
-                <Label htmlFor="chapter-content" className="mb-1.5 block text-xs font-medium">Chapter content</Label>
-                <RichTextEditor
-                  id="chapter-content"
-                  value={content}
-                  onChange={setContent}
-                  disabled={isSaving}
-                />
-                <p className="mt-1.5 font-mono text-[9px] text-muted-foreground">
-                  You can leave this empty and add the text later.
-                </p>
-              </div>
+              {editingChapter === "new" ? (
+                <div>
+                  <Label htmlFor="chapter-content" className="mb-1.5 block text-xs font-medium">Chapter content</Label>
+                  <RichTextEditor
+                    id="chapter-content"
+                    value={content}
+                    onChange={setContent}
+                    disabled={isSaving}
+                  />
+                  <p className="mt-1.5 font-mono text-[9px] text-muted-foreground">
+                    You can leave this empty and add the text later.
+                  </p>
+                </div>
+              ) : null}
               {editingChapter === "new" ? (
                 <fieldset className="border border-foreground/15 bg-muted/[0.16]">
                   <legend className="sr-only">Reader access</legend>
@@ -359,7 +347,7 @@ export function ChapterManagerDialog({
                 disabled={isSaving || !title.trim() || (editingChapter === "new" && (chapterReadersQuery.isPending || chapterReadersQuery.isError))}
                 className="rounded-none"
               >
-                {isSaving ? "Saving…" : editingChapter === "new" ? "Add chapter" : "Save chapter"}
+                {isSaving ? "Saving…" : editingChapter === "new" ? "Add chapter" : "Save title"}
               </Button>
             </DialogFooter>
           </form>
@@ -368,7 +356,7 @@ export function ChapterManagerDialog({
             <DialogHeader>
               <DialogTitle>Manage chapters</DialogTitle>
               <DialogDescription className="leading-6">
-                Edit chapter titles and text at any time. Feedback whose passage disappears is archived, never silently deleted.
+                Rename, add, or remove chapters here. Edit chapter text directly from the workspace.
               </DialogDescription>
             </DialogHeader>
 
@@ -391,7 +379,7 @@ export function ChapterManagerDialog({
                       size="icon"
                       onClick={() => startEditingChapter(chapter)}
                       className="h-8 w-8 rounded-none"
-                      aria-label={`Edit ${chapter.title}`}
+                      aria-label={`Rename ${chapter.title}`}
                     >
                       <PencilLine className="h-3.5 w-3.5" />
                     </Button>
@@ -454,76 +442,7 @@ export function ChapterManagerDialog({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        <AlertDialog open={Boolean(pendingChapterUpdate)} onOpenChange={(open) => {
-          if (!updateChapter.isPending && !open) setPendingChapterUpdate(null);
-        }}>
-          <AlertDialogContent className="rounded-none border-foreground/15 bg-card">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Archive affected feedback?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {pendingChapterUpdate?.inlineFeedbackCount ? (
-                  <>
-                    {pendingChapterUpdate.inlineFeedbackCount} inline {pendingChapterUpdate.inlineFeedbackCount === 1 ? "feedback entry" : "feedback entries"} will be archived because {pendingChapterUpdate.inlineFeedbackCount === 1 ? "its selected passage no longer exists" : "their selected passages no longer exist"}.
-                  </>
-                ) : null}
-                {pendingChapterUpdate?.inlineFeedbackCount && pendingChapterUpdate.generalFeedbackCount ? " " : null}
-                {pendingChapterUpdate?.generalFeedbackCount ? (
-                  <>
-                    {pendingChapterUpdate.generalFeedbackCount} general {pendingChapterUpdate.generalFeedbackCount === 1 ? "annotation" : "annotations"} will also be archived because this chapter is being fully replaced.
-                  </>
-                ) : null}
-                {" "}Archived feedback remains available only on the Feedback page.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={updateChapter.isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={updateChapter.isPending}
-                onClick={(event) => {
-                  event.preventDefault();
-                  void handleConfirmedChapterUpdate();
-                }}
-                className="rounded-none"
-              >
-                {updateChapter.isPending ? "Saving…" : "Save and archive feedback"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
-}
-
-function getChapterEditImpact(chapter: ManuscriptWorkspaceChapter, nextContent: string) {
-  const currentContent = chapter.blocks.map((block) => block.content).join("\n\n");
-  const normalizedCurrentContent = normalizeChapterContent(currentContent);
-  const normalizedNextContent = normalizeChapterContent(nextContent);
-
-  if (normalizedCurrentContent === normalizedNextContent) {
-    return { generalFeedbackCount: 0, inlineFeedbackCount: 0 };
-  }
-
-  const inlineFeedbackCount = chapter.annotations.filter((annotation) => (
-    !normalizedNextContent.includes(annotation.quote)
-  )).length;
-  const currentBlocks = chapter.blocks.map((block) => block.content).filter(Boolean);
-  const isCompleteReplacement = currentBlocks.length > 0 && currentBlocks.every((block) => (
-    !normalizedNextContent.includes(block)
-  ));
-
-  return {
-    generalFeedbackCount: isCompleteReplacement ? chapter.generalComments.length : 0,
-    inlineFeedbackCount,
-  };
-}
-
-function normalizeChapterContent(content: string) {
-  return content
-    .replace(/\r\n?/g, "\n")
-    .split(/\n[\t ]*\n+/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .join("\n\n");
 }
