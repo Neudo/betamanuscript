@@ -1,7 +1,8 @@
 import { BarChart2, ChevronRight, Upload, Users } from "lucide-react";
+import Link from "next/link";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { Lift, Reveal } from "../../../shared/ui/motion";
-import { INK, MONO, MUTED, OXBLOOD_TEXT, PAPER, SERIF, WARM } from "../../../shared/config/design-tokens";
+import { INK, MONO, MUTED, OXBLOOD_TEXT, PAPER, SANS, SERIF, WARM } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function HowItWorksSection() {
@@ -83,6 +84,19 @@ export function HowItWorksSection() {
               )}
             </Lift>
           ))}
+        </div>
+        <div
+          className="mt-10 border-t pt-6"
+          style={{ borderColor: "hsl(var(--ink) / 0.12)" }}
+        >
+          <Link
+            href="/how-it-works"
+            className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+            style={{ color: INK, fontFamily: SANS }}
+          >
+            See the full workflow
+            <ChevronRight className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </section>
