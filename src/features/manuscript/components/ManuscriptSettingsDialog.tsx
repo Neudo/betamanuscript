@@ -603,7 +603,7 @@ function CoverField({
             {coverFile ? coverFile.name : currentCoverUrl ? "Current cover" : "No cover uploaded"}
           </p>
           <p className="mt-1 font-mono text-[9px] leading-4 text-muted-foreground">
-            {coverFile ? "Ready to replace the current image." : "JPG, PNG, WEBP · max 5 MB · recommended 2:3 ratio"}
+            {coverFile ? "Optimized to WebP before replacing the current image." : "JPG, PNG, WEBP · max 5 MB · optimized before upload"}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button

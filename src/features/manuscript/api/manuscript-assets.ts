@@ -3,21 +3,25 @@ import {
   getSourceDocumentError,
   getSourceDocumentMetadata,
 } from "@/features/manuscript/lib/source-document";
+import {
+  COVER_IMAGE_MIME_TYPE,
+  optimizeCoverImage,
+} from "@/features/manuscript/lib/cover-image";
 
 export const MANUSCRIPT_COVERS_BUCKET = "manuscript-covers";
 export const MANUSCRIPT_SOURCES_BUCKET = "manuscript-sources";
 export const MAX_COVER_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-const coverFileExtensions = {
+const supportedCoverMimeTypes = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 } as const;
 
-export type CoverImageMimeType = keyof typeof coverFileExtensions;
+export type CoverImageMimeType = keyof typeof supportedCoverMimeTypes;
 
 export function getCoverFileError(file: File) {
-  if (!(file.type in coverFileExtensions)) {
+  if (!(file.type in supportedCoverMimeTypes)) {
     return "Choose a JPG, PNG, or WEBP image.";
   }
 
@@ -49,6 +53,7 @@ export async function uploadManuscriptCover({
 }: UploadManuscriptCoverInput) {
   const validationError = getCoverFileError(file);
   if (validationError) throw new Error(validationError);
+  const originalFilename = file.name.trim();
 
   const supabase = createSupabaseBrowserClient();
   const {
@@ -60,8 +65,8 @@ export async function uploadManuscriptCover({
     throw new Error("Authentication is required to upload a cover image.");
   }
 
-  const mimeType = file.type as CoverImageMimeType;
-  const storagePath = `${user.id}/${manuscriptVersionId}/cover.${coverFileExtensions[mimeType]}`;
+  const optimizedCover = await optimizeCoverImage(file);
+  const storagePath = `${user.id}/${manuscriptVersionId}/cover.webp`;
   const { data: existingAsset, error: existingAssetError } = await supabase
     .from("manuscript_assets")
     .select("id, storage_path")
@@ -73,18 +78,18 @@ export async function uploadManuscriptCover({
 
   const { data: uploadedObject, error: uploadError } = await supabase.storage
     .from(MANUSCRIPT_COVERS_BUCKET)
-    .upload(storagePath, file, {
+    .upload(storagePath, optimizedCover, {
       cacheControl: "31536000",
-      contentType: mimeType,
+      contentType: COVER_IMAGE_MIME_TYPE,
       upsert: Boolean(existingAsset),
     });
 
   if (uploadError) throw new Error(uploadError.message);
 
   const asset = {
-    byte_size: file.size,
-    mime_type: mimeType,
-    original_filename: file.name.trim(),
+    byte_size: optimizedCover.size,
+    mime_type: COVER_IMAGE_MIME_TYPE,
+    original_filename: originalFilename,
     processing_status: "available" as const,
     storage_bucket: MANUSCRIPT_COVERS_BUCKET,
     storage_path: uploadedObject.path,

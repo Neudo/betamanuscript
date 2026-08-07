@@ -1032,7 +1032,7 @@ function CoverUpload({
           <div className="min-w-0 pt-1">
             <p className="truncate text-xs font-medium">{file.name}</p>
             <p className="mt-1 font-mono text-[9px] text-muted-foreground">
-              {formatFileSize(file.size)} · Uploads when the manuscript is created
+              {formatFileSize(file.size)} · Optimized to WebP before upload
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -1080,7 +1080,7 @@ function CoverUpload({
           <span className="text-center text-[11px] leading-5">
             Drag and drop an image here, or click to choose one.
           </span>
-          <span className="font-mono text-[9px]">JPG, PNG, WEBP · max 5 MB · recommended 2:3 ratio</span>
+          <span className="font-mono text-[9px]">JPG, PNG, WEBP · max 5 MB · optimized before upload</span>
         </button>
       )}
       {error ? <p className="mt-1 font-mono text-[9px] text-destructive">{error}</p> : null}

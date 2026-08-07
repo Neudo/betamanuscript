@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   classifyDocxFontFamily,
   extractPdfPageParagraphs,
+  getExplicitChapterTitle,
   getSourceDocumentMetadata,
 } from "./source-document";
 
@@ -31,6 +32,21 @@ describe("DOCX font family classification", () => {
 
   it("leaves unknown fonts unclassified", () => {
     expect(classifyDocxFontFamily("A Writer's Private Typeface")).toBeUndefined();
+  });
+});
+
+describe("explicit chapter titles", () => {
+  it.each([
+    "Chapter 2 (Remnants)",
+    "Magma (Chapter 1)",
+    "Part IV (The return)",
+    "Le debut (Chapitre 3)",
+  ])("detects parenthesized chapter labels: %s", (title) => {
+    expect(getExplicitChapterTitle(title)).toBe(title);
+  });
+
+  it("does not mistake an ordinary parenthetical sentence for a chapter", () => {
+    expect(getExplicitChapterTitle("They discussed chapter 2 (Remnants) over dinner.")).toBeNull();
   });
 });
 

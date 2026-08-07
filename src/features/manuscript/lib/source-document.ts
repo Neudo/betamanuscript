@@ -19,6 +19,17 @@ const MAX_CHAPTER_COUNT = 200;
 const MAX_BLOCK_CHARACTER_COUNT = 25_000;
 const wordprocessingNamespace = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const drawingNamespace = "http://schemas.openxmlformats.org/drawingml/2006/main";
+const explicitChapterLabel = "(?:chapter|chapitre|part|partie)";
+const explicitChapterNumber = "(?:\\d+|[ivxlcdm]+)";
+const explicitChapterReference = `${explicitChapterLabel}\\s+${explicitChapterNumber}`;
+const startsWithExplicitChapterReference = new RegExp(
+  `^${explicitChapterReference}(?:\\s*(?:\\([^()]+\\)|[-–—:.]\\s*.+))?$`,
+  "i",
+);
+const endsWithExplicitChapterReference = new RegExp(
+  `^.+?\\s*\\(\\s*${explicitChapterReference}\\s*\\)$`,
+  "i",
+);
 
 const docxFontFamilies = {
   serif: [
@@ -520,11 +531,14 @@ function getChapterTitle(paragraph: DocumentParagraph) {
     ?? (paragraph.style?.startsWith("markdown-heading-") ? text : null);
 }
 
-function getExplicitChapterTitle(text: string) {
+export function getExplicitChapterTitle(text: string) {
   const normalizedText = text.trim();
   if (!normalizedText || normalizedText.length > 500) return null;
 
-  if (/^(chapter|chapitre|part|partie)\s+(?:\d+|[ivxlcdm]+)(?:\s*[-–—:.]\s*.+)?$/i.test(normalizedText)) {
+  // Authors often put a chapter's name and number together in parentheses
+  // rather than applying a Word heading style, e.g. "Magma (Chapter 1)" or
+  // "Chapter 2 (Remnants)". Both forms are reliable standalone boundaries.
+  if (startsWithExplicitChapterReference.test(normalizedText) || endsWithExplicitChapterReference.test(normalizedText)) {
     return normalizedText;
   }
 
