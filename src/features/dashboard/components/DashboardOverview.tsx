@@ -93,13 +93,13 @@ function DashboardContent({
 
   return (
     <div className="max-w-[1100px] px-5 py-7 sm:px-8 sm:py-8">
-      <div className="mb-8 flex items-start justify-between gap-5">
-        <div>
+      <div className="mb-8 flex flex-col-reverse flex-wrap gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">Overview</p>
           <Heading level={1} size="workspace">{data.title}</Heading>
           <p className="mt-1 text-sm text-muted-foreground">{data.draftLabel} · {formatActivityDate(data.lastActivityAt)}</p>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
           <FeatureRequestDialog manuscriptId={manuscriptId} />
           <InviteReaderDialog manuscriptId={manuscriptId} triggerVariant="outline" />
         </div>
