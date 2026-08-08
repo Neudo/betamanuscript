@@ -33,7 +33,8 @@ export default async function PublicReadingPage({ params }: PublicReadingPagePro
   if (access.readerAssignmentId) {
     redirect(getReaderResumePath({
       chapterId: access.latestChapterId,
-      manuscriptId: access.manuscript.manuscriptId,
+      manuscriptTitle: access.manuscript.title,
+      manuscriptUrlKey: access.manuscript.urlKey,
       versionId: access.manuscript.versionId,
     }));
   }

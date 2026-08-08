@@ -36,6 +36,10 @@ import {
 import type { FeedbackAnnotation, FeedbackTag } from "@/features/feedback/types";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import {
+  findManuscriptByReference,
+  withManuscriptReference,
+} from "@/features/manuscript/lib/manuscript-url";
 import { cn } from "@/lib/utils";
 
 type FilterTag = FeedbackTag & { count: number };
@@ -51,11 +55,14 @@ export function FeedbackExplorer({
   accountPlan: AccountPlan;
 }) {
   const searchParams = useSearchParams();
-  const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedManuscriptReference = searchParams.get("manuscript") ?? searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
   const manuscripts = manuscriptsQuery.data ?? [];
-  const manuscriptId = selectedManuscriptId ?? manuscripts[0]?.id ?? null;
+  const selectedManuscript = findManuscriptByReference(manuscripts, selectedManuscriptReference)
+    ?? manuscripts[0]
+    ?? null;
+  const manuscriptId = selectedManuscript?.id ?? null;
 
   if (!manuscriptsQuery.isPending && !manuscriptsQuery.error && manuscripts.length === 0) {
     return <FeedbackNoManuscript />;
@@ -66,6 +73,7 @@ export function FeedbackExplorer({
       key={`${manuscriptId ?? "no-manuscript"}:${selectedVersionId ?? "latest"}`}
       accountId={accountId}
       accountPlan={accountPlan}
+      manuscript={selectedManuscript}
       manuscriptId={manuscriptId}
       manuscriptVersionId={selectedVersionId}
       isResolvingManuscript={!manuscriptId && manuscriptsQuery.isPending}
@@ -119,6 +127,7 @@ function FeedbackExplorerContent({
   accountId,
   accountPlan,
   isResolvingManuscript,
+  manuscript,
   manuscriptError,
   manuscriptId,
   manuscriptVersionId,
@@ -126,6 +135,7 @@ function FeedbackExplorerContent({
   accountId: string;
   accountPlan: AccountPlan;
   isResolvingManuscript: boolean;
+  manuscript: { title: string; urlKey: string } | null;
   manuscriptError: Error | null;
   manuscriptId: string | null;
   manuscriptVersionId: string | null;
@@ -376,7 +386,7 @@ function FeedbackExplorerContent({
           <FeedbackState
             annotations={filtered}
             isLoading={isLoading}
-            manuscriptId={manuscriptId}
+            manuscript={manuscript}
             manuscriptVersionId={manuscriptVersionId}
             isUpdating={updateFeedbackSeen.isPending}
             isArchiving={archiveFeedback.isPending}
@@ -396,7 +406,7 @@ function FeedbackExplorerContent({
             <FeedbackState
               annotations={[]}
               isLoading={isLoading}
-              manuscriptId={manuscriptId}
+              manuscript={manuscript}
               manuscriptVersionId={manuscriptVersionId}
               isUpdating={updateFeedbackSeen.isPending}
               isArchiving={archiveFeedback.isPending}
@@ -419,7 +429,7 @@ function FeedbackExplorerContent({
                       key={annotation.id}
                       annotation={annotation}
                       compact
-                      manuscriptId={manuscriptId}
+                      manuscript={manuscript}
                       manuscriptVersionId={manuscriptVersionId}
                       isUpdating={updateFeedbackSeen.isPending}
                       isArchiving={archiveFeedback.isPending}
@@ -520,7 +530,7 @@ function FeedbackState({
   emptyMessage,
   error,
   isLoading,
-  manuscriptId,
+  manuscript,
   manuscriptVersionId,
   isArchiving,
   isDeleting,
@@ -533,7 +543,7 @@ function FeedbackState({
   emptyMessage: string;
   error: Error | null;
   isLoading: boolean;
-  manuscriptId: string | null;
+  manuscript: { title: string; urlKey: string } | null;
   manuscriptVersionId: string | null;
   isArchiving: boolean;
   isDeleting: boolean;
@@ -560,7 +570,7 @@ function FeedbackState({
         <AnnotationRow
           key={annotation.id}
           annotation={annotation}
-          manuscriptId={manuscriptId}
+          manuscript={manuscript}
           manuscriptVersionId={manuscriptVersionId}
           isArchiving={isArchiving}
           isDeleting={isDeleting}
@@ -593,7 +603,7 @@ function FeedbackRowsLoadingSkeleton() {
 function AnnotationRow({
   annotation,
   compact = false,
-  manuscriptId,
+  manuscript,
   manuscriptVersionId,
   isArchiving,
   isDeleting,
@@ -604,7 +614,7 @@ function AnnotationRow({
 }: {
   annotation: FeedbackAnnotation;
   compact?: boolean;
-  manuscriptId: string | null;
+  manuscript: { title: string; urlKey: string } | null;
   manuscriptVersionId: string | null;
   isArchiving: boolean;
   isDeleting: boolean;
@@ -616,14 +626,20 @@ function AnnotationRow({
   const isSeen = annotation.isSeenByAuthor;
   const isArchived = annotation.archivedAt !== null;
   const tagColor = getAnnotationTagColor(annotation.tag);
-  const href = manuscriptId && !isArchived ? `/dashboard/manuscript?${new URLSearchParams({
-    ...(annotation.kind === "annotation"
-      ? { annotationId: annotation.id }
-      : { generalCommentId: annotation.id }),
-    chapterId: annotation.chapter.id,
-    manuscriptId,
-    ...(manuscriptVersionId ? { versionId: manuscriptVersionId } : {}),
-  }).toString()}` : null;
+  const manuscriptSearchParams = manuscript
+    ? withManuscriptReference(new URLSearchParams(), manuscript)
+    : null;
+  if (manuscriptSearchParams) {
+    manuscriptSearchParams.set("chapterId", annotation.chapter.id);
+    manuscriptSearchParams.set(
+      annotation.kind === "annotation" ? "annotationId" : "generalCommentId",
+      annotation.id,
+    );
+    if (manuscriptVersionId) manuscriptSearchParams.set("versionId", manuscriptVersionId);
+  }
+  const href = manuscriptSearchParams && !isArchived
+    ? `/dashboard/manuscript?${manuscriptSearchParams.toString()}`
+    : null;
 
   return (
     <article className={cn("grid grid-cols-[30px_minmax(0,1fr)] gap-3 py-5", compact && "py-4")}>

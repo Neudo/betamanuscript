@@ -4,6 +4,7 @@ import { dehydrate, type QueryKey, QueryClient } from "@tanstack/react-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getManuscriptsWithClient } from "@/features/manuscript/api/manuscripts";
+import { findManuscriptByReference } from "@/features/manuscript/lib/manuscript-url";
 import { manuscriptKeys } from "@/features/manuscript/query-keys";
 import type { ManuscriptSummary } from "@/features/manuscript/types";
 import type { Database } from "@/lib/supabase/database.types";
@@ -17,6 +18,7 @@ type ManuscriptScopedHydrationInput<TData> = {
   ) => Promise<TData>;
   getQueryKey: (manuscriptId: string, manuscriptVersionId: string | null) => QueryKey;
   manuscriptId: string | null;
+  manuscriptReference?: string | null;
   manuscriptVersionId: string | null;
   resolveManuscriptId?: (
     manuscripts: ManuscriptSummary[],
@@ -32,19 +34,23 @@ export async function getManuscriptScopedHydrationState<TData>({
   getData,
   getQueryKey,
   manuscriptId: requestedManuscriptId,
+  manuscriptReference,
   manuscriptVersionId,
   resolveManuscriptId,
 }: ManuscriptScopedHydrationInput<TData>) {
   const supabase = await createSupabaseServerClient();
   const queryClient = new QueryClient();
   const manuscriptsPromise = getManuscriptsWithClient(supabase);
-  const requestedDataPromise = requestedManuscriptId && !resolveManuscriptId
+  const requestedDataPromise = requestedManuscriptId && !manuscriptReference && !resolveManuscriptId
     ? getData(supabase, requestedManuscriptId, manuscriptVersionId)
     : null;
   const manuscripts = await manuscriptsPromise;
+  const resolvedManuscriptId = manuscriptReference
+    ? findManuscriptByReference(manuscripts, manuscriptReference)?.id ?? null
+    : requestedManuscriptId;
   const manuscriptId = resolveManuscriptId
-    ? resolveManuscriptId(manuscripts, requestedManuscriptId)
-    : requestedManuscriptId ?? manuscripts[0]?.id ?? null;
+    ? resolveManuscriptId(manuscripts, resolvedManuscriptId)
+    : resolvedManuscriptId ?? manuscripts[0]?.id ?? null;
 
   queryClient.setQueryData(manuscriptKeys.list(), manuscripts);
 

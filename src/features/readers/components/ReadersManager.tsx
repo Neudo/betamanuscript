@@ -33,6 +33,7 @@ import {
   useSetReaderDraftAccess,
 } from "@/features/readers/hooks/use-readers";
 import { Heading } from "@/shared/ui/Heading";
+import { findManuscriptByReference } from "@/features/manuscript/lib/manuscript-url";
 
 function formatDate(value: string | null) {
   if (!value) return "—";
@@ -55,8 +56,9 @@ export function ReadersManager({ accountPlan }: { accountPlan: AccountPlan }) {
   const disablePublicLinkMutation = useDisablePublicReadingLink();
   const reviewPlaceRequestMutation = useReviewReaderPlaceRequest();
   const manuscripts = manuscriptsQuery.data ?? [];
-  const selectedManuscript = manuscripts.find(
-    (manuscript) => manuscript.id === searchParams.get("manuscriptId"),
+  const selectedManuscript = findManuscriptByReference(
+    manuscripts,
+    searchParams.get("manuscript") ?? searchParams.get("manuscriptId"),
   );
   const visibleManuscripts = selectedManuscript ? [selectedManuscript] : manuscripts;
 

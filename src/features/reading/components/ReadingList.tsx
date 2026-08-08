@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import type { ReaderManuscriptListItem } from "@/features/reading/api/reading";
 import { ReaderManuscriptDetailsDialog } from "@/features/reading/components/ReaderManuscriptDetailsDialog";
 import { useReaderManuscripts } from "@/features/reading/hooks/use-reading";
+import { getReaderManuscriptPath } from "@/features/manuscript/lib/manuscript-url";
 import { Heading } from "@/shared/ui/Heading";
 
 const sections: Array<{
@@ -148,7 +149,7 @@ function ReadingCard({ book }: { book: ReaderManuscriptBook }) {
   } else if (item.status === "finished") {
     readingParams.set("reread", "1");
   }
-  const readingHref = `/reader/${item.id}?${readingParams.toString()}`;
+  const readingHref = `${getReaderManuscriptPath(item)}?${readingParams.toString()}`;
 
   return (
     <Card className="group relative overflow-hidden border-foreground/10 p-0 transition-colors hover:border-primary/35">

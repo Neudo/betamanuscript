@@ -78,6 +78,10 @@ import {
   getRichTextDocumentContent,
   type ManuscriptRichTextDocument,
 } from "@/features/manuscript/lib/rich-text";
+import {
+  findManuscriptByReference,
+  withManuscriptReference,
+} from "@/features/manuscript/lib/manuscript-url";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -158,13 +162,17 @@ export function ManuscriptWorkspace() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedManuscriptReference = searchParams.get("manuscript") ?? searchParams.get("manuscriptId");
   const selectedVersionIdFromUrl = searchParams.get("versionId");
   const focusedAnnotationIdFromUrl = searchParams.get("annotationId");
   const focusedGeneralCommentIdFromUrl = searchParams.get("generalCommentId");
   const selectedChapterIdFromUrl = searchParams.get("chapterId");
   const manuscriptsQuery = useManuscripts();
-  const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
+  const selectedManuscript = findManuscriptByReference(
+    manuscriptsQuery.data ?? [],
+    selectedManuscriptReference,
+  ) ?? manuscriptsQuery.data?.[0] ?? null;
+  const manuscriptId = selectedManuscript?.id ?? null;
   const manuscriptQuery = useManuscript(manuscriptId, selectedVersionIdFromUrl);
   const [feedbackFilters, setFeedbackFilters] = useScopedFeedbackFilters(
     `${manuscriptId ?? "none"}:${selectedVersionIdFromUrl ?? "latest"}`,
@@ -181,6 +189,14 @@ export function ManuscriptWorkspace() {
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingChapterUpdate, setPendingChapterUpdate] = useState<ChapterEditImpact | null>(null);
+
+  useEffect(() => {
+    if (!searchParams.get("manuscriptId") || searchParams.get("manuscript") || !selectedManuscript) return;
+
+    router.replace(`${pathname}?${withManuscriptReference(searchParams, selectedManuscript).toString()}`, {
+      scroll: false,
+    });
+  }, [pathname, router, searchParams, selectedManuscript]);
 
   useEffect(() => {
     if (!isFocusMode) return;

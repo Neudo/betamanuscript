@@ -16,6 +16,11 @@ import type { AccountPlan } from "@/features/account/types";
 import { CreateManuscriptDialog } from "@/features/manuscript/components/CreateManuscriptDialog";
 import { PlanRequiredDialog } from "@/features/manuscript/components/PlanRequiredDialog";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import {
+  findManuscriptByReference,
+  getManuscriptReference,
+  withManuscriptReference,
+} from "@/features/manuscript/lib/manuscript-url";
 import type { CreatedManuscript } from "@/features/manuscript/types";
 import { cn } from "@/lib/utils";
 
@@ -35,16 +40,15 @@ export function ManuscriptSwitcher({
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const manuscriptsQuery = useManuscripts();
   const manuscripts = manuscriptsQuery.data ?? [];
-  const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedManuscriptReference = searchParams.get("manuscript") ?? searchParams.get("manuscriptId");
   const activeManuscript =
-    manuscripts.find((item) => item.id === selectedManuscriptId) ?? manuscripts[0];
+    findManuscriptByReference(manuscripts, selectedManuscriptReference) ?? manuscripts[0];
   const canCreateManuscript =
     accountPlan === "pro" ||
     (!manuscriptsQuery.isLoading && manuscripts.length === 0);
 
-  function selectManuscript(manuscriptId: string) {
-    const nextSearchParams = new URLSearchParams(searchParams.toString());
-    nextSearchParams.set("manuscriptId", manuscriptId);
+  function selectManuscript(manuscript: NonNullable<typeof activeManuscript>) {
+    const nextSearchParams = withManuscriptReference(searchParams, manuscript);
     nextSearchParams.delete("versionId");
     nextSearchParams.delete("chapterId");
     nextSearchParams.delete("annotationId");
@@ -65,7 +69,10 @@ export function ManuscriptSwitcher({
 
   function handleManuscriptCreated(manuscript: CreatedManuscript) {
     const nextSearchParams = new URLSearchParams({
-      manuscriptId: manuscript.manuscriptId,
+      manuscript: getManuscriptReference({
+        title: manuscript.manuscriptTitle,
+        urlKey: manuscript.manuscriptUrlKey,
+      }),
       versionId: manuscript.manuscriptVersionId,
     });
 
@@ -119,7 +126,7 @@ export function ManuscriptSwitcher({
             return (
               <DropdownMenuItem
                 key={item.id}
-                onSelect={() => selectManuscript(item.id)}
+                onSelect={() => selectManuscript(item)}
                 className="items-start rounded-none px-2 py-2.5 focus:bg-foreground/[0.05]"
               >
                 <span className="min-w-0 flex-1">

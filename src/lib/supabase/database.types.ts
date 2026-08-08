@@ -683,6 +683,7 @@ export type Database = {
           internal_title: string
           owner_id: string
           updated_at: string
+          url_key: string
         }
         Insert: {
           archived_at?: string | null
@@ -691,6 +692,7 @@ export type Database = {
           internal_title: string
           owner_id: string
           updated_at?: string
+          url_key?: string
         }
         Update: {
           archived_at?: string | null
@@ -699,6 +701,7 @@ export type Database = {
           internal_title?: string
           owner_id?: string
           updated_at?: string
+          url_key?: string
         }
         Relationships: [
           {

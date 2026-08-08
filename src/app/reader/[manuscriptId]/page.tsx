@@ -5,7 +5,7 @@ type ReadingPageProps = {
 };
 
 export default async function ReadingPage({ params }: ReadingPageProps) {
-  const { manuscriptId } = await params;
+  const { manuscriptId: manuscriptReference } = await params;
 
-  return <ReadingView manuscriptId={manuscriptId} />;
+  return <ReadingView manuscriptReference={manuscriptReference} />;
 }

@@ -52,6 +52,7 @@ export type PublicReaderManuscript = {
   readingRoundId: string;
   tags: ReaderAnnotationTag[];
   title: string;
+  urlKey: string;
   versionId: string;
   versionNumber: number;
 };
@@ -90,6 +91,7 @@ type ManuscriptVersionRow = {
 type ManuscriptRow = {
   id: string;
   owner_id: string;
+  url_key: string;
 };
 
 type ManuscriptCoverRow = {
@@ -176,7 +178,7 @@ export const getPublicReadingAccess = cache(async function getPublicReadingAcces
   const manuscriptVersion = version as ManuscriptVersionRow;
   const { data: manuscript, error: manuscriptError } = await admin
     .from("manuscripts")
-    .select("id, owner_id")
+    .select("id, owner_id, url_key")
     .eq("id", manuscriptVersion.manuscript_id)
     .is("archived_at", null)
     .maybeSingle();
@@ -382,6 +384,7 @@ export const getPublicReadingAccess = cache(async function getPublicReadingAcces
       readingRoundId: round.id,
       tags: tagsResult.data ?? [],
       title: manuscriptVersion.title,
+      urlKey: manuscriptRecord.url_key,
       versionId: manuscriptVersion.id,
       versionNumber: manuscriptVersion.version_number,
     },

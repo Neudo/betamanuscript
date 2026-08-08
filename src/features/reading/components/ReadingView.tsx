@@ -2,7 +2,7 @@
 
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, CircleHelp, MessageSquare, MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 
@@ -17,7 +17,9 @@ import {
 import {
   createMultiBlockTextSelection,
   getAnnotationEndAnchor,
+  type MultiBlockTextSelection,
 } from "@/features/annotations/lib/multi-block-annotations";
+import { MobileAnnotationActionBar } from "@/features/annotations/components/MobileAnnotationActionBar";
 import type {
   ReaderAnnotation,
   ReaderAnnotationDraft,
@@ -32,6 +34,7 @@ import { ReaderChapterGeneralCommentSheet } from "@/features/reading/components/
 import { ReaderEndScreen } from "@/features/reading/components/ReaderEndScreen";
 import { ReaderSurveyDialog } from "@/features/reading/components/ReaderSurveyDialog";
 import { RichText } from "@/features/manuscript/components/RichText";
+import { getReaderManuscriptPath } from "@/features/manuscript/lib/manuscript-url";
 import {
   useCompleteReaderChapter,
   useReaderDueSurveys,
@@ -66,11 +69,12 @@ function hasSeenReaderAnnotationGuideOnServer() {
   return true;
 }
 
-export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
+export function ReadingView({ manuscriptReference }: { manuscriptReference: string }) {
+  const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const manuscriptVersionId = searchParams.get("version");
-  const manuscriptQuery = useReaderManuscript(manuscriptId, manuscriptVersionId);
+  const manuscriptQuery = useReaderManuscript(manuscriptReference, manuscriptVersionId);
   const readerManuscriptsQuery = useReaderManuscripts();
   const completeChapterMutation = useCompleteReaderChapter();
   const { mutate: startReaderChapter } = useStartReaderChapter();
@@ -78,6 +82,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const submitSurveyMutation = useSubmitReaderSurvey();
   const [chapterIndex, setChapterIndex] = useState<number | null>(null);
   const [annotationPanel, setAnnotationPanel] = useState<AnnotationPanel | null>(null);
+  const [mobileSelectionDraft, setMobileSelectionDraft] = useState<MultiBlockTextSelection | null>(null);
   const [isGeneralCommentOpen, setIsGeneralCommentOpen] = useState(false);
   const [isAnnotationGuideDismissed, setIsAnnotationGuideDismissed] = useState(false);
   const [isAnnotationGuideManuallyOpen, setIsAnnotationGuideManuallyOpen] = useState(false);
@@ -89,7 +94,10 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const [surveyQueue, setSurveyQueue] = useState<ReaderDueSurvey[]>([]);
   const [isSurveyPromptOpen, setIsSurveyPromptOpen] = useState(false);
   const startedChapterRef = useRef<string | null>(null);
+  const mobileSelectionCaptureTimeoutRef = useRef<number | null>(null);
   const manuscript = manuscriptQuery.data;
+  const manuscriptId = manuscript?.id ?? null;
+  const readerSearchParams = searchParams.toString();
   const availableDrafts = useMemo(() => {
     const draftsById = new Map<string, ReaderManuscriptListItem>();
 
@@ -145,6 +153,24 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
       },
     );
   }, [initialChapterId, initialReaderAssignmentId, shouldStartReading, startReaderChapter]);
+
+  useEffect(() => () => {
+    if (mobileSelectionCaptureTimeoutRef.current !== null) {
+      window.clearTimeout(mobileSelectionCaptureTimeoutRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!manuscript) return;
+
+    const canonicalPath = getReaderManuscriptPath(manuscript);
+    if (pathname === canonicalPath) return;
+
+    router.replace(
+      readerSearchParams ? `${canonicalPath}?${readerSearchParams}` : canonicalPath,
+      { scroll: false },
+    );
+  }, [manuscript, pathname, readerSearchParams, router]);
 
   useEffect(() => {
     if (
@@ -205,7 +231,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   const readerAssignmentId = manuscript.assignmentId;
   const readerCompletedChapterIds = manuscript.completedChapterIds;
   const readingRoundId = manuscript.readingRoundId;
-  const readerUrl = `/reader/${manuscriptId}?version=${manuscript.versionId}`;
+  const readerUrl = `${getReaderManuscriptPath(manuscript)}?version=${manuscript.versionId}`;
   const activeSurvey = surveyQueue[0] ?? null;
   const isLastChapter = currentChapterIndex === chapters.length - 1;
 
@@ -266,6 +292,7 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   }
 
   function changeChapter(nextChapterIndex: number) {
+    dismissMobileTextSelection();
     setAnnotationPanel(null);
     setIsGeneralCommentOpen(false);
     setChapterIndex(nextChapterIndex);
@@ -274,12 +301,15 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
   function changeDraft(nextVersionId: string) {
     if (nextVersionId === manuscriptVersionId) return;
 
+    dismissMobileTextSelection();
     setAnnotationPanel(null);
     setIsGeneralCommentOpen(false);
     setChapterIndex(null);
     setIsSurveyPromptOpen(false);
     setSurveyQueue([]);
-    router.push(`/reader/${manuscriptId}?${new URLSearchParams({ version: nextVersionId })}`);
+    const nextDraft = availableDrafts.find((draft) => draft.versionId === nextVersionId);
+    if (!nextDraft) return;
+    router.push(`${getReaderManuscriptPath(nextDraft)}?${new URLSearchParams({ version: nextVersionId })}`);
   }
 
   function dismissAnnotationGuide() {
@@ -320,36 +350,32 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
     );
   }
 
-  function handleTextSelection() {
-    if (!manuscript?.feedbackEnabled) return;
-
+  function getTextSelectionDraft() {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return;
+    if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return null;
 
     const range = selection.getRangeAt(0);
     const startBlockElement = getReaderBlockElement(range.startContainer);
     const endBlockElement = getReaderBlockElement(range.endContainer);
 
-    if (!startBlockElement || !endBlockElement) return;
+    if (!startBlockElement || !endBlockElement) return null;
 
     const startBlockId = startBlockElement.dataset.readerBlockId;
     const endBlockId = endBlockElement.dataset.readerBlockId;
-    if (!startBlockId || !endBlockId) return;
+    if (!startBlockId || !endBlockId) return null;
 
     const rawSelectionStart = getTextOffset(startBlockElement, range.startContainer, range.startOffset);
     const rawSelectionEnd = getTextOffset(endBlockElement, range.endContainer, range.endOffset);
-    const selectionDraft = createMultiBlockTextSelection({
+    return createMultiBlockTextSelection({
       blocks: chapter.blocks,
       endBlockId,
       rawSelectionEnd,
       rawSelectionStart,
       startBlockId,
     });
+  }
 
-    selection.removeAllRanges();
-
-    if (!selectionDraft) return;
-
+  function openTextSelectionDraft(selectionDraft: MultiBlockTextSelection) {
     if (selectionDraft.quote.length > 10_000) {
       toast.error("Select a passage shorter than 10,000 characters.");
       return;
@@ -407,6 +433,54 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
       kind: "create",
     });
     dismissAnnotationGuide();
+  }
+
+  function handleTextSelection() {
+    if (!manuscript?.feedbackEnabled || usesCoarsePointer()) return;
+
+    const selectionDraft = getTextSelectionDraft();
+    if (!selectionDraft) return;
+
+    window.getSelection()?.removeAllRanges();
+    openTextSelectionDraft(selectionDraft);
+  }
+
+  function captureMobileTextSelection() {
+    if (!manuscript?.feedbackEnabled || !usesCoarsePointer()) return;
+
+    if (mobileSelectionCaptureTimeoutRef.current !== null) {
+      window.clearTimeout(mobileSelectionCaptureTimeoutRef.current);
+    }
+
+    mobileSelectionCaptureTimeoutRef.current = window.setTimeout(() => {
+      mobileSelectionCaptureTimeoutRef.current = null;
+      const selectionDraft = getTextSelectionDraft();
+
+      if (!selectionDraft || selectionDraft.quote.length > 10_000) {
+        setMobileSelectionDraft(null);
+        return;
+      }
+
+      setMobileSelectionDraft(selectionDraft);
+    }, 50);
+  }
+
+  function openMobileTextSelection() {
+    if (!mobileSelectionDraft) return;
+
+    window.getSelection()?.removeAllRanges();
+    setMobileSelectionDraft(null);
+    openTextSelectionDraft(mobileSelectionDraft);
+  }
+
+  function dismissMobileTextSelection() {
+    if (mobileSelectionCaptureTimeoutRef.current !== null) {
+      window.clearTimeout(mobileSelectionCaptureTimeoutRef.current);
+      mobileSelectionCaptureTimeoutRef.current = null;
+    }
+
+    window.getSelection()?.removeAllRanges();
+    setMobileSelectionDraft(null);
   }
 
   return (
@@ -483,7 +557,11 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
             router.replace(`${readerUrl}&reread=1`, { scroll: false });
           }}
         />
-      ) : <article className="reader-copy mx-auto max-w-[760px] px-5 py-12 pb-28 sm:px-10 sm:py-16 sm:pb-32" onMouseUp={manuscript.feedbackEnabled ? handleTextSelection : undefined}>
+      ) : <article
+        className="reader-copy mx-auto max-w-[760px] px-5 py-12 pb-28 sm:px-10 sm:py-16 sm:pb-32"
+        onMouseUp={manuscript.feedbackEnabled ? handleTextSelection : undefined}
+        onTouchEnd={manuscript.feedbackEnabled ? captureMobileTextSelection : undefined}
+      >
         <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-muted-foreground">Chapter {chapter.position}</p>
         <Heading level={1} size="section" className="mt-4">{chapter.title}</Heading>
         {!manuscript.feedbackEnabled ? (
@@ -535,6 +613,13 @@ export function ReadingView({ manuscriptId }: { manuscriptId: string }) {
           <MessageSquarePlus className="h-4 w-4" />
           {chapter.generalComment ? "Edit general annotation" : "General annotation"}
         </Button>
+      ) : null}
+
+      {mobileSelectionDraft ? (
+        <MobileAnnotationActionBar
+          onAnnotate={openMobileTextSelection}
+          onDismiss={dismissMobileTextSelection}
+        />
       ) : null}
 
       {annotationPanel ? (
@@ -644,6 +729,10 @@ function ReaderAnnotatedBlock({
 function getTextSegmentRange(key: string): [number, number] {
   const [, start, end] = key.split(":").map(Number);
   return [start, end];
+}
+
+function usesCoarsePointer() {
+  return window.matchMedia("(pointer: coarse)").matches;
 }
 
 function getReaderBlockElement(node: Node) {

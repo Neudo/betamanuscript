@@ -15,7 +15,11 @@ import {
   annotationBackgroundColor,
   getTextAnnotationSegments,
 } from "@/features/annotations/lib/text-annotations";
-import { createMultiBlockTextSelection } from "@/features/annotations/lib/multi-block-annotations";
+import {
+  createMultiBlockTextSelection,
+  type MultiBlockTextSelection,
+} from "@/features/annotations/lib/multi-block-annotations";
+import { MobileAnnotationActionBar } from "@/features/annotations/components/MobileAnnotationActionBar";
 import {
   createPendingPublicFeedback,
   createPublicReaderAnnotation,
@@ -70,6 +74,10 @@ function getTextOffset(block: HTMLElement, container: Node, offset: number) {
   return prefixRange.toString().length;
 }
 
+function usesCoarsePointer() {
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
 export function PublicReadingView({
   isAuthenticated,
   manuscript,
@@ -84,6 +92,7 @@ export function PublicReadingView({
   const router = useRouter();
   const [chapterIndex, setChapterIndex] = useState(0);
   const [annotationPanel, setAnnotationPanel] = useState<AnnotationPanel | null>(null);
+  const [mobileSelectionDraft, setMobileSelectionDraft] = useState<MultiBlockTextSelection | null>(null);
   const [generalAnnotationPanel, setGeneralAnnotationPanel] = useState<GeneralAnnotationPanel | null>(null);
   const [pendingFeedback, setPendingFeedback] = useState<PreparedPublicFeedback | null>(null);
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
@@ -92,6 +101,7 @@ export function PublicReadingView({
   const [isRequestingPlace, setIsRequestingPlace] = useState(false);
   const [hasRequestedPlace, setHasRequestedPlace] = useState(false);
   const pendingFeedbackFinalizationRef = useRef(false);
+  const mobileSelectionCaptureTimeoutRef = useRef<number | null>(null);
   const chapter = manuscript.chapters[chapterIndex];
   const next = `/read/${manuscript.accessLinkId}/reading`;
   const loginHref = `/login?next=${encodeURIComponent(next)}`;
@@ -176,6 +186,12 @@ export function PublicReadingView({
       });
   }, [isAuthenticated, next, pendingFeedbackToken, requestReaderPlace, router]);
 
+  useEffect(() => () => {
+    if (mobileSelectionCaptureTimeoutRef.current !== null) {
+      window.clearTimeout(mobileSelectionCaptureTimeoutRef.current);
+    }
+  }, []);
+
   const chapterById = useMemo(
     () => new Map(manuscript.chapters.map((item) => [item.id, item])),
     [manuscript.chapters],
@@ -210,35 +226,83 @@ export function PublicReadingView({
     await requestReaderPlace();
   }
 
-  function handleTextSelection() {
+  function getTextSelectionDraft() {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return;
+    if (!selection || selection.rangeCount !== 1 || selection.isCollapsed) return null;
 
     const range = selection.getRangeAt(0);
     const startBlockElement = getReaderBlockElement(range.startContainer);
     const endBlockElement = getReaderBlockElement(range.endContainer);
-    if (!startBlockElement || !endBlockElement) return;
+    if (!startBlockElement || !endBlockElement) return null;
 
     const startBlockId = startBlockElement.dataset.readerBlockId;
     const endBlockId = endBlockElement.dataset.readerBlockId;
-    if (!startBlockId || !endBlockId) return;
+    if (!startBlockId || !endBlockId) return null;
 
-    const selectionDraft = createMultiBlockTextSelection({
+    return createMultiBlockTextSelection({
       blocks: chapter.blocks,
       endBlockId,
       rawSelectionEnd: getTextOffset(endBlockElement, range.endContainer, range.endOffset),
       rawSelectionStart: getTextOffset(startBlockElement, range.startContainer, range.startOffset),
       startBlockId,
     });
-    selection.removeAllRanges();
+  }
 
-    if (!selectionDraft) return;
+  function openTextSelectionDraft(selectionDraft: MultiBlockTextSelection) {
     if (selectionDraft.quote.length > 10_000) {
       toast.error("Select a passage shorter than 10,000 characters.");
       return;
     }
 
     setAnnotationPanel({ draft: { chapterId: chapter.id, ...selectionDraft }, kind: "create" });
+  }
+
+  function handleTextSelection() {
+    if (usesCoarsePointer()) return;
+
+    const selectionDraft = getTextSelectionDraft();
+    if (!selectionDraft) return;
+
+    window.getSelection()?.removeAllRanges();
+    openTextSelectionDraft(selectionDraft);
+  }
+
+  function captureMobileTextSelection() {
+    if (!usesCoarsePointer()) return;
+
+    if (mobileSelectionCaptureTimeoutRef.current !== null) {
+      window.clearTimeout(mobileSelectionCaptureTimeoutRef.current);
+    }
+
+    mobileSelectionCaptureTimeoutRef.current = window.setTimeout(() => {
+      mobileSelectionCaptureTimeoutRef.current = null;
+      const selectionDraft = getTextSelectionDraft();
+
+      if (!selectionDraft || selectionDraft.quote.length > 10_000) {
+        setMobileSelectionDraft(null);
+        return;
+      }
+
+      setMobileSelectionDraft(selectionDraft);
+    }, 50);
+  }
+
+  function openMobileTextSelection() {
+    if (!mobileSelectionDraft) return;
+
+    window.getSelection()?.removeAllRanges();
+    setMobileSelectionDraft(null);
+    openTextSelectionDraft(mobileSelectionDraft);
+  }
+
+  function dismissMobileTextSelection() {
+    if (mobileSelectionCaptureTimeoutRef.current !== null) {
+      window.clearTimeout(mobileSelectionCaptureTimeoutRef.current);
+      mobileSelectionCaptureTimeoutRef.current = null;
+    }
+
+    window.getSelection()?.removeAllRanges();
+    setMobileSelectionDraft(null);
   }
 
   const displayedGeneralChapter = generalAnnotationPanel
@@ -334,6 +398,7 @@ export function PublicReadingView({
             isGuideOpen && "pt-8",
           )}
           onMouseUp={handleTextSelection}
+          onTouchEnd={captureMobileTextSelection}
         >
           {chapter.blocks.map((block) => (
             <PublicReaderAnnotatedBlock
@@ -346,10 +411,27 @@ export function PublicReadingView({
 
         <div className="mt-12 flex justify-end border-t border-foreground/10 pt-6">
           <div className="flex items-center gap-2">
-            <Button type="button" variant="ghost" size="sm" disabled={chapterIndex === 0} onClick={() => setChapterIndex((value) => Math.max(0, value - 1))}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={chapterIndex === 0}
+              onClick={() => {
+                dismissMobileTextSelection();
+                setChapterIndex((value) => Math.max(0, value - 1));
+              }}
+            >
               <ArrowLeft className="h-3.5 w-3.5" />Previous
             </Button>
-            <Button type="button" size="sm" disabled={chapterIndex === manuscript.chapters.length - 1} onClick={() => setChapterIndex((value) => Math.min(manuscript.chapters.length - 1, value + 1))}>
+            <Button
+              type="button"
+              size="sm"
+              disabled={chapterIndex === manuscript.chapters.length - 1}
+              onClick={() => {
+                dismissMobileTextSelection();
+                setChapterIndex((value) => Math.min(manuscript.chapters.length - 1, value + 1));
+              }}
+            >
               Next<ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -365,6 +447,13 @@ export function PublicReadingView({
         <MessageSquarePlus className="h-4 w-4" />
         {chapter.generalComment ? "Edit general annotation" : "General annotation"}
       </Button>
+
+      {mobileSelectionDraft ? (
+        <MobileAnnotationActionBar
+          onAnnotate={openMobileTextSelection}
+          onDismiss={dismissMobileTextSelection}
+        />
+      ) : null}
 
       {annotationPanel ? (
         <ReaderAnnotationSheet

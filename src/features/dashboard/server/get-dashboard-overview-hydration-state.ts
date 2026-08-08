@@ -6,17 +6,20 @@ import { getManuscriptScopedHydrationState } from "@/features/dashboard/server/g
 
 type DashboardOverviewHydrationInput = {
   manuscriptId: string | null;
+  manuscriptReference?: string | null;
   manuscriptVersionId: string | null;
 };
 
 export async function getDashboardOverviewHydrationState({
   manuscriptId,
+  manuscriptReference,
   manuscriptVersionId,
 }: DashboardOverviewHydrationInput) {
   return getManuscriptScopedHydrationState({
     getData: getDashboardOverviewWithClient,
     getQueryKey: dashboardKeys.overview,
     manuscriptId,
+    manuscriptReference,
     manuscriptVersionId,
   });
 }

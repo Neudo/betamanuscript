@@ -17,6 +17,10 @@ import { getAnnotationTagColor, isDefaultAnnotationTag } from "@/features/annota
 import { FeatureRequestDialog } from "@/features/feature-requests/components/FeatureRequestDialog";
 import { NoManuscriptState } from "@/features/manuscript/components/ManuscriptFullPageState";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import {
+  findManuscriptByReference,
+  withManuscriptReference,
+} from "@/features/manuscript/lib/manuscript-url";
 import { InviteReaderDialog } from "@/features/readers/components/InviteReaderDialog";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
@@ -33,10 +37,14 @@ function accessibleTagColor(tag: { color: string; slug?: string }) {
 
 export function DashboardOverview() {
   const searchParams = useSearchParams();
-  const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedManuscriptReference = searchParams.get("manuscript") ?? searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
-  const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
+  const selectedManuscript = findManuscriptByReference(
+    manuscriptsQuery.data ?? [],
+    selectedManuscriptReference,
+  ) ?? manuscriptsQuery.data?.[0] ?? null;
+  const manuscriptId = selectedManuscript?.id ?? null;
   const overviewQuery = useDashboardOverview(manuscriptId, selectedVersionId);
   const [selectedTagSlug, setSelectedTagSlug] = useState<string | null>(null);
 
@@ -51,6 +59,7 @@ export function DashboardOverview() {
   return (
     <DashboardContent
       data={overviewQuery.data}
+      manuscript={selectedManuscript}
       manuscriptId={manuscriptId}
       selectedTagSlug={selectedTagSlug}
       onSelectTag={(tagSlug) => setSelectedTagSlug((current) => current === tagSlug ? null : tagSlug)}
@@ -60,11 +69,13 @@ export function DashboardOverview() {
 
 function DashboardContent({
   data,
+  manuscript,
   manuscriptId,
   onSelectTag,
   selectedTagSlug,
 }: {
   data: DashboardOverviewData;
+  manuscript: { title: string; urlKey: string } | null;
   manuscriptId: string;
   onSelectTag: (tagSlug: string) => void;
   selectedTagSlug: string | null;
@@ -86,10 +97,14 @@ function DashboardContent({
     ["Survey responses", String(data.surveyResponseCount), data.surveyResponseCount === 1 ? "reader response received" : "reader responses received"],
   ] as const;
   const hasJoinedReader = data.readers.some((reader) => reader.status !== "pending");
-  const readersHref = `/dashboard/readers?manuscriptId=${encodeURIComponent(manuscriptId)}`;
-  const surveysHref = data.manuscriptVersionId
-    ? `/dashboard/surveys?manuscriptId=${encodeURIComponent(manuscriptId)}&versionId=${encodeURIComponent(data.manuscriptVersionId)}`
-    : `/dashboard/surveys?manuscriptId=${encodeURIComponent(manuscriptId)}`;
+  const readersHref = manuscript
+    ? `/dashboard/readers?${withManuscriptReference(new URLSearchParams(), manuscript).toString()}`
+    : "/dashboard/readers";
+  const surveysSearchParams = manuscript
+    ? withManuscriptReference(new URLSearchParams(), manuscript)
+    : new URLSearchParams();
+  if (data.manuscriptVersionId) surveysSearchParams.set("versionId", data.manuscriptVersionId);
+  const surveysHref = `/dashboard/surveys?${surveysSearchParams.toString()}`;
 
   return (
     <div className="max-w-[1100px] px-5 py-7 sm:px-8 sm:py-8">

@@ -24,6 +24,10 @@ import { ManuscriptSwitcher } from "@/features/manuscript/components/ManuscriptS
 import { DraftVersionSwitcher } from "@/features/manuscript/components/DraftVersionSwitcher";
 import { ManuscriptSettingsDialog } from "@/features/manuscript/components/ManuscriptSettingsDialog";
 import { useManuscript, useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import {
+  findManuscriptByReference,
+  withManuscriptReference,
+} from "@/features/manuscript/lib/manuscript-url";
 import { NotificationCenter } from "@/features/notifications/components/NotificationCenter";
 import { cn } from "@/lib/utils";
 
@@ -49,10 +53,14 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedManuscriptReference = searchParams.get("manuscript") ?? searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
-  const manuscriptId = selectedManuscriptId ?? manuscriptsQuery.data?.[0]?.id ?? null;
+  const selectedManuscript = findManuscriptByReference(
+    manuscriptsQuery.data ?? [],
+    selectedManuscriptReference,
+  ) ?? manuscriptsQuery.data?.[0] ?? null;
+  const manuscriptId = selectedManuscript?.id ?? null;
   const manuscriptQuery = useManuscript(manuscriptId, selectedVersionId);
   const manuscript = manuscriptQuery.data;
   const canAccessReaderWorkspace = account.role !== null && canRead(account.role);
@@ -62,11 +70,10 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   const settingsHref = isReaderRoute ? "/reader/settings" : withSelectedManuscript("/dashboard/settings");
 
   function withSelectedManuscript(href: string) {
-    if (!manuscriptId) return href;
+    if (!manuscriptId || !selectedManuscript) return href;
 
     const [path, query = ""] = href.split("?");
-    const nextSearchParams = new URLSearchParams(query);
-    nextSearchParams.set("manuscriptId", manuscriptId);
+    const nextSearchParams = withManuscriptReference(new URLSearchParams(query), selectedManuscript);
     if (selectedVersionId) nextSearchParams.set("versionId", selectedVersionId);
     return `${path}?${nextSearchParams.toString()}`;
   }
@@ -93,6 +100,7 @@ export function WorkspaceSidebar({ account, onNavigate }: WorkspaceSidebarProps)
   function handleManuscriptDeleted() {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("manuscriptId");
+    nextSearchParams.delete("manuscript");
     nextSearchParams.delete("versionId");
     nextSearchParams.delete("chapterId");
     nextSearchParams.delete("annotationId");

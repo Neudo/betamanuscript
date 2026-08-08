@@ -63,6 +63,7 @@ export type ManuscriptReaders = {
   readingRoundId: string | null;
   readers: ManagedReader[];
   title: string;
+  urlKey: string;
 };
 
 type ReaderAssignmentRow = {
@@ -93,6 +94,7 @@ type ReaderAssignmentWithRound = ReaderAssignmentRow & {
 type ManuscriptReadersRow = {
   id: string;
   internal_title: string;
+  url_key: string;
   manuscript_versions: Array<{
     archived_at: string | null;
     id: string;
@@ -195,6 +197,7 @@ export async function getManuscriptReadersWithClient(
     .select(`
       id,
       internal_title,
+      url_key,
       manuscript_versions (
         archived_at,
         id,
@@ -379,6 +382,7 @@ export async function getManuscriptReadersWithClient(
         ))
         .sort((left, right) => (right.startedAt ?? "").localeCompare(left.startedAt ?? "")),
       title: manuscript.internal_title,
+      urlKey: manuscript.url_key,
     };
   });
 }

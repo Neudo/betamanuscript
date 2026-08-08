@@ -6,6 +6,7 @@ import {
   normalizeRichText,
   type ManuscriptRichText,
 } from "@/features/manuscript/lib/rich-text";
+import { findManuscriptByReference } from "@/features/manuscript/lib/manuscript-url";
 
 export type ReaderManuscriptListItem = {
   assignmentId: string;
@@ -24,6 +25,7 @@ export type ReaderManuscriptListItem = {
   status: "finished" | "not-started" | "reading";
   title: string;
   totalChapters: number;
+  urlKey: string;
   versionId: string;
   versionNumber: number;
 };
@@ -143,6 +145,7 @@ type ReaderAssignmentRow = {
       id: string;
       logline: string | null;
       manuscript_id: string;
+      manuscripts: { url_key: string } | null;
       title: string;
       version_number: number;
     } | null;
@@ -206,7 +209,14 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
           reading_deadline,
           reader_closing_note,
           reader_note,
-          manuscript_versions!inner (id, manuscript_id, title, logline, version_number)
+          manuscript_versions!inner (
+            id,
+            manuscript_id,
+            title,
+            logline,
+            version_number,
+            manuscripts!inner (url_key)
+          )
         )
       )
     `)
@@ -299,7 +309,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
   return rows.flatMap((assignment) => {
     const readingRound = assignment.reading_rounds;
     const version = readingRound?.manuscript_versions;
-    if (!readingRound || !version) return [];
+    if (!readingRound || !version || !version.manuscripts) return [];
 
     const accessibleChapterIds = [
       ...(accessibleChapterIdsByAssignment.get(assignment.id) ?? new Set<string>()),
@@ -331,6 +341,7 @@ export async function getReaderManuscripts(): Promise<ReaderManuscriptListItem[]
       status,
       title: version.title,
       totalChapters,
+      urlKey: version.manuscripts.url_key,
       versionId: version.id,
       versionNumber: version.version_number,
     }];
@@ -354,13 +365,16 @@ export type ReaderManuscript = ReaderManuscriptListItem & {
 };
 
 export async function getReaderManuscript(
-  manuscriptId: string,
+  manuscriptReference: string,
   manuscriptVersionId: string | null = null,
 ): Promise<ReaderManuscript | null> {
   const manuscripts = await getReaderManuscripts();
   const manuscript = manuscriptVersionId
-    ? manuscripts.find((item) => item.id === manuscriptId && item.versionId === manuscriptVersionId)
-    : manuscripts.find((item) => item.id === manuscriptId);
+    ? manuscripts.find((item) => (
+      findManuscriptByReference([item], manuscriptReference) !== null
+      && item.versionId === manuscriptVersionId
+    ))
+    : findManuscriptByReference(manuscripts, manuscriptReference);
   if (!manuscript) return null;
 
   const supabase = createSupabaseBrowserClient();

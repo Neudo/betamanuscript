@@ -29,6 +29,7 @@ import {
 type ManuscriptSummaryRow = {
   id: string;
   internal_title: string;
+  url_key: string;
   manuscript_versions: Array<{
     archived_at: string | null;
     id: string;
@@ -121,6 +122,7 @@ type AnnotationTagRow = {
 const manuscriptSummarySelect = `
   id,
   internal_title,
+  url_key,
   manuscript_versions (
     archived_at,
     id,
@@ -145,6 +147,7 @@ function toManuscriptSummary(row: ManuscriptSummaryRow): ManuscriptSummary {
 
   return {
     id: row.id,
+    urlKey: row.url_key,
     title: row.internal_title,
     draft: currentVersion ? `Draft ${currentVersion.version_number}` : "No draft",
     versionId: currentVersion?.id ?? null,
@@ -554,6 +557,17 @@ export async function createManuscript({
     readingRoundId: created.reading_round_id,
   };
 
+  const { data: createdManuscript, error: createdManuscriptError } = await supabase
+    .from("manuscripts")
+    .select("url_key")
+    .eq("id", manuscript.manuscriptId)
+    .maybeSingle();
+
+  if (createdManuscriptError) throw new Error(createdManuscriptError.message);
+  if (!createdManuscript) {
+    throw new Error("The manuscript was created but its URL key could not be loaded.");
+  }
+
   if (importedChapters) {
     await setManuscriptVersionRichContent(
       supabase,
@@ -562,7 +576,11 @@ export async function createManuscript({
     );
   }
 
-  return manuscript;
+  return {
+    ...manuscript,
+    manuscriptTitle: draft.title.trim(),
+    manuscriptUrlKey: createdManuscript.url_key,
+  };
 }
 
 export async function createManuscriptDraftVersion(

@@ -43,6 +43,7 @@ export type ManuscriptDraft = {
 
 export type ManuscriptSummary = {
   id: string;
+  urlKey: string;
   title: string;
   draft: string;
   versionId: string | null;
@@ -53,6 +54,8 @@ export type ManuscriptSummary = {
 
 export type CreatedManuscript = {
   manuscriptId: string;
+  manuscriptTitle: string;
+  manuscriptUrlKey: string;
   manuscriptVersionId: string;
   readingRoundId: string;
 };

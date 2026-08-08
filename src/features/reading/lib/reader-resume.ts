@@ -1,12 +1,16 @@
+import { getReaderManuscriptPath } from "@/features/manuscript/lib/manuscript-url";
+
 type ReaderResumeInput = {
   chapterId: string | null;
-  manuscriptId: string;
+  manuscriptTitle: string;
+  manuscriptUrlKey: string;
   versionId: string;
 };
 
 export function getReaderResumePath({
   chapterId,
-  manuscriptId,
+  manuscriptTitle,
+  manuscriptUrlKey,
   versionId,
 }: ReaderResumeInput) {
   const searchParams = new URLSearchParams({ version: versionId });
@@ -15,5 +19,5 @@ export function getReaderResumePath({
     searchParams.set("chapter", chapterId);
   }
 
-  return `/reader/${manuscriptId}?${searchParams.toString()}`;
+  return `${getReaderManuscriptPath({ title: manuscriptTitle, urlKey: manuscriptUrlKey })}?${searchParams.toString()}`;
 }

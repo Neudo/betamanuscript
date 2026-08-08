@@ -62,6 +62,7 @@ import type {
   SurveyStatus,
 } from "@/features/surveys/types";
 import { useManuscripts } from "@/features/manuscript/hooks/use-manuscripts";
+import { findManuscriptByReference } from "@/features/manuscript/lib/manuscript-url";
 import { cn } from "@/lib/utils";
 
 const statusStyles = {
@@ -74,11 +75,11 @@ const FREE_SURVEY_LIMIT = 2;
 
 export function SurveysWorkspace({ accountPlan }: { accountPlan: AccountPlan }) {
   const searchParams = useSearchParams();
-  const selectedManuscriptId = searchParams.get("manuscriptId");
+  const selectedManuscriptReference = searchParams.get("manuscript") ?? searchParams.get("manuscriptId");
   const selectedVersionId = searchParams.get("versionId");
   const manuscriptsQuery = useManuscripts();
   const manuscripts = manuscriptsQuery.data ?? [];
-  const selectedManuscript = manuscripts.find((manuscript) => manuscript.id === selectedManuscriptId);
+  const selectedManuscript = findManuscriptByReference(manuscripts, selectedManuscriptReference);
   const manuscriptId = selectedManuscript?.id ?? manuscripts[0]?.id ?? null;
   const surveysQuery = useManuscriptSurveys(manuscriptId, selectedVersionId);
   const [expandedSurveyId, setExpandedSurveyId] = useState<string | null>(null);
