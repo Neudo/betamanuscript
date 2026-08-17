@@ -11,6 +11,7 @@ export const metadata = createPublicMetadata({
 export default function PrivacyPage() {
   return (
     <LegalPage
+      breadcrumb={{ href: "/privacy", label: "Privacy Policy" }}
       eyebrow="Legal"
       title="Privacy Policy"
       summary="This policy explains the personal data BetaManuscript processes, why we process it, and the choices available to you."

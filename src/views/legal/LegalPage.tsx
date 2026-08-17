@@ -3,10 +3,15 @@ import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/BrandLogo";
 import { BODY, INK, MONO, MUTED, OXBLOOD_TEXT, PAPER, SANS } from "@/shared/config/design-tokens";
+import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
 import { Footer } from "@/views/waitlist/components/Footer";
 
 type LegalPageProps = {
+  breadcrumb: {
+    href: string;
+    label: string;
+  };
   children: ReactNode;
   eyebrow: string;
   lastUpdated: string;
@@ -14,7 +19,7 @@ type LegalPageProps = {
   title: string;
 };
 
-export function LegalPage({ children, eyebrow, lastUpdated, summary, title }: LegalPageProps) {
+export function LegalPage({ breadcrumb, children, eyebrow, lastUpdated, summary, title }: LegalPageProps) {
   return (
     <div className="min-h-screen" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
       <header className="border-b px-6 py-4 md:px-12" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
@@ -32,7 +37,8 @@ export function LegalPage({ children, eyebrow, lastUpdated, summary, title }: Le
 
       <main className="px-6 py-14 sm:py-20 md:px-12">
         <div className="mx-auto max-w-3xl">
-          <p className="text-[9px] uppercase tracking-[0.22em]" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>{eyebrow}</p>
+          <Breadcrumbs items={[{ href: "/", label: "Home" }, breadcrumb]} />
+          <p className="mt-7 text-[9px] uppercase tracking-[0.22em]" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>{eyebrow}</p>
           <Heading level={1} className="mt-4 text-balance">{title}</Heading>
           <p className="mt-6 max-w-2xl text-lg leading-8" style={{ color: BODY }}>{summary}</p>
           <p className="mt-6 text-[10px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Last updated {lastUpdated}</p>

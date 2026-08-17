@@ -5,6 +5,7 @@ import Link from "next/link";
 import { type ReactNode, useState } from "react";
 
 import { authorPricing } from "@/shared/config/pricing";
+import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
 import { SupportEmailLink } from "@/shared/ui/SupportEmailLink";
 import { Footer } from "@/views/waitlist/components/Footer";
@@ -98,6 +99,11 @@ const faqs = [
 
 const authorSignupHref = "/signup?next=%2Fdashboard%2Fsettings%3Fsection%3Dplan";
 
+const breadcrumbs = [
+  { href: "/", label: "Home" },
+  { href: "/pricing", label: "Pricing" },
+] as const;
+
 export function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -114,8 +120,11 @@ export function PricingPage() {
       <Nav />
 
       <main>
-        <section className="px-6 pb-12 pt-20 text-center sm:pt-28 md:px-12">
-          <div className="mx-auto max-w-3xl">
+        <section className="px-6 pb-12 pt-8 sm:pt-10 md:px-12">
+          <div className="mx-auto max-w-6xl">
+            <Breadcrumbs items={breadcrumbs} />
+          </div>
+          <div className="mx-auto mt-14 max-w-3xl text-center sm:mt-16">
             <Heading level={1} className="text-balance">
               Make every reader note <em>count.</em>
             </Heading>

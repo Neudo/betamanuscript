@@ -11,6 +11,7 @@ export const metadata = createPublicMetadata({
 export default function TermsPage() {
   return (
     <LegalPage
+      breadcrumb={{ href: "/terms", label: "Terms of Service" }}
       eyebrow="Legal"
       title="Terms of Service"
       summary="These terms set the rules for using BetaManuscript as an author, invited reader, or account holder."

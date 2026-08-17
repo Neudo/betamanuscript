@@ -35,6 +35,7 @@ import { PublicFeedbackAuthDialog } from "@/features/reading/components/PublicFe
 import { RichText } from "@/features/manuscript/components/RichText";
 import type { ReaderAnnotation, ReaderAnnotationDraft } from "@/features/reading/api/reading";
 import type { PublicReaderManuscript } from "@/features/reading/server/public-reading";
+import { scrollToTopInstantly } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -305,6 +306,12 @@ export function PublicReadingView({
     setMobileSelectionDraft(null);
   }
 
+  function changeChapter(nextChapterIndex: number) {
+    dismissMobileTextSelection();
+    scrollToTopInstantly();
+    setChapterIndex(nextChapterIndex);
+  }
+
   const displayedGeneralChapter = generalAnnotationPanel
     ? chapterById.get(generalAnnotationPanel.chapterId) ?? null
     : null;
@@ -417,8 +424,7 @@ export function PublicReadingView({
               size="sm"
               disabled={chapterIndex === 0}
               onClick={() => {
-                dismissMobileTextSelection();
-                setChapterIndex((value) => Math.max(0, value - 1));
+                changeChapter(Math.max(0, chapterIndex - 1));
               }}
             >
               <ArrowLeft className="h-3.5 w-3.5" />Previous
@@ -428,8 +434,7 @@ export function PublicReadingView({
               size="sm"
               disabled={chapterIndex === manuscript.chapters.length - 1}
               onClick={() => {
-                dismissMobileTextSelection();
-                setChapterIndex((value) => Math.min(manuscript.chapters.length - 1, value + 1));
+                changeChapter(Math.min(manuscript.chapters.length - 1, chapterIndex + 1));
               }}
             >
               Next<ArrowRight className="h-3.5 w-3.5" />

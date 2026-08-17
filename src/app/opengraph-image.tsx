@@ -1,13 +1,21 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 export const alt = "BetaManuscript — beta reader feedback workspace";
 export const contentType = "image/png";
+export const runtime = "nodejs";
 export const size = {
   height: 630,
   width: 1200,
 };
 
-export default function OpenGraphImage() {
+const logoData = readFile(join(process.cwd(), "public", "logo-full.svg"), "base64")
+  .then((svg) => `data:image/svg+xml;base64,${svg}`);
+
+export default async function OpenGraphImage() {
+  const logo = await logoData;
+
   return new ImageResponse(
     (
       <div
@@ -23,9 +31,13 @@ export default function OpenGraphImage() {
           width: "100%",
         }}
       >
-        <div style={{ color: "#7b1d1d", display: "flex", fontSize: 28, letterSpacing: 4, textTransform: "uppercase" }}>
-          BetaManuscript
-        </div>
+        <img
+          alt="BetaManuscript"
+          height="93"
+          src={logo}
+          style={{ height: 93, objectFit: "contain", objectPosition: "left", width: 303 }}
+          width="303"
+        />
         <div style={{ display: "flex", flexDirection: "column", gap: 28, maxWidth: 920 }}>
           <div style={{ fontFamily: "serif", fontSize: 76, letterSpacing: -3, lineHeight: 1.05 }}>
             Turn beta reader feedback into clearer revisions.

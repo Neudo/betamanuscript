@@ -29,6 +29,7 @@ import {
   WARM,
   premiumEase,
 } from "@/shared/config/design-tokens";
+import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
 import { Footer } from "@/views/waitlist/components/Footer";
 import { Nav } from "@/views/waitlist/components/Nav";
@@ -65,6 +66,11 @@ const steps = [
 
 type StepPreviewKind = (typeof steps)[number]["preview"];
 
+const breadcrumbs = [
+  { href: "/", label: "Home" },
+  { href: "/how-it-works", label: "How it works" },
+] as const;
+
 export function HowItWorksPage() {
   const reduceMotion = useReducedMotion();
 
@@ -73,7 +79,7 @@ export function HowItWorksPage() {
       <Nav />
 
       <main>
-        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
+        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-8 md:px-12 md:pb-28 md:pt-10" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div
             className="pointer-events-none absolute inset-0 -z-10 opacity-80"
             style={{
@@ -82,7 +88,9 @@ export function HowItWorksPage() {
             }}
           />
           <div className="mx-auto max-w-6xl">
+            <Breadcrumbs items={breadcrumbs} />
             <motion.div
+              className="mt-14 md:mt-20"
               initial={reduceMotion ? false : { opacity: 0, y: 18 }}
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.72, ease: premiumEase }}
@@ -221,6 +229,26 @@ export function HowItWorksPage() {
                       {step.title}
                     </Heading>
                     <p className="mt-5 max-w-xl text-base leading-7" style={{ color: BODY }}>{step.detail}</p>
+                    {index === 1 ? (
+                      <Link
+                        href="/use-cases/manage-multiple-beta-readers"
+                        className="mt-5 inline-flex items-center gap-1.5 text-sm underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                        style={{ color: INK }}
+                      >
+                        Managing several readers? See how BetaManuscript handles multiple beta readers
+                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    ) : null}
+                    {index === 2 ? (
+                      <Link
+                        href="/use-cases/organize-beta-reader-feedback"
+                        className="mt-5 inline-flex items-center gap-1.5 text-sm underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                        style={{ color: INK }}
+                      >
+                        See how feedback stays organized throughout the beta round
+                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    ) : null}
                   </div>
                   <div className={index % 2 === 1 ? "md:order-1" : undefined}>
                     <StepPreview kind={step.preview} />

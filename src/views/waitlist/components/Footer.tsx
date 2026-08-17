@@ -26,6 +26,7 @@ export function Footer() {
           <FooterGroup title="Explore">
             <FooterLink href="/">Home</FooterLink>
             <FooterLink href="/how-it-works">How it works</FooterLink>
+            <FooterLink href="/use-cases">Use cases</FooterLink>
             <FooterLink href="/for-readers">For readers</FooterLink>
             <FooterLink href="/pricing">Pricing</FooterLink>
             <FooterLink href="/signup">Start for free</FooterLink>

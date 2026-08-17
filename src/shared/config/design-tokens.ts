@@ -12,6 +12,7 @@ const BODY = "hsl(var(--body))";
 const INVERSE_BACKGROUND = "hsl(var(--inverse-background))";
 const INVERSE_FOREGROUND = "hsl(var(--inverse-foreground))";
 const INVERSE_MUTED = "hsl(var(--inverse-muted))";
+const EDITORIAL_DARK = "hsl(29 18% 18%)";
 const MONO = "'DM Mono', monospace";
 const SERIF = "'EB Garamond', serif";
 const SANS = "'Inter', sans-serif";
@@ -31,6 +32,7 @@ export {
   INVERSE_BACKGROUND,
   INVERSE_FOREGROUND,
   INVERSE_MUTED,
+  EDITORIAL_DARK,
   MONO,
   SERIF,
   SANS,

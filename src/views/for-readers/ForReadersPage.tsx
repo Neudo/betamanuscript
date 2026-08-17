@@ -15,6 +15,7 @@ import Link from "next/link";
 
 import { Footer } from "@/views/waitlist/components/Footer";
 import { Nav } from "@/views/waitlist/components/Nav";
+import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
 import {
   BODY,
@@ -72,6 +73,11 @@ const feedbackPrompts = [
   "I expected… but instead…",
 ];
 
+const breadcrumbs = [
+  { href: "/", label: "Home" },
+  { href: "/for-readers", label: "For readers" },
+] as const;
+
 export function ForReadersPage() {
   const reduceMotion = useReducedMotion();
 
@@ -80,55 +86,58 @@ export function ForReadersPage() {
       <Nav />
 
       <main>
-        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-16 md:px-12 md:pb-28 md:pt-24" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
+        <section className="relative isolate overflow-hidden border-b px-6 pb-20 pt-8 md:px-12 md:pb-28 md:pt-10" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div
             className="pointer-events-none absolute inset-0 -z-10 opacity-70"
             style={{
               backgroundImage: "radial-gradient(circle at 13% 28%, hsl(var(--oxblood) / 0.1), transparent 24rem), radial-gradient(circle at 88% 3%, hsl(var(--forest) / 0.1), transparent 25rem)",
             }}
           />
-          <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.82fr)] lg:gap-20">
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-              animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-              transition={{ duration: 0.72, ease: premiumEase }}
-            >
-              <Heading level={1} className="max-w-2xl text-balance">
-                Read the manuscript. Share your reactions as they happen.
-              </Heading>
-              <p className="mt-7 max-w-xl text-pretty text-base leading-8 sm:text-lg" style={{ color: BODY }}>
-                BetaManuscript gives you a focused place to read an author&apos;s manuscript, save your progress, and leave feedback on the exact passages that made you react.
-              </p>
-              <div className="mt-10 flex flex-wrap items-center gap-4">
-                <Link
-                  href="/login"
-                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
-                  style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
-                >
-                  I have an invitation
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-                <a
-                  href="#how-it-works"
-                  className="text-sm underline decoration-1 underline-offset-4 transition-opacity hover:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
-                  style={{ color: INK }}
-                >
-                  See how it works
-                </a>
-              </div>
-              <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
-                Shared reading pages open without an account · Feedback is free for beta readers
-              </p>
-            </motion.div>
+          <div className="mx-auto max-w-6xl">
+            <Breadcrumbs items={breadcrumbs} />
+            <div className="mt-14 grid items-center gap-14 lg:mt-20 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.82fr)] lg:gap-20">
+              <motion.div
+                initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+                animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                transition={{ duration: 0.72, ease: premiumEase }}
+              >
+                <Heading level={1} className="max-w-2xl text-balance">
+                  Read the manuscript. Share your reactions as they happen.
+                </Heading>
+                <p className="mt-7 max-w-xl text-pretty text-base leading-8 sm:text-lg" style={{ color: BODY }}>
+                  BetaManuscript gives you a focused place to read an author&apos;s manuscript, save your progress, and leave feedback on the exact passages that made you react.
+                </p>
+                <div className="mt-10 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/login"
+                    className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                    style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
+                  >
+                    I have an invitation
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                  <a
+                    href="#how-it-works"
+                    className="text-sm underline decoration-1 underline-offset-4 transition-opacity hover:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
+                    style={{ color: INK }}
+                  >
+                    See how it works
+                  </a>
+                </div>
+                <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
+                  Shared reading pages open without an account · Feedback is free for beta readers
+                </p>
+              </motion.div>
 
-            <motion.div
-              className="relative mx-auto w-full max-w-[510px] lg:mr-0"
-              initial={reduceMotion ? false : { opacity: 0, y: 26, rotate: 1.2 }}
-              animate={reduceMotion ? undefined : { opacity: 1, y: 0, rotate: 0 }}
-              transition={{ duration: 0.82, delay: 0.12, ease: premiumEase }}
-            >
-              <ReaderPreview />
-            </motion.div>
+              <motion.div
+                className="relative mx-auto w-full max-w-[510px] lg:mr-0"
+                initial={reduceMotion ? false : { opacity: 0, y: 26, rotate: 1.2 }}
+                animate={reduceMotion ? undefined : { opacity: 1, y: 0, rotate: 0 }}
+                transition={{ duration: 0.82, delay: 0.12, ease: premiumEase }}
+              >
+                <ReaderPreview />
+              </motion.div>
+            </div>
           </div>
         </section>
 
@@ -277,6 +286,12 @@ export function ForReadersPage() {
             Log in to read
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
+          <p className="mt-6 text-xs" style={{ color: MUTED }}>
+            Are you an author?{" "}
+            <Link href="/use-cases" className="underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">
+              Explore BetaManuscript use cases
+            </Link>
+          </p>
         </section>
       </main>
 

@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown, EyeOff, Maximize2, MessageSquareText, PencilLine, Tags, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -83,6 +83,7 @@ import {
   withManuscriptReference,
 } from "@/features/manuscript/lib/manuscript-url";
 import { cn } from "@/lib/utils";
+import { scrollElementToTopInstantly, scrollToTopInstantly } from "@/lib/scroll";
 import { Heading } from "@/shared/ui/Heading";
 
 const statusStyles: Record<ChapterEditorialStatus, string> = {
@@ -189,6 +190,7 @@ export function ManuscriptWorkspace() {
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [pendingChapterUpdate, setPendingChapterUpdate] = useState<ChapterEditImpact | null>(null);
+  const chapterViewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!searchParams.get("manuscriptId") || searchParams.get("manuscript") || !selectedManuscript) return;
@@ -391,6 +393,8 @@ export function ManuscriptWorkspace() {
     nextSearchParams.delete("annotationId");
     nextSearchParams.delete("generalCommentId");
     nextSearchParams.set("chapterId", chapterId);
+    scrollToTopInstantly();
+    scrollElementToTopInstantly(chapterViewportRef.current);
     router.replace(`${pathname}?${nextSearchParams.toString()}`, { scroll: false });
   }
 
@@ -538,7 +542,7 @@ export function ManuscriptWorkspace() {
           </p>
         ) : null}
 
-        <ScrollArea className="md:min-h-0 md:flex-1">
+        <ScrollArea viewportRef={chapterViewportRef} className="md:min-h-0 md:flex-1">
           <article className={cn(
             "reader-copy mx-auto max-w-3xl px-5 pt-10 sm:px-10 sm:pt-14",
             isEditing ? "pb-40 sm:pb-32" : "pb-10 sm:pb-14",

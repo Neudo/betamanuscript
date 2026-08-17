@@ -86,7 +86,7 @@ export function HowItWorksSection() {
           ))}
         </div>
         <div
-          className="mt-10 border-t pt-6"
+          className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:flex-wrap sm:gap-x-8"
           style={{ borderColor: "hsl(var(--ink) / 0.12)" }}
         >
           <Link
@@ -95,6 +95,14 @@ export function HowItWorksSection() {
             style={{ color: INK, fontFamily: SANS }}
           >
             See the full workflow
+            <ChevronRight className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+          </Link>
+          <Link
+            href="/use-cases/organize-beta-reader-feedback"
+            className="inline-flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+            style={{ color: INK, fontFamily: SANS }}
+          >
+            See how BetaManuscript organizes beta reader feedback
             <ChevronRight className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
           </Link>
         </div>

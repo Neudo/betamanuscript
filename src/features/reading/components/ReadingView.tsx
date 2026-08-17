@@ -44,6 +44,7 @@ import {
   useSubmitReaderSurvey,
 } from "@/features/reading/hooks/use-reading";
 import { cn } from "@/lib/utils";
+import { scrollToTopInstantly } from "@/lib/scroll";
 import { Heading } from "@/shared/ui/Heading";
 
 type AnnotationPanel =
@@ -252,7 +253,7 @@ export function ReadingView({ manuscriptReference }: { manuscriptReference: stri
         onSuccess() {
           toast.success("Chapter marked complete.");
           if (!isLastChapter) {
-            setChapterIndex(currentChapterIndex + 1);
+            changeChapter(currentChapterIndex + 1);
           }
 
           const nextCompletedChapterIds = [...new Set([...readerCompletedChapterIds, chapter.id])];
@@ -295,6 +296,7 @@ export function ReadingView({ manuscriptReference }: { manuscriptReference: stri
     dismissMobileTextSelection();
     setAnnotationPanel(null);
     setIsGeneralCommentOpen(false);
+    scrollToTopInstantly();
     setChapterIndex(nextChapterIndex);
   }
 
@@ -553,7 +555,7 @@ export function ReadingView({ manuscriptReference }: { manuscriptReference: stri
           closingNote={manuscript.closingNote}
           manuscriptTitle={manuscript.title}
           onReadAgain={() => {
-            setChapterIndex(0);
+            changeChapter(0);
             router.replace(`${readerUrl}&reread=1`, { scroll: false });
           }}
         />
