@@ -75,25 +75,25 @@ export function ReaderChapterGeneralCommentSheet({
   function saveGeneralComment() {
     const input = { chapterId, comment };
 
-    if (!isEditing && onAuthenticationRequired) {
+    if (onSaveGeneralAnnotation) {
       setIsExternalSaving(true);
-      void onAuthenticationRequired({ ...input, displayName: normalizedDisplayName })
+      void onSaveGeneralAnnotation(input)
+        .then(() => {
+          toast.success(isEditing ? "General annotation updated." : "General annotation saved.");
+          onClose();
+        })
         .catch((error: unknown) => {
-          toast.error(error instanceof Error ? error.message : "Your feedback could not be saved.");
+          toast.error(error instanceof Error ? error.message : "The general annotation could not be saved.");
         })
         .finally(() => setIsExternalSaving(false));
       return;
     }
 
-    if (!isEditing && onSaveGeneralAnnotation) {
+    if (!isEditing && onAuthenticationRequired) {
       setIsExternalSaving(true);
-      void onSaveGeneralAnnotation(input)
-        .then(() => {
-          toast.success("General annotation saved.");
-          onClose();
-        })
+      void onAuthenticationRequired({ ...input, displayName: normalizedDisplayName })
         .catch((error: unknown) => {
-          toast.error(error instanceof Error ? error.message : "The general annotation could not be saved.");
+          toast.error(error instanceof Error ? error.message : "Your feedback could not be saved.");
         })
         .finally(() => setIsExternalSaving(false));
       return;

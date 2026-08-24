@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CircleHelp, MessageSquarePlus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/BrandLogo";
@@ -32,6 +32,11 @@ import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnot
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
 import { ReaderChapterGeneralCommentSheet } from "@/features/reading/components/ReaderChapterGeneralCommentSheet";
 import { PublicFeedbackAuthDialog } from "@/features/reading/components/PublicFeedbackAuthDialog";
+import {
+  addReaderAnnotation,
+  createOptimisticFeedbackId,
+  setReaderGeneralAnnotation,
+} from "@/features/reading/lib/optimistic-feedback";
 import { RichText } from "@/features/manuscript/components/RichText";
 import type { ReaderAnnotation, ReaderAnnotationDraft } from "@/features/reading/api/reading";
 import type { PublicReaderManuscript } from "@/features/reading/server/public-reading";
@@ -61,6 +66,12 @@ type GeneralAnnotationPanel = {
 type PreparedPublicFeedback = {
   displayName: string;
   token: string;
+};
+
+type OptimisticGeneralAnnotation = {
+  chapterId: string;
+  comment: string;
+  id: string;
 };
 
 function getReaderBlockElement(node: Node) {
@@ -101,9 +112,38 @@ export function PublicReadingView({
   const [isAtReaderLimit, setIsAtReaderLimit] = useState(false);
   const [isRequestingPlace, setIsRequestingPlace] = useState(false);
   const [hasRequestedPlace, setHasRequestedPlace] = useState(false);
+  const [optimisticAnnotations, setOptimisticAnnotations] = useState<ReaderAnnotation[]>([]);
+  const [optimisticGeneralAnnotations, setOptimisticGeneralAnnotations] = useState<OptimisticGeneralAnnotation[]>([]);
   const pendingFeedbackFinalizationRef = useRef(false);
   const mobileSelectionCaptureTimeoutRef = useRef<number | null>(null);
-  const chapter = manuscript.chapters[chapterIndex];
+  const chaptersWithOptimisticFeedback = useMemo(() => {
+    let chapters = manuscript.chapters;
+
+    for (const annotation of optimisticAnnotations) {
+      const isPersisted = manuscript.chapters.some((chapter) => (
+        chapter.blocks.some((block) => block.annotations.some((item) => item.id === annotation.id))
+      ));
+      if (isPersisted) continue;
+
+      chapters = addReaderAnnotation(chapters, annotation);
+    }
+
+    for (const generalAnnotation of optimisticGeneralAnnotations) {
+      const isPersisted = manuscript.chapters.some(
+        (chapter) => chapter.generalComment?.id === generalAnnotation.id,
+      );
+      if (isPersisted) continue;
+
+      chapters = setReaderGeneralAnnotation(
+        chapters,
+        generalAnnotation.chapterId,
+        generalAnnotation,
+      );
+    }
+
+    return chapters;
+  }, [manuscript.chapters, optimisticAnnotations, optimisticGeneralAnnotations]);
+  const chapter = chaptersWithOptimisticFeedback[chapterIndex];
   const next = `/read/${manuscript.accessLinkId}/reading`;
   const loginHref = `/login?next=${encodeURIComponent(next)}`;
   const signUpHref = `/signup?next=${encodeURIComponent(next)}`;
@@ -125,14 +165,32 @@ export function PublicReadingView({
     }
   }, [hasRequestedPlace, manuscript.accessLinkId]);
 
-  const saveAnnotation = useCallback(async (input: ReaderAnnotationDraft & { comment: string; tagId: string }) => {
+  const saveAnnotation = useCallback(async (input: ReaderAnnotationDraft & {
+    comment: string;
+    tag: ReaderAnnotation["tag"];
+    tagId: string;
+  }) => {
+    const temporaryAnnotation: ReaderAnnotation = {
+      ...input,
+      comment: input.comment.trim() || null,
+      id: createOptimisticFeedbackId(),
+    };
+
+    setOptimisticAnnotations((current) => [...current, temporaryAnnotation]);
+
     try {
-      await createPublicReaderAnnotation({
+      const annotationId = await createPublicReaderAnnotation({
         accessLinkId: manuscript.accessLinkId,
         ...input,
       });
-      router.refresh();
+      const savedAnnotation = { ...temporaryAnnotation, id: annotationId };
+
+      setOptimisticAnnotations((current) => current.map((annotation) => (
+        annotation.id === temporaryAnnotation.id ? savedAnnotation : annotation
+      )));
+      startTransition(() => router.refresh());
     } catch (error) {
+      setOptimisticAnnotations((current) => current.filter((annotation) => annotation.id !== temporaryAnnotation.id));
       const message = error instanceof Error ? error.message : "The annotation could not be saved.";
       if (/reached its reader limit/i.test(message)) {
         setIsAtReaderLimit(true);
@@ -143,13 +201,41 @@ export function PublicReadingView({
   }, [manuscript.accessLinkId, requestReaderPlace, router]);
 
   const saveGeneralAnnotation = useCallback(async (input: { chapterId: string; comment: string }) => {
+    const previousGeneralAnnotation = chaptersWithOptimisticFeedback
+      .find((item) => item.id === input.chapterId)
+      ?.generalComment ?? null;
+    const temporaryGeneralAnnotation: OptimisticGeneralAnnotation = {
+      chapterId: input.chapterId,
+      comment: input.comment.trim(),
+      id: createOptimisticFeedbackId(),
+    };
+
+    setOptimisticGeneralAnnotations((current) => [
+      ...current.filter((annotation) => annotation.chapterId !== input.chapterId),
+      temporaryGeneralAnnotation,
+    ]);
+
     try {
-      await createPublicReaderGeneralAnnotation({
+      const annotationId = await createPublicReaderGeneralAnnotation({
         accessLinkId: manuscript.accessLinkId,
         ...input,
       });
-      router.refresh();
+      const savedGeneralAnnotation = { ...temporaryGeneralAnnotation, id: annotationId };
+
+      setOptimisticGeneralAnnotations((current) => current.map((annotation) => (
+        annotation.id === temporaryGeneralAnnotation.id ? savedGeneralAnnotation : annotation
+      )));
+      startTransition(() => router.refresh());
     } catch (error) {
+      setOptimisticGeneralAnnotations((current) => {
+        const withoutTemporaryAnnotation = current.filter(
+          (annotation) => annotation.id !== temporaryGeneralAnnotation.id,
+        );
+
+        return previousGeneralAnnotation
+          ? [...withoutTemporaryAnnotation, { chapterId: input.chapterId, ...previousGeneralAnnotation }]
+          : withoutTemporaryAnnotation;
+      });
       const message = error instanceof Error ? error.message : "The general annotation could not be saved.";
       if (/reached its reader limit/i.test(message)) {
         setIsAtReaderLimit(true);
@@ -157,7 +243,7 @@ export function PublicReadingView({
       }
       throw error;
     }
-  }, [manuscript.accessLinkId, requestReaderPlace, router]);
+  }, [chaptersWithOptimisticFeedback, manuscript.accessLinkId, requestReaderPlace, router]);
 
   const promptForAuthentication = useCallback(async (feedback: PendingPublicReaderFeedback) => {
     const token = await createPendingPublicFeedback(feedback);
@@ -194,8 +280,8 @@ export function PublicReadingView({
   }, []);
 
   const chapterById = useMemo(
-    () => new Map(manuscript.chapters.map((item) => [item.id, item])),
-    [manuscript.chapters],
+    () => new Map(chaptersWithOptimisticFeedback.map((item) => [item.id, item])),
+    [chaptersWithOptimisticFeedback],
   );
 
   if (!chapter) {

@@ -995,6 +995,7 @@ export async function getReaderAnnotationTags(
 export type CreateReaderAnnotationInput = ReaderAnnotationDraft & {
   comment: string;
   readerAssignmentId: string;
+  tag: ReaderAnnotationTag;
   tagId: string;
 };
 
@@ -1010,10 +1011,11 @@ export async function createReaderAnnotation({
   selectionEndChapterBlockId,
   selectionEndOffset,
   selectionStart,
+  tag,
   tagId,
 }: CreateReaderAnnotationInput) {
   const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("annotations")
     .insert({
       chapter_block_id: chapterBlockId,
@@ -1028,9 +1030,27 @@ export async function createReaderAnnotation({
       selection_end_offset: selectionEndOffset,
       selection_start: selectionStart,
       tag_id: tagId,
-    });
+    })
+    .select("id, chapter_id, chapter_block_id, quote, selection_start, selection_end, selection_end_chapter_block_id, selection_end_offset, context_before, context_after, comment")
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("The annotation could not be saved.");
+
+  return {
+    chapterBlockId: data.chapter_block_id,
+    chapterId: data.chapter_id,
+    comment: data.comment,
+    contextAfter: data.context_after,
+    contextBefore: data.context_before,
+    id: data.id,
+    quote: data.quote,
+    selectionEnd: data.selection_end,
+    selectionEndChapterBlockId: data.selection_end_chapter_block_id,
+    selectionEndOffset: data.selection_end_offset,
+    selectionStart: data.selection_start,
+    tag,
+  } satisfies ReaderAnnotation;
 }
 
 export async function updateReaderAnnotation({

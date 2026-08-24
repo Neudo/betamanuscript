@@ -39,7 +39,7 @@ export async function createPublicReaderAnnotation({
   tagId,
 }: PublicReaderAnnotationInput) {
   const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.rpc("create_public_reader_annotation", {
+  const { data, error } = await supabase.rpc("create_public_reader_annotation", {
     p_chapter_block_id: chapterBlockId,
     p_chapter_id: chapterId,
     p_comment: comment,
@@ -55,6 +55,9 @@ export async function createPublicReaderAnnotation({
   });
 
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("The annotation could not be saved.");
+
+  return data;
 }
 
 export async function createPublicReaderGeneralAnnotation({
@@ -67,13 +70,16 @@ export async function createPublicReaderGeneralAnnotation({
   comment: string;
 }) {
   const supabase = createSupabaseBrowserClient();
-  const { error } = await supabase.rpc("create_public_reader_general_annotation", {
+  const { data, error } = await supabase.rpc("create_public_reader_general_annotation", {
     p_chapter_id: chapterId,
     p_comment: comment,
     p_public_link_id: accessLinkId,
   });
 
   if (error) throw new Error(error.message);
+  if (!data) throw new Error("The general annotation could not be saved.");
+
+  return data;
 }
 
 export async function createReaderPlaceRequest(accessLinkId: string) {

@@ -59,7 +59,11 @@ type ReaderAnnotationSheetProps = {
     tagId: string;
   }) => Promise<void>;
   onClose: () => void;
-  onCreateAnnotation?: (input: ReaderAnnotationDraft & { comment: string; tagId: string }) => Promise<void>;
+  onCreateAnnotation?: (input: ReaderAnnotationDraft & {
+    comment: string;
+    tag: ReaderAnnotationTag;
+    tagId: string;
+  }) => Promise<void>;
   readerAssignmentId: string;
   tags?: ReaderAnnotationTag[];
 };
@@ -87,6 +91,7 @@ export function ReaderAnnotationSheet({
   const [isExternalSaving, setIsExternalSaving] = useState(false);
   const tags = providedTags ?? tagsQuery.data ?? [];
   const selectedTagId = tagId || tags[0]?.id || "";
+  const selectedTag = tags.find((tag) => tag.id === selectedTagId);
   const quote = annotation?.quote ?? draft?.quote ?? "";
   const isPending = createAnnotation.isPending || updateAnnotation.isPending || deleteAnnotation.isPending || isExternalSaving;
   const requiresDisplayName = !annotation && Boolean(onAuthenticationRequired);
@@ -97,7 +102,7 @@ export function ReaderAnnotationSheet({
   }, [tagsQuery.error, tagsQuery.isError]);
 
   function saveAnnotation() {
-    if (!selectedTagId) return;
+    if (!selectedTagId || !selectedTag) return;
 
     if (annotation) {
       updateAnnotation.mutate(
@@ -124,6 +129,7 @@ export function ReaderAnnotationSheet({
     const input = {
       ...draft,
       comment,
+      tag: selectedTag,
       tagId: selectedTagId,
     };
 

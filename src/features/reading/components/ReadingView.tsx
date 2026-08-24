@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, CircleHelp, MessageSquare, MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -20,13 +21,16 @@ import {
   type MultiBlockTextSelection,
 } from "@/features/annotations/lib/multi-block-annotations";
 import { MobileAnnotationActionBar } from "@/features/annotations/components/MobileAnnotationActionBar";
-import type {
-  ReaderAnnotation,
-  ReaderAnnotationDraft,
-  ReaderDueSurvey,
-  ReaderManuscript,
-  ReaderManuscriptListItem,
-  ReaderSurveyAnswer,
+import {
+  createReaderAnnotation,
+  upsertReaderChapterGeneralComment,
+  type ReaderAnnotation,
+  type ReaderAnnotationDraft,
+  type ReaderAnnotationTag,
+  type ReaderDueSurvey,
+  type ReaderManuscript,
+  type ReaderManuscriptListItem,
+  type ReaderSurveyAnswer,
 } from "@/features/reading/api/reading";
 import { ReaderAnnotationSheet } from "@/features/reading/components/ReaderAnnotationSheet";
 import { ReaderAnnotationGuide } from "@/features/reading/components/ReaderAnnotationGuide";
@@ -43,6 +47,14 @@ import {
   useStartReaderChapter,
   useSubmitReaderSurvey,
 } from "@/features/reading/hooks/use-reading";
+import { readingKeys } from "@/features/reading/hooks/use-reading";
+import {
+  addReaderAnnotation,
+  createOptimisticFeedbackId,
+  removeReaderAnnotation,
+  replaceReaderAnnotation,
+  setReaderGeneralAnnotation,
+} from "@/features/reading/lib/optimistic-feedback";
 import { cn } from "@/lib/utils";
 import { scrollToTopInstantly } from "@/lib/scroll";
 import { Heading } from "@/shared/ui/Heading";
@@ -73,6 +85,7 @@ function hasSeenReaderAnnotationGuideOnServer() {
 export function ReadingView({ manuscriptReference }: { manuscriptReference: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const manuscriptVersionId = searchParams.get("version");
   const manuscriptQuery = useReaderManuscript(manuscriptReference, manuscriptVersionId);
@@ -235,6 +248,98 @@ export function ReadingView({ manuscriptReference }: { manuscriptReference: stri
   const readerUrl = `${getReaderManuscriptPath(manuscript)}?version=${manuscript.versionId}`;
   const activeSurvey = surveyQueue[0] ?? null;
   const isLastChapter = currentChapterIndex === chapters.length - 1;
+
+  function updateReaderManuscriptCache(
+    update: (cachedManuscript: ReaderManuscript) => ReaderManuscript,
+  ) {
+    queryClient.setQueryData<ReaderManuscript | null>(
+      readingKeys.detail(manuscriptReference, manuscriptVersionId),
+      (cachedManuscript) => cachedManuscript ? update(cachedManuscript) : cachedManuscript,
+    );
+  }
+
+  async function saveReaderAnnotation(input: ReaderAnnotationDraft & {
+    comment: string;
+    tag: ReaderAnnotationTag;
+    tagId: string;
+  }) {
+    const temporaryAnnotationId = createOptimisticFeedbackId();
+    const temporaryAnnotation: ReaderAnnotation = {
+      ...input,
+      comment: input.comment.trim() || null,
+      id: temporaryAnnotationId,
+    };
+
+    updateReaderManuscriptCache((cachedManuscript) => ({
+      ...cachedManuscript,
+      chapters: addReaderAnnotation(cachedManuscript.chapters, temporaryAnnotation),
+    }));
+
+    try {
+      const savedAnnotation = await createReaderAnnotation({
+        ...input,
+        readerAssignmentId,
+      });
+
+      updateReaderManuscriptCache((cachedManuscript) => ({
+        ...cachedManuscript,
+        chapters: replaceReaderAnnotation(
+          cachedManuscript.chapters,
+          temporaryAnnotationId,
+          savedAnnotation,
+        ),
+      }));
+    } catch (error) {
+      updateReaderManuscriptCache((cachedManuscript) => ({
+        ...cachedManuscript,
+        chapters: removeReaderAnnotation(cachedManuscript.chapters, temporaryAnnotationId),
+      }));
+      throw error;
+    }
+  }
+
+  async function saveReaderGeneralAnnotation(input: { chapterId: string; comment: string }) {
+    const previousGeneralAnnotation = chapter.generalComment;
+    const temporaryGeneralAnnotation = {
+      comment: input.comment.trim(),
+      id: createOptimisticFeedbackId(),
+    };
+
+    updateReaderManuscriptCache((cachedManuscript) => ({
+      ...cachedManuscript,
+      chapters: setReaderGeneralAnnotation(
+        cachedManuscript.chapters,
+        input.chapterId,
+        temporaryGeneralAnnotation,
+      ),
+    }));
+
+    try {
+      const savedGeneralAnnotation = await upsertReaderChapterGeneralComment({
+        ...input,
+        readerAssignmentId,
+      });
+
+      updateReaderManuscriptCache((cachedManuscript) => ({
+        ...cachedManuscript,
+        chapters: setReaderGeneralAnnotation(
+          cachedManuscript.chapters,
+          input.chapterId,
+          savedGeneralAnnotation,
+        ),
+      }));
+    } catch (error) {
+      updateReaderManuscriptCache((cachedManuscript) => ({
+        ...cachedManuscript,
+        chapters: setReaderGeneralAnnotation(
+          cachedManuscript.chapters,
+          input.chapterId,
+          previousGeneralAnnotation,
+        ),
+      }));
+      throw error;
+    }
+  }
 
   function enqueueDueSurveys(surveys: ReaderDueSurvey[], shouldOpenPrompt: boolean) {
     setSurveyQueue((current) => {
@@ -630,6 +735,7 @@ export function ReadingView({ manuscriptReference }: { manuscriptReference: stri
           annotation={annotationPanel.kind === "edit" ? annotationPanel.annotation : undefined}
           draft={annotationPanel.kind === "create" ? annotationPanel.draft : undefined}
           readerAssignmentId={readerAssignmentId}
+          onCreateAnnotation={annotationPanel.kind === "create" ? saveReaderAnnotation : undefined}
           onClose={() => setAnnotationPanel(null)}
         />
       ) : null}
@@ -642,6 +748,7 @@ export function ReadingView({ manuscriptReference }: { manuscriptReference: stri
           chapterTitle={chapter.title}
           generalComment={chapter.generalComment}
           readerAssignmentId={readerAssignmentId}
+          onSaveGeneralAnnotation={saveReaderGeneralAnnotation}
           onClose={() => setIsGeneralCommentOpen(false)}
         />
       ) : null}
