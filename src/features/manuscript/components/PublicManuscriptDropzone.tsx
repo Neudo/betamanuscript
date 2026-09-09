@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Loader2 } from "lucide-react";
+import { FileUp, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Turnstile } from "@/features/account/components/Turnstile";
@@ -85,8 +85,20 @@ export function PublicManuscriptDropzone() {
   useEffect(() => () => { requestRef.current?.abort(); xhrRef.current?.abort(); }, []);
 
   return (
-    <div className="mt-7 space-y-3">
-      <input ref={input} type="file" accept={sourceDocumentAccept} className="sr-only" aria-label="Choose your manuscript" disabled={!!status} onChange={(event) => { const selected = event.target.files?.[0]; event.target.value = ""; if (selected) selectFile(selected); }} />
+    <div className="mt-9 space-y-3">
+      <input
+        ref={input}
+        type="file"
+        accept={sourceDocumentAccept}
+        className="sr-only"
+        aria-label="Choose your manuscript"
+        disabled={!!status}
+        onChange={(event) => {
+          const selected = event.target.files?.[0];
+          event.target.value = "";
+          if (selected) selectFile(selected);
+        }}
+      />
       <button
         type="button"
         disabled={!!status || !siteKey}
@@ -94,16 +106,25 @@ export function PublicManuscriptDropzone() {
         onDragOver={(event) => { event.preventDefault(); if (!status) setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={(event) => { event.preventDefault(); setDragging(false); const selected = event.dataTransfer.files[0]; if (selected && siteKey) selectFile(selected); }}
-        className={cn("flex min-h-40 w-full flex-col items-center justify-center gap-3 border border-dashed border-foreground/30 bg-card/40 px-5 py-6 text-center transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary disabled:cursor-wait", dragging && "border-primary bg-primary/5")}
+        className={cn(
+          "group relative flex min-h-[17.5rem] w-full flex-col items-center justify-center overflow-hidden border border-foreground/25 bg-card px-6 pb-20 pt-9 text-center paper-shadow transition-colors duration-300 hover:border-primary hover:bg-primary/[0.035] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary disabled:cursor-wait",
+          dragging && "border-primary bg-primary/[0.08]",
+        )}
       >
-        {status ? <Loader2 className="h-6 w-6 animate-spin" strokeWidth={1.5} /> : <FileText className="h-6 w-6" strokeWidth={1.5} />}
-        <span className="text-sm font-medium">{status ?? (file ? "Complete verification to upload" : "Drop your manuscript here")}</span>
-        <span className="max-w-full truncate text-xs text-muted-foreground">{file?.name ?? "or click to choose a file"}</span>
-        <span className="font-mono text-[10px] text-muted-foreground">DOCX, PDF, TXT, Markdown · max 20 MB</span>
+        <span className="pointer-events-none absolute inset-3 border border-dashed border-foreground/20 transition-colors duration-300 group-hover:border-primary/60" aria-hidden="true" />
+        <span className="relative grid h-12 w-12 place-items-center border border-primary bg-primary text-primary-foreground shadow-glow" aria-hidden="true">
+          {status ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={1.5} /> : <FileUp className="h-5 w-5" strokeWidth={1.5} />}
+        </span>
+        <span className="relative mt-5 font-display text-[1.7rem] leading-none text-foreground sm:text-[2rem]">
+          {status ?? (file ? "Complete verification to upload" : "Drop your manuscript")}
+        </span>
+        <span className="relative mt-2 max-w-full truncate text-sm text-muted-foreground">
+          {file?.name ?? "Upload your draft and start collecting reader feedback."}
+        </span>
+        <span className="absolute inset-x-0 bottom-0 flex min-h-15 items-center border-t border-foreground/15 bg-sidebar/30 px-5 py-3">
+          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">DOCX · PDF · TXT · Markdown · 20 MB max</span>
+        </span>
       </button>
-      <p className="text-xs leading-5 text-muted-foreground">
-        Your file is held for 4 hours while you create your account.
-      </p>
       {siteKey && file ? <Turnstile siteKey={siteKey} onTokenChange={setToken} refreshKey={refreshKey} /> : null}
       {!siteKey ? <p className="text-xs text-destructive">Uploads are temporarily unavailable.</p> : null}
       <p role="status" aria-live="polite" className="sr-only">{status}</p>
