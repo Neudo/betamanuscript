@@ -1,3 +1,4 @@
+import { pendingUploadIdFromPath } from "@/features/manuscript/lib/pending-upload";
 import { redirect } from "next/navigation";
 
 import { createNoIndexMetadata } from "@/shared/config/seo";
@@ -40,7 +41,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
       initialAvatarPath={account.avatarPath}
       initialAvatarUrl={account.avatarUrl}
       initialDisplayName={account.displayName}
-      initialRole={account.role}
+      initialRole={pendingUploadIdFromPath(safeNext) ? "writer" : account.role}
       next={safeNext}
     />
   );

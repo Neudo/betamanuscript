@@ -1,3 +1,5 @@
+import { claimUpload } from "@/features/manuscript/server/pending-upload";
+import { pendingUploadIdFromPath } from "@/features/manuscript/lib/pending-upload";
 import { z } from "zod";
 
 import {
@@ -101,6 +103,12 @@ export async function POST(request: Request) {
       console.error("Unable to bind saved public feedback to the signed-in account", bindingError);
       return errorResponse("Your feedback could not be secured. Please try again.", 500);
     }
+  }
+
+  const pendingUploadId = pendingUploadIdFromPath(payload.next);
+  if (pendingUploadId) {
+    try { await claimUpload(pendingUploadId, data.user.id); }
+    catch (claimError) { console.error("Could not resume manuscript after login", claimError); }
   }
 
   return Response.json(

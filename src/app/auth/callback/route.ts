@@ -1,3 +1,5 @@
+import { claimUpload } from "@/features/manuscript/server/pending-upload";
+import { pendingUploadIdFromPath } from "@/features/manuscript/lib/pending-upload";
 import { NextResponse } from "next/server";
 
 import {
@@ -34,6 +36,14 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      const pendingUploadId = pendingUploadIdFromPath(safeNext);
+      if (pendingUploadId) {
+        const { data: { user: uploadOwner } } = await supabase.auth.getUser();
+        if (uploadOwner) {
+          try { await claimUpload(pendingUploadId, uploadOwner.id); }
+          catch (claimError) { console.error("Could not resume manuscript after authentication", claimError); }
+        }
+      }
       if (isEmailConfirmation) {
         return publicReaderPath
           ? redirectToPublicReader(url, publicReaderPath, pendingFeedbackToken)

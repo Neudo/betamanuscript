@@ -1,3 +1,5 @@
+import { claimUpload, getUpload, requireUploadCookie, UploadError, uploadErrorResponse } from "@/features/manuscript/server/pending-upload";
+import { pendingUploadIdFromPath } from "@/features/manuscript/lib/pending-upload";
 import { z } from "zod";
 
 import {
@@ -81,6 +83,16 @@ export async function POST(request: Request) {
     return errorResponse("The saved feedback needs a valid manuscript link.", 400);
   }
 
+  const pendingUploadId = pendingUploadIdFromPath(safeNext);
+  if (pendingUploadId) {
+    try {
+      const upload = await getUpload(pendingUploadId);
+      await requireUploadCookie(upload);
+      if (upload.state === "uploading") throw new UploadError("Wait for your manuscript upload to finish before creating your account.");
+    }
+    catch (error) { return uploadErrorResponse(error); }
+  }
+
   const confirmationUrl = new URL("/auth/callback", appOrigin(request));
   confirmationUrl.searchParams.set("intent", "confirmation");
 
@@ -104,6 +116,16 @@ export async function POST(request: Request) {
 
   if (error) {
     return errorResponse(error.message, 400);
+  }
+
+  // Supabase may return an obfuscated user with no identities for an existing email.
+  // Only bind after a real signup, never to that obfuscated identifier.
+  if (pendingUploadId && data.user && (data.session || (data.user.identities?.length ?? 0) > 0)) {
+    try { await claimUpload(pendingUploadId, data.user.id); }
+    catch (error) {
+      console.error("Could not attach the manuscript after signup", error);
+      return errorResponse("Your account was created, but the manuscript could not be attached. Log in from this browser to resume the upload.", 500);
+    }
   }
 
   if (feedbackToken && data.user) {

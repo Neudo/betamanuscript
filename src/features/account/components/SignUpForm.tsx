@@ -101,7 +101,7 @@ export function SignUpForm({
             {publicReaderFlow ? " Your feedback is saved and will be added when you confirm your email." : null}
           </p>
           <Button asChild size="sm" variant="outline">
-            <Link href="/login">Back to login</Link>
+            <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>Back to login</Link>
           </Button>
         </AlertDescription>
       </Alert>

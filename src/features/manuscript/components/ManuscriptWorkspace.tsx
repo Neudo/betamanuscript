@@ -84,6 +84,7 @@ import {
 } from "@/features/manuscript/lib/manuscript-url";
 import { cn } from "@/lib/utils";
 import { scrollElementToTopInstantly, scrollToTopInstantly } from "@/lib/scroll";
+import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { Heading } from "@/shared/ui/Heading";
 
 const statusStyles: Record<ChapterEditorialStatus, string> = {
@@ -879,7 +880,9 @@ function FocusReadingMode({
   onExit: () => void;
   title: string;
 }) {
-  if (typeof document === "undefined") return null;
+  const isHydrated = useHydrated();
+
+  if (!isHydrated) return null;
 
   return createPortal(
     <div

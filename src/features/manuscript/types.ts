@@ -1,5 +1,3 @@
-export type ManuscriptWizardStep = "info" | "structure" | "readers" | "share";
-
 export type ManuscriptWordCountBand =
   | "under_40k"
   | "40k_80k"

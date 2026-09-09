@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { INK, INVERSE_FOREGROUND, SANS, premiumEase } from "../../../shared/config/design-tokens";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useHydrated } from "@/shared/hooks/use-hydrated";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ export function Nav() {
   const reduceMotion = useReducedMotion();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const isHydrated = useHydrated();
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -134,7 +136,7 @@ export function Nav() {
         </button>
       </div>
 
-      {typeof document !== "undefined" &&
+      {isHydrated &&
         createPortal(
           <AnimatePresence initial={false}>
             {isMobileMenuOpen ? (

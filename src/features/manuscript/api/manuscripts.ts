@@ -160,6 +160,7 @@ function toManuscriptSummary(row: ManuscriptSummaryRow): ManuscriptSummary {
 export type CreateManuscriptInput = {
   draft: ManuscriptDraft;
   importedChapters?: ImportedManuscriptChapter[];
+  pendingUploadId?: string;
 };
 
 function toCreateManuscriptPayload({
@@ -538,11 +539,13 @@ export async function getManuscriptGenres(): Promise<ManuscriptGenre[]> {
 export async function createManuscript({
   draft,
   importedChapters,
+  pendingUploadId,
 }: CreateManuscriptInput): Promise<CreatedManuscript> {
   const supabase = createSupabaseBrowserClient();
-  const { data, error } = await supabase.rpc("create_manuscript_from_draft", {
-    p_draft: toCreateManuscriptPayload({ draft, importedChapters }),
-  });
+  const payload = toCreateManuscriptPayload({ draft, importedChapters });
+  const { data, error } = pendingUploadId
+    ? await supabase.rpc("create_manuscript_from_pending_upload", { p_upload_id: pendingUploadId, p_draft: payload })
+    : await supabase.rpc("create_manuscript_from_draft", { p_draft: payload });
 
   if (error) throw new Error(error.message);
 

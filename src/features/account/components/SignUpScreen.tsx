@@ -5,11 +5,15 @@ import { SignUpForm } from "./SignUpForm";
 
 export function SignUpScreen({
   next,
+  uploadedFilename = null,
+  uploadError = null,
   feedbackToken,
   publicReaderDisplayName,
   publicReaderFlow = false,
 }: {
   next: string | null;
+  uploadedFilename?: string | null;
+  uploadError?: string | null;
   feedbackToken: string | null;
   publicReaderDisplayName: string | null;
   publicReaderFlow?: boolean;
@@ -37,6 +41,8 @@ export function SignUpScreen({
         </p>
       }
     >
+      {uploadedFilename ? <p className="mb-6 border border-foreground/15 bg-sidebar/40 p-4 text-sm"><strong className="break-words">{uploadedFilename}</strong> is uploaded. Create your account to finish setting up your manuscript.</p> : null}
+      {uploadError ? <p role="alert" className="mb-6 text-sm text-destructive">{uploadError}</p> : null}
       <SignUpForm
         next={next}
         feedbackToken={feedbackToken}

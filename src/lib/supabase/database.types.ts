@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      pending_manuscript_uploads: {
+        Row: {
+          id: string
+          token_digest: string
+          original_filename: string
+          byte_size: number
+          mime_type: string
+          storage_path: string
+          state: string
+          created_at: string
+          expires_at: string
+          owner_id: string | null
+          manuscript_id: string | null
+          manuscript_version_id: string | null
+          reading_round_id: string | null
+        }
+        Insert: {
+          id?: string
+          token_digest: string
+          original_filename: string
+          byte_size: number
+          mime_type: string
+          storage_path: string
+          state?: string
+          created_at?: string
+          expires_at?: string
+          owner_id?: string | null
+          manuscript_id?: string | null
+          manuscript_version_id?: string | null
+          reading_round_id?: string | null
+        }
+        Update: {
+          id?: string
+          token_digest?: string
+          original_filename?: string
+          byte_size?: number
+          mime_type?: string
+          storage_path?: string
+          state?: string
+          created_at?: string
+          expires_at?: string
+          owner_id?: string | null
+          manuscript_id?: string | null
+          manuscript_version_id?: string | null
+          reading_round_id?: string | null
+        }
+        Relationships: []
+      }
       author_notification_preferences: {
         Row: {
           new_annotation: boolean
@@ -1701,6 +1749,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      reserve_manuscript_upload: {
+        Args: { p_filename: string; p_size: number; p_mime: string; p_token_digest: string; p_fingerprint: string }
+        Returns: string | null
+      }
+      claim_manuscript_upload: {
+        Args: { p_id: string; p_digest: string; p_owner: string }
+        Returns: boolean
+      }
+      create_manuscript_from_pending_upload: {
+        Args: { p_upload_id: string; p_draft: Json }
+        Returns: { manuscript_id: string; manuscript_version_id: string; reading_round_id: string }[]
+      }
+      pending_manuscript_creation: {
+        Args: { p_id: string; p_created?: Json }
+        Returns: Json
+      }
+      take_expired_manuscript_uploads: {
+        Args: never
+        Returns: { id: string; storage_path: string }[]
+      }
+      authorize_manuscript_upload_cleanup: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
       accept_reading_invitation: {
         Args: { p_token: string }
         Returns: {

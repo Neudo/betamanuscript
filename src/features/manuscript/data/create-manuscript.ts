@@ -1,15 +1,7 @@
 import type {
   ManuscriptDraft,
-  ManuscriptWizardStep,
   ManuscriptWordCountBand,
 } from "@/features/manuscript/types";
-
-export const manuscriptWizardSteps: Array<{ id: ManuscriptWizardStep; label: string }> = [
-  { id: "info", label: "Files" },
-  { id: "structure", label: "Book setup" },
-  { id: "readers", label: "Beta readers" },
-  { id: "share", label: "Share" },
-];
 
 export const manuscriptWordCountOptions: Array<{
   value: ManuscriptWordCountBand;
@@ -27,7 +19,7 @@ export const initialManuscriptDraft: ManuscriptDraft = {
   readerClosingNote: "",
   genreSlugs: [],
   draftNumber: 1,
-  chapters: 12,
+  chapters: 0,
   wordCountBand: "",
   deadline: "",
   maxReaders: 5,
