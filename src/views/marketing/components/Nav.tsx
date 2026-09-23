@@ -26,6 +26,10 @@ const navigationLinks = [
 const useCaseLinks = [
   { href: "/use-cases/manage-multiple-beta-readers", label: "Manage multiple beta readers" },
   { href: "/use-cases/organize-beta-reader-feedback", label: "Organize beta reader feedback" },
+  { href: "/use-cases/google-docs-alternative-for-beta-reading", label: "Google Docs alternative for beta reading" },
+  { href: "/use-cases/track-beta-reader-progress", label: "Track beta reader progress" },
+  { href: "/use-cases/share-manuscript-with-beta-readers", label: "Share a manuscript with beta readers" },
+  { href: "/use-cases/beta-reader-surveys", label: "Beta reader surveys" },
 ];
 
 export function Nav() {
@@ -75,7 +79,7 @@ export function Nav() {
               <ChevronDown className="h-3 w-3" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="w-64 rounded-none border-foreground/15 bg-card p-1 shadow-[0_12px_32px_rgba(28,24,18,0.14)]">
+          <DropdownMenuContent align="center" className="w-80 rounded-none border-foreground/15 bg-card p-1 shadow-[0_12px_32px_rgba(28,24,18,0.14)]">
             <DropdownMenuItem asChild className="rounded-none px-3 py-2.5 text-xs focus:bg-foreground/[0.05]">
               <Link href="/use-cases">All use cases</Link>
             </DropdownMenuItem>

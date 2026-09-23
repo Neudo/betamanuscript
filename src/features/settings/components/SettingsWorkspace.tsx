@@ -156,7 +156,7 @@ export function SettingsWorkspace({
             <SettingsRow label="Current plan" hint="Your BetaManuscript workspace limits.">
               <div>
                 <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">{hasProPlan ? "Paid plan" : "Free plan"}</p>
-                <p className="mt-2 text-xl font-medium">{hasProPlan ? "Pro" : "Free"}</p>
+                <p className="mt-2 text-xl font-medium">{hasProPlan ? "Author" : "Free"}</p>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                   {hasProPlan
                     ? "Manage unlimited manuscripts and active beta readers from one workspace."
@@ -164,7 +164,7 @@ export function SettingsWorkspace({
                 </p>
               </div>
             </SettingsRow>
-            <SettingsRow label="Included" hint={`Available on the ${hasProPlan ? "Pro" : "free"} plan.`}>
+            <SettingsRow label="Included" hint={`Available on the ${hasProPlan ? "Author" : "free"} plan.`}>
               <ul className="grid gap-3 text-sm sm:grid-cols-2">
                 {currentPlanBenefits.map((item) => (
                   <li key={item} className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export function SettingsWorkspace({
                 ))}
               </ul>
             </SettingsRow>
-            {!hasProPlan ? <SettingsRow label="Pro plan" hint="For writers managing multiple manuscripts and larger reader groups.">
+            {!hasProPlan ? <SettingsRow label="Author plan" hint="For writers managing multiple manuscripts and larger reader groups.">
               <div>
                 <p className="max-w-xl text-sm leading-6 text-muted-foreground">
                   Remove manuscript and reader limits while keeping every feedback and revision tool in one workspace.

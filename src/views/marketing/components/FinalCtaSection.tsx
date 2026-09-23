@@ -90,7 +90,7 @@ export function FinalCtaSection() {
             </p>
             <div className="mt-10 space-y-4">
               {[
-                "Your manuscript stays private — no public sharing",
+                "Private invitations by default. Enable a shareable reading page for a specific round.",
                 "Structured annotations, not open-ended comment threads",
                 "Reader feedback patterns, organized in one workspace",
                 "Designed for indie authors, not publishing houses",

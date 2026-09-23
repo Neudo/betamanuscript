@@ -1,4 +1,4 @@
-import { ArrowRight, FolderTree, UsersRound } from "lucide-react";
+import { ArrowRight, ChartNoAxesCombined, FileQuestion, FileText, FolderTree, Mail, UsersRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { BODY, CARD, INK, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
@@ -9,7 +9,15 @@ import {
   UseCasePageFrame,
 } from "@/views/use-cases/components/UseCaseShared";
 
-const useCases = [
+type UseCase = {
+  description: string;
+  href: string;
+  Icon: LucideIcon;
+  label: string;
+  title: string;
+};
+
+const useCases: UseCase[] = [
   {
     Icon: UsersRound,
     description: "Invite your readers into one beta-reading workspace, follow their progress, and keep each person’s feedback organized without juggling separate documents.",
@@ -23,6 +31,34 @@ const useCases = [
     href: "/use-cases/organize-beta-reader-feedback",
     label: "Organize beta reader feedback",
     title: "Organize beta reader feedback",
+  },
+  {
+    Icon: FileText,
+    description: "Run a structured beta-reading round without turning Google Docs into a shared feedback queue for independent readers.",
+    href: "/use-cases/google-docs-alternative-for-beta-reading",
+    label: "Google Docs alternative for beta reading",
+    title: "Use an alternative to Google Docs for beta reading",
+  },
+  {
+    Icon: ChartNoAxesCombined,
+    description: "See which readers have started, completed their round, and left feedback without asking everyone for manual progress updates.",
+    href: "/use-cases/track-beta-reader-progress",
+    label: "Track beta reader progress",
+    title: "Track beta reader progress",
+  },
+  {
+    Icon: Mail,
+    description: "Choose private invitations or a shareable reading page, then keep the draft, reader progress, and feedback connected to one round.",
+    href: "/use-cases/share-manuscript-with-beta-readers",
+    label: "Share a manuscript with beta readers",
+    title: "Share a manuscript with beta readers",
+  },
+  {
+    Icon: FileQuestion,
+    description: "Ask chapter or manuscript questions and review broader reader reactions alongside passage-level feedback.",
+    href: "/use-cases/beta-reader-surveys",
+    label: "Use beta reader surveys",
+    title: "Use beta reader surveys",
   },
 ] as const;
 
@@ -55,7 +91,7 @@ export function UseCasesHubPage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-4 lg:grid-cols-2">
               {useCases.map((useCase, index) => (
-                <article key={useCase.href} className="flex min-h-full flex-col border p-5 sm:p-7" style={{ background: index === 0 ? PAPER : CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
+                <article key={useCase.title} className="flex min-h-full flex-col border p-5 sm:p-7" style={{ background: index === 0 ? PAPER : CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
                   <span className="flex h-10 w-10 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
                     <useCase.Icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
                   </span>

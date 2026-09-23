@@ -133,10 +133,10 @@ export function FeedbackTagManagerDialog({ accountPlan, manuscriptId }: Feedback
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3 border border-foreground/10 bg-muted/25 p-4">
               <div>
-                <Heading level={3} size="small">Custom tags are on Pro</Heading>
+                <Heading level={3} size="small">Custom tags are on the Author plan</Heading>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">Your default feedback tags remain available to readers.</p>
               </div>
-              <Button type="button" size="sm" onClick={() => setPlanDialogOpen(true)}>View Pro plan</Button>
+              <Button type="button" size="sm" onClick={() => setPlanDialogOpen(true)}>View Author plan</Button>
             </div>
           )}
 
@@ -180,7 +180,7 @@ export function FeedbackTagManagerDialog({ accountPlan, manuscriptId }: Feedback
       </DialogContent>
       </Dialog>
       <PlanRequiredDialog
-        description="Your free plan includes the default feedback tags. Upgrade to Pro to create custom tags for each manuscript."
+        description="Your free plan includes the default feedback tags. Upgrade to the Author plan to create custom tags for each manuscript."
         open={planDialogOpen}
         onOpenChange={setPlanDialogOpen}
         title="Create custom feedback tags"

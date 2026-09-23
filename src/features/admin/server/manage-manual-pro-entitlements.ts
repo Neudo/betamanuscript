@@ -28,7 +28,7 @@ export async function grantManualProEntitlement({
   const superAdmin = await requireSuperAdmin();
 
   if (typeof profileId !== "string" || typeof duration !== "string") {
-    throw new Error("Enter a valid account and Pro access duration.");
+    throw new Error("Enter a valid account and Author access duration.");
   }
 
   const normalizedProfileId = profileId.trim();
@@ -38,7 +38,7 @@ export async function grantManualProEntitlement({
   }
 
   if (!manualProDurations.includes(duration as ManualProDuration)) {
-    throw new Error("Choose a valid Pro access duration.");
+    throw new Error("Choose a valid Author access duration.");
   }
 
   const admin = createSupabaseAdminClient();
@@ -57,7 +57,7 @@ export async function grantManualProEntitlement({
   }
 
   if (profile.role === "super_admin") {
-    throw new Error("Manual Pro access is reserved for customer accounts.");
+    throw new Error("Manual Author access is reserved for customer accounts.");
   }
 
   const expiresAt = duration === "permanent"
@@ -77,7 +77,7 @@ export async function grantManualProEntitlement({
     );
 
   if (entitlementError) {
-    throw new Error(`Unable to grant manual Pro access: ${entitlementError.message}`);
+    throw new Error(`Unable to grant manual Author access: ${entitlementError.message}`);
   }
 
   revalidatePath(adminConsolePath);
@@ -105,7 +105,7 @@ export async function revokeManualProEntitlement(profileId: string) {
     .eq("profile_id", normalizedProfileId);
 
   if (error) {
-    throw new Error(`Unable to revoke manual Pro access: ${error.message}`);
+    throw new Error(`Unable to revoke manual Author access: ${error.message}`);
   }
 
   revalidatePath(adminConsolePath);

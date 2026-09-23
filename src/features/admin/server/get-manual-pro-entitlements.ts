@@ -16,7 +16,7 @@ export async function getManualProEntitlements(): Promise<ManualProEntitlement[]
     .select("profile_id, expires_at, created_at");
 
   if (overridesError) {
-    throw new Error(`Unable to load manual Pro entitlements: ${overridesError.message}`);
+    throw new Error(`Unable to load manual Author entitlements: ${overridesError.message}`);
   }
 
   const now = Date.now();
@@ -36,7 +36,7 @@ export async function getManualProEntitlements(): Promise<ManualProEntitlement[]
     .neq("role", "super_admin");
 
   if (profilesError) {
-    throw new Error(`Unable to load manual Pro account details: ${profilesError.message}`);
+    throw new Error(`Unable to load manual Author account details: ${profilesError.message}`);
   }
 
   const profilesById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));

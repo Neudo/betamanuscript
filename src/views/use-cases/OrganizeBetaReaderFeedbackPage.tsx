@@ -1,6 +1,6 @@
 import { BookMarked, MessageSquareQuote, Tags, UserRoundCheck, FileQuestion } from "lucide-react";
 
-import { BODY, CARD, FOREST, INK, INVERSE_BACKGROUND, INVERSE_FOREGROUND, MONO, MUTED, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
+import { BODY, CARD, INVERSE_BACKGROUND, INVERSE_FOREGROUND, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 import {
   BreadcrumbJsonLd,
@@ -8,7 +8,6 @@ import {
   FaqList,
   FinalCta,
   RelatedLinks,
-  ScreenshotPlaceholder,
   UseCaseHero,
   UseCasePageFrame,
 } from "@/views/use-cases/components/UseCaseShared";
@@ -31,7 +30,7 @@ const feedbackContext = [
   },
   {
     Icon: Tags,
-    detail: "Group reactions with feedback tags, including the default categories or your own custom tags on Pro.",
+    detail: "Group reactions with feedback tags, including the default categories or your own custom tags on the Author plan.",
     title: "Feedback tag or category",
   },
   {
@@ -99,37 +98,12 @@ export function OrganizeBetaReaderFeedbackPage() {
         </section>
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: INVERSE_BACKGROUND, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
-          <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.79fr_1.21fr] lg:gap-20">
-            <div>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">Separate isolated opinions from recurring issues.</Heading>
-              <div className="mt-6 max-w-lg space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
-                <p>Not every comment deserves the same weight. One reader may dislike a scene while several others respond positively. Another passage may confuse multiple readers independently.</p>
-                <p>Seeing those reactions together helps you decide where to investigate first without treating every suggestion as an instruction.</p>
-              </div>
+          <div className="mx-auto max-w-6xl">
+            <Heading level={2} tone="inverse" className="max-w-md text-balance">Separate isolated opinions from recurring issues.</Heading>
+            <div className="mt-6 max-w-lg space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
+              <p>Not every comment deserves the same weight. One reader may dislike a scene while several others respond positively. Another passage may confuse multiple readers independently.</p>
+              <p>Seeing those reactions together helps you decide where to investigate first without treating every suggestion as an instruction.</p>
             </div>
-            <ScreenshotPlaceholder label="Recurring issue with source annotations">
-              <div aria-hidden="true">
-                <p className="text-[9px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Illustrative example</p>
-                <div className="mt-4 border p-4" style={{ borderColor: "hsl(var(--oxblood) / 0.23)", background: "hsl(var(--oxblood) / 0.04)" }}>
-                  <p className="text-[9px] uppercase tracking-[0.15em]" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>Recurring issue</p>
-                  <p className="mt-3 text-xl" style={{ color: INK, fontFamily: "'EB Garamond', serif" }}>Chapter 8 — Pacing</p>
-                  <p className="mt-1 text-sm" style={{ color: BODY }}>4 readers flagged this section</p>
-                </div>
-                <div className="mt-4 space-y-2">
-                  {[
-                    "“I started skimming during the conversation.”",
-                    "“This felt longer than the previous scenes.”",
-                    "“I understood why the scene mattered, but it slowed the momentum.”",
-                  ].map((quote) => (
-                    <p key={quote} className="border px-3 py-3 text-sm leading-5" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)", color: BODY, fontFamily: "'EB Garamond', serif" }}>{quote}</p>
-                  ))}
-                </div>
-                <div className="mt-4 border-l-2 py-1 pl-4" style={{ borderColor: FOREST }}>
-                  <p className="text-[9px] uppercase tracking-[0.14em]" style={{ color: FOREST, fontFamily: MONO }}>Author revision note</p>
-                  <p className="mt-2 text-sm leading-5" style={{ color: BODY }}>Review whether the conversation can reach its turning point earlier.</p>
-                </div>
-              </div>
-            </ScreenshotPlaceholder>
           </div>
         </section>
 

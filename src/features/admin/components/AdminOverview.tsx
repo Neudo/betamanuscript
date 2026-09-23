@@ -46,7 +46,7 @@ export function AdminOverview({
       tone: "success",
     },
     { label: "Stripe paid", value: overview.stripePaidCustomerAccounts, icon: CreditCard, tone: "accent" },
-    { label: "Manual Pro", value: overview.manualProAccounts, icon: CreditCard, tone: "success" },
+    { label: "Manual Author", value: overview.manualProAccounts, icon: CreditCard, tone: "success" },
   ];
 
   const signalMetrics: Metric[] = [

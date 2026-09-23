@@ -420,7 +420,7 @@ export function ManuscriptSettingsDialog({
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <p className="font-mono text-[9px] text-muted-foreground">
-                    {hasProPlan ? "Your Pro plan supports unlimited readers." : "Your free plan supports up to 5 readers."}
+                    {hasProPlan ? "Your Author plan supports unlimited readers." : "Your free plan supports up to 5 readers."}
                   </p>
                   {!hasProPlan ? (
                     <Button asChild variant="link" size="sm" className="h-auto px-0 py-0 text-[10px]">

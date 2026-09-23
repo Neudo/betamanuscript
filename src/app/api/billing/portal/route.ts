@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   if (account.role === null || !canWrite(account.role)) {
-    return errorResponse("Only writer workspaces can manage a Pro subscription.", 403);
+    return errorResponse("Only writer workspaces can manage an Author subscription.", 403);
   }
 
   try {

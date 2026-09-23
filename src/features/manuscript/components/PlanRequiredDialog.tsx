@@ -23,7 +23,7 @@ type PlanRequiredDialogProps = {
 };
 
 export function PlanRequiredDialog({
-  description = "Your free plan is limited to one manuscript. Upgrade to Pro to create and manage additional projects.",
+  description = "Your free plan is limited to one manuscript. Upgrade to the Author plan to create and manage additional projects.",
   open,
   onOpenChange,
   onNavigate,
@@ -34,7 +34,7 @@ export function PlanRequiredDialog({
       <DialogContent className="max-w-[440px] gap-0 border-foreground/10 bg-card p-0 shadow-[0_24px_64px_rgba(28,24,18,0.18)] sm:rounded-none">
         <DialogHeader className="border-b border-foreground/[0.08] px-7 pb-5 pt-7 text-left">
           <p className="font-mono text-[9px] uppercase tracking-widest text-primary-text">
-            Pro plan
+            Author plan
           </p>
           <DialogTitle className="pt-1 text-lg tracking-normal">
             {title}
@@ -58,7 +58,7 @@ export function PlanRequiredDialog({
                 onNavigate?.();
               }}
             >
-              View Pro plan
+              View Author plan
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </Button>

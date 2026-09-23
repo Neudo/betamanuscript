@@ -31,8 +31,8 @@ import {
 } from "@/shared/config/design-tokens";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
-import { Footer } from "@/views/waitlist/components/Footer";
-import { Nav } from "@/views/waitlist/components/Nav";
+import { Footer } from "@/views/marketing/components/Footer";
+import { Nav } from "@/views/marketing/components/Nav";
 
 const steps = [
   {
@@ -121,6 +121,10 @@ export function HowItWorksPage() {
               <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
                 Bring your own beta readers. BetaManuscript gives them a focused place to read and gives you one place to understand their feedback.
               </p>
+              <Link href="/use-cases/google-docs-alternative-for-beta-reading" className="mt-4 inline-flex items-center gap-1.5 text-sm underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary" style={{ color: INK }}>
+                Still managing beta readers in Google Docs? See the dedicated Google Docs alternative for beta reading.
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
             </motion.div>
 
           </div>

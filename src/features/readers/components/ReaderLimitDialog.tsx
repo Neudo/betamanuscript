@@ -108,7 +108,7 @@ export function ReaderLimitDialog({
             </div>
             <p className="font-mono text-[10px] leading-5 text-muted-foreground">
               {hasProPlan
-                ? "Pro supports any reader limit."
+                ? "The Author plan supports any reader limit."
                 : "Free supports up to 5 readers per reading round."}
             </p>
           </div>

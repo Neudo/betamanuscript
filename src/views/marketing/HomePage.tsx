@@ -9,7 +9,7 @@ import { ProblemSection } from "./components/ProblemSection";
 import { ProductPresentationSlider } from "./components/ProductPresentationSlider";
 import { ProductPreviewSection } from "./components/ProductPreviewSection";
 
-export function WaitlistPage() {
+export function HomePage() {
   return (
     <div className="min-h-screen" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
       <Nav />

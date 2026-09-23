@@ -13,8 +13,8 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 
-import { Footer } from "@/views/waitlist/components/Footer";
-import { Nav } from "@/views/waitlist/components/Nav";
+import { Footer } from "@/views/marketing/components/Footer";
+import { Nav } from "@/views/marketing/components/Nav";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
 import {

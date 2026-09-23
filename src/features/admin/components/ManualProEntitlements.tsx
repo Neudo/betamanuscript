@@ -40,11 +40,11 @@ export function ManualProEntitlements({
         setProfileId("");
         toast.success(
           result.expiresAt
-            ? `Pro access granted to ${result.displayName} until ${dateFormat.format(new Date(result.expiresAt))}.`
-            : `Permanent Pro access granted to ${result.displayName}.`,
+            ? `Author access granted to ${result.displayName} until ${dateFormat.format(new Date(result.expiresAt))}.`
+            : `Permanent Author access granted to ${result.displayName}.`,
         );
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Unable to grant manual Pro access.");
+        toast.error(error instanceof Error ? error.message : "Unable to grant manual Author access.");
       }
     });
   }
@@ -53,9 +53,9 @@ export function ManualProEntitlements({
     startTransition(async () => {
       try {
         await revokeManualProEntitlement(entitlement.profileId);
-        toast.success(`Manual Pro access revoked for ${entitlement.displayName}.`);
+        toast.success(`Manual Author access revoked for ${entitlement.displayName}.`);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Unable to revoke manual Pro access.");
+        toast.error(error instanceof Error ? error.message : "Unable to revoke manual Author access.");
       }
     });
   }
@@ -64,7 +64,7 @@ export function ManualProEntitlements({
     <section className="mt-5 border border-foreground/15 bg-card" aria-labelledby="manual-pro-heading">
       <div className="border-b border-foreground/15 px-4 py-3 sm:px-5">
         <Heading level={2} size="label" id="manual-pro-heading">
-          Manual Pro access
+          Manual Author access
         </Heading>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
           Gift or trial access that stays separate from Stripe subscriptions.
@@ -98,13 +98,13 @@ export function ManualProEntitlements({
           </select>
         </div>
         <Button type="submit" disabled={isPending} className="sm:min-w-28">
-          Grant Pro
+          Grant Author
         </Button>
       </form>
 
       <div className="border-t border-foreground/15">
         {entitlements.length === 0 ? (
-          <p className="px-4 py-3 text-xs text-muted-foreground sm:px-5">No manual Pro access is active.</p>
+          <p className="px-4 py-3 text-xs text-muted-foreground sm:px-5">No manual Author access is active.</p>
         ) : (
           <ul className="divide-y divide-foreground/15">
             {entitlements.map((entitlement) => (

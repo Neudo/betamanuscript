@@ -4,7 +4,7 @@ import { getWorkspaceHome } from "@/features/account/domain/user-role";
 import { getAuthenticatedAccount } from "@/features/account/server/get-authenticated-account";
 import { createPublicMetadata } from "@/shared/config/seo";
 import { site } from "@/shared/config/site";
-import { WaitlistPage } from "../views/waitlist/WaitlistPage";
+import { HomePage } from "../views/marketing/HomePage";
 
 export const metadata = createPublicMetadata({
   description: site.defaultDescription,
@@ -19,5 +19,5 @@ export default async function Page() {
     redirect(account.role === null ? "/onboarding" : getWorkspaceHome(account.role));
   }
 
-  return <WaitlistPage />;
+  return <HomePage />;
 }

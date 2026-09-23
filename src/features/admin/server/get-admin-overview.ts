@@ -77,7 +77,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       }),
       error: manualProEntitlements.error,
     },
-    "manual Pro accounts",
+    "manual Author accounts",
   );
 
   return {

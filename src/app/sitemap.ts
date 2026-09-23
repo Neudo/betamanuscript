@@ -40,6 +40,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${site.url}/use-cases/google-docs-alternative-for-beta-reading`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${site.url}/use-cases/track-beta-reader-progress`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${site.url}/use-cases/share-manuscript-with-beta-readers`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${site.url}/use-cases/beta-reader-surveys`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: `${site.url}/privacy`,
       changeFrequency: "yearly",
       priority: 0.3,

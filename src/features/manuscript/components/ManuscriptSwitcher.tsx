@@ -167,7 +167,7 @@ export function ManuscriptSwitcher({
             Add new
             {accountPlan === "free" && !canCreateManuscript ? (
               <span className="ml-auto font-mono text-[8px] uppercase tracking-widest text-muted-foreground">
-                Pro
+                Author
               </span>
             ) : null}
           </DropdownMenuItem>

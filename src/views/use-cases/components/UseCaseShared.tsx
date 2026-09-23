@@ -8,7 +8,6 @@ import {
   EDITORIAL_DARK,
   INK,
   INVERSE_FOREGROUND,
-  MONO,
   MUTED,
   OXBLOOD,
   PAPER,
@@ -17,8 +16,8 @@ import {
 } from "@/shared/config/design-tokens";
 import { site } from "@/shared/config/site";
 import { Heading } from "@/shared/ui/Heading";
-import { Footer } from "@/views/waitlist/components/Footer";
-import { Nav } from "@/views/waitlist/components/Nav";
+import { Footer } from "@/views/marketing/components/Footer";
+import { Nav } from "@/views/marketing/components/Nav";
 
 type BreadcrumbItem = {
   href: string;
@@ -99,20 +98,6 @@ export function UseCaseHero({
         </div>
       </div>
     </section>
-  );
-}
-
-export function ScreenshotPlaceholder({ children, label }: { children?: ReactNode; label: string }) {
-  return (
-    <aside className="overflow-hidden border shadow-[0_22px_50px_hsl(var(--ink)/0.1)]" aria-label={`${label} product screenshot placeholder`} style={{ background: CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
-      <div className="border-b px-4 py-3 text-right text-[8px] uppercase tracking-[0.14em] sm:px-5" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: PAPER, color: MUTED, fontFamily: MONO }}>
-        Screenshot placeholder
-      </div>
-      <div className="p-4 sm:p-5">{children ?? <p className="text-sm leading-6" style={{ color: BODY }}>{label}</p>}</div>
-      <p className="border-t px-4 py-3 text-[9px] leading-4" style={{ borderColor: "hsl(var(--ink) / 0.1)", color: MUTED, fontFamily: MONO }}>
-        Illustrative layout — replace with a product capture before launch.
-      </p>
-    </aside>
   );
 }
 

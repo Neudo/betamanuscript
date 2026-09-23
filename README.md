@@ -1,6 +1,6 @@
 # BetaManuscript
 
-Waiting page for collecting BetaManuscript emails.
+BetaManuscript is a Next.js workspace for authors to manage beta readers and organize manuscript feedback.
 
 ## Development
 
@@ -8,22 +8,3 @@ Waiting page for collecting BetaManuscript emails.
 pnpm install
 pnpm dev
 ```
-
-The app runs on Next.js. The waitlist form posts to `/api/waitlist` in local
-development and production.
-
-## Resend Waitlist
-
-Production posts to `/api/waitlist` by default. Configure these environment
-variables on Vercel:
-
-```bash
-RESEND_API_KEY=re_xxxxxxxxx
-RESEND_FROM=BetaManuscript <hello@your-domain.com>
-RESEND_REPLY_TO=
-RESEND_WAITLIST_SEGMENT_ID=seg_xxxxxxxxx
-```
-
-The API route creates the Resend contact and adds it to the BetaManuscript waitlist
-segment, then sends a confirmation email.
-# betaManuscript

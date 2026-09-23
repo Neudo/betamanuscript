@@ -1,5 +1,5 @@
-import { WaitlistPage } from "./views/waitlist/WaitlistPage";
+import { HomePage } from "./views/marketing/HomePage";
 
 export default function App() {
-  return <WaitlistPage />;
+  return <HomePage />;
 }

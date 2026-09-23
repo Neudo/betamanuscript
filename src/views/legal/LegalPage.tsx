@@ -5,7 +5,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { BODY, INK, MONO, MUTED, OXBLOOD_TEXT, PAPER, SANS } from "@/shared/config/design-tokens";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
-import { Footer } from "@/views/waitlist/components/Footer";
+import { Footer } from "@/views/marketing/components/Footer";
 
 type LegalPageProps = {
   breadcrumb: {

@@ -221,7 +221,7 @@ export function SurveysWorkspace({ accountPlan }: { accountPlan: AccountPlan }) 
         )}
       </div>
       <PlanRequiredDialog
-        description="Your free plan includes two surveys per active manuscript. Upgrade to Pro to create as many as you need."
+        description="Your free plan includes two surveys per active manuscript. Upgrade to the Author plan to create as many as you need."
         open={planDialogOpen}
         onOpenChange={setPlanDialogOpen}
         title="Add unlimited surveys"
@@ -317,7 +317,7 @@ function CloneSurveysDialog({
       <Button type="button" size="sm" variant="outline" onClick={onUpgrade}>
         <Copy className="h-3.5 w-3.5" />
         {cloneButtonLabel}
-        <span className="ml-1 font-mono text-[8px] uppercase tracking-widest">Pro</span>
+        <span className="ml-1 font-mono text-[8px] uppercase tracking-widest">Author</span>
       </Button>
     );
   }
@@ -723,7 +723,7 @@ function NewSurveyDialog({
       <Button type="button" size="sm" disabled={disabled} onClick={onUpgrade}>
         <Plus className="h-3.5 w-3.5" />
         New survey
-        <span className="ml-1 font-mono text-[8px] uppercase tracking-widest">Pro</span>
+        <span className="ml-1 font-mono text-[8px] uppercase tracking-widest">Author</span>
       </Button>
     );
   }

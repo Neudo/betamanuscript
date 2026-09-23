@@ -1,6 +1,6 @@
 import { BookOpenCheck, ChartNoAxesCombined, Mail, MessageSquareText } from "lucide-react";
 
-import { BODY, CARD, EDITORIAL_DARK, INK, INVERSE_FOREGROUND, MONO, MUTED, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
+import { BODY, CARD, EDITORIAL_DARK, INVERSE_FOREGROUND, MONO, MUTED, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 import {
   BreadcrumbJsonLd,
@@ -8,7 +8,6 @@ import {
   FaqList,
   FinalCta,
   RelatedLinks,
-  ScreenshotPlaceholder,
   UseCaseHero,
   UseCasePageFrame,
 } from "@/views/use-cases/components/UseCaseShared";
@@ -103,31 +102,14 @@ export function ManageMultipleBetaReadersPage() {
         </section>
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: EDITORIAL_DARK, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
-          <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-            <div>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">
-                One opinion is useful. Repeated reactions are a pattern.
-              </Heading>
-              <div className="mt-6 max-w-lg space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
-                <p>A single reader may find a chapter slow. That can be personal preference. When several readers flag the same section, the issue becomes much more useful to investigate.</p>
-                <p>BetaManuscript keeps every reaction attached to its original chapter and passage, making it easier to compare individual opinions without losing their context.</p>
-              </div>
+          <div className="mx-auto max-w-6xl">
+            <Heading level={2} tone="inverse" className="max-w-md text-balance">
+              One opinion is useful. Repeated reactions are a pattern.
+            </Heading>
+            <div className="mt-6 max-w-lg space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
+              <p>A single reader may find a chapter slow. That can be personal preference. When several readers flag the same section, the issue becomes much more useful to investigate.</p>
+              <p>BetaManuscript keeps every reaction attached to its original chapter and passage, making it easier to compare individual opinions without losing their context.</p>
             </div>
-            <ScreenshotPlaceholder label="Recurring reader reactions">
-              <div aria-hidden="true">
-                <p className="text-[9px] uppercase tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>Illustrative example</p>
-                <p className="mt-4 text-xl" style={{ color: INK, fontFamily: "'EB Garamond', serif" }}>Chapter 6 — Pacing</p>
-                <p className="mt-1 text-sm" style={{ color: BODY }}>4 readers mentioned this issue</p>
-                <div className="mt-5 space-y-2 border-t pt-4" style={{ borderColor: "hsl(var(--ink) / 0.1)" }}>
-                  {["Annotation from reader one", "Annotation from reader two", "Annotation from reader three", "Annotation from reader four"].map((annotation) => (
-                    <div key={annotation} className="flex items-center gap-3 border px-3 py-2.5" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: PAPER }}>
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: OXBLOOD_TEXT }} />
-                      <span className="text-xs" style={{ color: BODY }}>{annotation}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </ScreenshotPlaceholder>
           </div>
         </section>
 
@@ -174,7 +156,7 @@ export function ManageMultipleBetaReadersPage() {
               <FaqList items={[
                 {
                   question: "How many beta readers can I manage with BetaManuscript?",
-                  answer: <p>The Free plan supports up to 5 beta readers per active manuscript. The Pro plan supports unlimited beta readers. You can compare the current plan limits on the pricing page.</p>,
+                  answer: <p>The Free plan supports up to 5 beta readers per active manuscript. The Author plan supports unlimited beta readers. You can compare the current plan limits on the pricing page.</p>,
                 },
                 {
                   question: "Can beta readers see each other’s feedback?",
