@@ -39,8 +39,8 @@ export function HeroSection() {
           className="text-lg leading-relaxed"
           style={{ color: BODY, fontWeight: 300, lineHeight: 1.65 }}
         >
-          Invite readers, collect structured annotations, spot repeated issues, and understand
-          what works before you publish.
+          BetaManuscript is a beta reading platform for authors to manage readers, collect
+          private annotations, and review chapter surveys in one place.
         </p>
       </motion.div>
       <motion.div

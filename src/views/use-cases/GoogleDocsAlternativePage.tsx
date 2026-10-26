@@ -1,5 +1,6 @@
 import { BookOpenCheck, ChartNoAxesCombined, FileQuestion } from "lucide-react";
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BODY, CARD, EDITORIAL_DARK, INVERSE_FOREGROUND, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 import {
@@ -11,6 +12,29 @@ import {
   UseCaseHero,
   UseCasePageFrame,
 } from "@/views/use-cases/components/UseCaseShared";
+
+const comparisonRows = [
+  {
+    need: "Independent reader feedback",
+    googleDocs: "Use separate document copies to keep each reader’s comments independent.",
+    betaManuscript: "Each reader’s annotations stay private to that reader and the author within the same beta round.",
+  },
+  {
+    need: "Chapter and manuscript questions",
+    googleDocs: "Add questions to the document or collect answers in a separate form.",
+    betaManuscript: "Keep chapter and manuscript surveys alongside passage-level annotations.",
+  },
+  {
+    need: "Reviewing feedback across readers",
+    googleDocs: "Review comments in a shared document or bring feedback together from separate reader copies.",
+    betaManuscript: "Review annotations by chapter and feedback tag in one workspace, with each reader’s context preserved.",
+  },
+  {
+    need: "Writing and editing together",
+    googleDocs: "Write, suggest edits, and revise together directly in the document.",
+    betaManuscript: "Collect reader reactions to guide the revisions you make in your writing editor.",
+  },
+] as const;
 
 const betaReadingCapabilities = [
   {
@@ -60,6 +84,35 @@ export function GoogleDocsAlternativePage() {
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: BODY }}>
               <p>Google Docs works well when you&apos;re revising with one collaborator or working through line edits together. A beta-reading round is different: several independent readers move through the same manuscript at their own pace, react to different passages, and answer broader questions about the draft.</p>
               <p>That does not make Google Docs inadequate. It means the workflow needs a place designed to keep readers independent while giving the author one view of the whole round.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
+          <div className="mx-auto max-w-6xl">
+            <Heading level={2} id="beta-reading-comparison" className="max-w-2xl text-balance">Compare Google Docs and BetaManuscript for beta reading.</Heading>
+            <p className="mt-6 max-w-2xl text-base leading-7" style={{ color: BODY }}>
+              Both can collect reader comments. Choose the workflow that fits how you want to coordinate readers, ask questions, and review their reactions.
+            </p>
+            <div className="mt-10 border bg-card p-3 sm:p-5">
+              <Table aria-labelledby="beta-reading-comparison" className="min-w-[640px] table-fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead scope="col" className="w-[24%] px-4 py-5">Your workflow</TableHead>
+                    <TableHead scope="col" className="w-[38%] px-4 py-5">Google Docs</TableHead>
+                    <TableHead scope="col" className="w-[38%] px-4 py-5">BetaManuscript</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comparisonRows.map((row) => (
+                    <TableRow key={row.need}>
+                      <TableHead scope="row" className="px-4 py-6 align-top">{row.need}</TableHead>
+                      <TableCell className="px-4 py-6 align-top">{row.googleDocs}</TableCell>
+                      <TableCell className="px-4 py-6 align-top">{row.betaManuscript}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
         </section>

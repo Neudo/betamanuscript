@@ -38,6 +38,10 @@ export function ProductPreviewSection() {
               Readers annotate directly in the text. You see which passages repeated across
               readers, what landed, and what needs work — all in one place.
             </p>
+            <p className="text-sm leading-relaxed" style={{ color: BODY }}>
+              Readers can focus on the story, leave passage-level feedback, and respond
+              independently without seeing other readers’ notes.
+            </p>
           </div>
           <div className="space-y-3">
             {/* Annotation examples — styled as real marked-up text */}

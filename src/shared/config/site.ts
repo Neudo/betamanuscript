@@ -1,6 +1,6 @@
 export const site = {
   defaultDescription:
-    "Organize beta reader feedback in one place. Invite readers, collect tagged annotations, spot recurring issues, and revise your manuscript with clarity.",
+    "A beta reading platform for authors to manage readers, collect private annotations, and review chapter surveys in one place.",
   defaultTitle: "Beta Reader Feedback for Better Revisions | BetaManuscript",
   locale: "en_US",
   name: "BetaManuscript",
