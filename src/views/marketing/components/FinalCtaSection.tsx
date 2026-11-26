@@ -17,7 +17,7 @@ export function FinalCtaSection() {
           <div>
             <div className="w-8 h-px mb-8" style={{ background: "hsl(var(--inverse-foreground) / 0.25)" }} />
             <Heading
-              level={2}
+              level={2} reveal
               className="mb-5 leading-tight"
               style={{
                 fontFamily: SERIF,

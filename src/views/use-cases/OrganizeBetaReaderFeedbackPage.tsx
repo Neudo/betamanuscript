@@ -66,7 +66,7 @@ export function OrganizeBetaReaderFeedbackPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">Collecting feedback is only half the work.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">Collecting feedback is only half the work.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: BODY }}>
               <p>A beta round can produce dozens or hundreds of comments. The difficult part is not collecting them—it is deciding what they mean together.</p>
@@ -80,7 +80,7 @@ export function OrganizeBetaReaderFeedbackPage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-end lg:gap-20">
               <div>
-                <Heading level={2} className="max-w-md text-balance">Keep every reaction connected to its context.</Heading>
+                <Heading level={2} reveal className="max-w-md text-balance">Keep every reaction connected to its context.</Heading>
               </div>
               <p className="max-w-xl text-base leading-7" style={{ color: BODY }}>Instead of a pile of detached comments, each reaction carries the information needed to return to the manuscript and understand why it was given.</p>
             </div>
@@ -100,7 +100,7 @@ export function OrganizeBetaReaderFeedbackPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: INVERSE_BACKGROUND, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} tone="inverse" className="max-w-md text-balance">Separate isolated opinions from recurring issues.</Heading>
+            <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">Separate isolated opinions from recurring issues.</Heading>
             <div className="mt-6 max-w-lg space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
               <p>Not every comment deserves the same weight. One reader may dislike a scene while several others respond positively. Another passage may confuse multiple readers independently.</p>
               <p>Seeing those reactions together helps you decide where to investigate first without treating every suggestion as an instruction.</p>
@@ -111,7 +111,7 @@ export function OrganizeBetaReaderFeedbackPage() {
         <section id="worked-example" className="scroll-mt-28 border-b border-foreground/10 px-6 py-16 md:px-12 md:py-24" style={{ background: WARM }} aria-labelledby="worked-example-title">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
             <div>
-              <Heading id="worked-example-title" level={2} className="max-w-md text-balance">Worked example: what should change in chapter four?</Heading>
+              <Heading id="worked-example-title" level={2} reveal className="max-w-md text-balance">Worked example: what should change in chapter four?</Heading>
               <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>Illustrative feedback on the fictional manuscript <cite>The Salt Orchard</cite>.</p>
             </div>
             <ol className="list-decimal space-y-4 pl-5 text-base leading-7" style={{ color: BODY }}>
@@ -125,7 +125,7 @@ export function OrganizeBetaReaderFeedbackPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">See what already works, too.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">See what already works, too.</Heading>
             </div>
             <p className="max-w-2xl text-base leading-7" style={{ color: BODY }}>Repeated positive reactions can be just as useful as criticism. If several readers highlight the same reveal, character moment, or emotional beat positively, that is evidence worth protecting during revision.</p>
           </div>
@@ -134,7 +134,7 @@ export function OrganizeBetaReaderFeedbackPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">Useful when feedback starts becoming difficult to compare.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">Useful when feedback starts becoming difficult to compare.</Heading>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2" role="list">
               {[
@@ -155,7 +155,7 @@ export function OrganizeBetaReaderFeedbackPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-4xl">
-            <Heading level={2} className="max-w-2xl text-balance">A practical way to review feedback before revision.</Heading>
+            <Heading level={2} reveal className="max-w-2xl text-balance">A practical way to review feedback before revision.</Heading>
             <div className="mt-12">
               <FaqList items={[
                 {

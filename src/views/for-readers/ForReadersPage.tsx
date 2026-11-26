@@ -131,7 +131,7 @@ export function ForReadersPage() {
         <section className="border-b px-6 py-16 md:px-12 md:py-24" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.76fr_1.24fr] lg:gap-20">
             <div>
-              <Heading level={2} className="mt-5 max-w-md">
+              <Heading level={2} reveal className="mt-5 max-w-md">
                 React honestly. <em>Not perfectly.</em>
               </Heading>
             </div>
@@ -164,7 +164,7 @@ export function ForReadersPage() {
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
               <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: MUTED }}>The reading flow</p>
-              <Heading level={2} className="mt-5">
+              <Heading level={2} reveal className="mt-5">
                 From invitation to feedback in four simple steps.
               </Heading>
             </div>
@@ -192,7 +192,7 @@ export function ForReadersPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <div>
               <p className="text-[10px] uppercase tracking-[0.24em]" style={{ fontFamily: MONO, color: INVERSE_MUTED }}>A useful reaction is enough</p>
-              <Heading level={2} tone="inverse" className="mt-5 max-w-md">
+              <Heading level={2} reveal tone="inverse" className="mt-5 max-w-md">
                 You don&apos;t need to be an editor to give excellent feedback.
               </Heading>
               <p className="mt-6 max-w-lg text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
@@ -216,7 +216,7 @@ export function ForReadersPage() {
 
         <section className="px-6 py-20 md:px-12 md:py-28" style={{ background: CARD }}>
           <div className="mx-auto max-w-3xl text-center">
-            <Heading level={2} className="mt-5">
+            <Heading level={2} reveal className="mt-5">
               What beta readers need to know.
             </Heading>
 
@@ -251,7 +251,7 @@ export function ForReadersPage() {
 
         <section className="border-t px-6 py-16 text-center md:px-12 md:py-20" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: PAPER }}>
           <CircleHelp className="mx-auto h-5 w-5" style={{ color: FOREST }} strokeWidth={1.5} aria-hidden="true" />
-          <Heading level={2} className="mx-auto mt-5 max-w-xl text-balance">
+          <Heading level={2} reveal className="mx-auto mt-5 max-w-xl text-balance">
             Already invited to read?
           </Heading>
           <p className="mx-auto mt-4 max-w-md text-sm leading-6" style={{ color: BODY }}>

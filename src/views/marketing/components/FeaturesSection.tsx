@@ -14,7 +14,7 @@ export function FeaturesSection() {
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <SectionLabel>Features</SectionLabel>
-        <Heading level={2} size="page" className="mb-12 max-w-xl">
+        <Heading level={2} reveal size="page" className="mb-12 max-w-xl">
           Built for authors who want signal,
           <em> not more noise.</em>
         </Heading>

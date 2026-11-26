@@ -2,7 +2,7 @@
 
 import { type HTMLAttributes, type CSSProperties, useCallback, useEffect, useRef } from "react";
 
-type RevealTag = "article" | "div" | "li";
+type RevealTag = "article" | "div" | "li" | "h2";
 type RevealProps = HTMLAttributes<HTMLElement> & {
   as?: RevealTag;
   order?: number;
@@ -56,7 +56,7 @@ function Reveal({
     <Tag
       {...props}
       ref={setRef}
-      data-editorial-reveal=""
+      data-editorial-reveal={Tag === "h2" ? "heading" : ""}
       className={className}
       style={{ ...style, "--editorial-delay": `${Math.max(0, Math.min(order, 4)) * 110}ms` } as CSSProperties}
     >

@@ -45,7 +45,7 @@ export function ProductPresentationSlider() {
   return (
     <section className="hidden border-b px-6 py-10 md:block md:px-12 md:py-14" style={{ borderColor: "hsl(var(--ink) / 0.1)", background: CARD }} aria-label="BetaManuscript product presentation">
       <div className="mx-auto max-w-6xl">
-        <Heading level={2} size="page" className="mb-8 text-balance">
+        <Heading level={2} reveal size="page" className="mb-8 text-balance">
           Everything you need for a structured beta round.
         </Heading>
         <div className="relative overflow-hidden border paper-shadow" style={{ borderColor: "hsl(var(--ink) / 0.16)", background: PAPER }}>

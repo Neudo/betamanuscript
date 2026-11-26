@@ -80,7 +80,7 @@ export function GoogleDocsAlternativePage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">Google Docs is not the wrong tool. It is a different tool.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">Google Docs is not the wrong tool. It is a different tool.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: BODY }}>
               <p>Google Docs works well when you&apos;re revising with one collaborator or working through line edits together. A beta-reading round is different: several independent readers move through the same manuscript at their own pace, react to different passages, and answer broader questions about the draft.</p>
@@ -91,7 +91,7 @@ export function GoogleDocsAlternativePage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} id="beta-reading-comparison" className="max-w-2xl text-balance">Compare Google Docs and BetaManuscript for beta reading.</Heading>
+            <Heading level={2} reveal id="beta-reading-comparison" className="max-w-2xl text-balance">Compare Google Docs and BetaManuscript for beta reading.</Heading>
             <p className="mt-6 max-w-2xl text-base leading-7" style={{ color: BODY }}>
               Both can collect reader comments. Choose the workflow that fits how you want to coordinate readers, ask questions, and review their reactions.
             </p>
@@ -120,7 +120,7 @@ export function GoogleDocsAlternativePage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} className="max-w-xl text-balance">Run the beta-reading workflow in one place.</Heading>
+            <Heading level={2} reveal className="max-w-xl text-balance">Run the beta-reading workflow in one place.</Heading>
             <div className="mt-12 grid gap-px border md:grid-cols-3" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {betaReadingCapabilities.map((capability, index) => (
                 <Reveal as="article" order={index} key={capability.title} className="min-h-full p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
@@ -138,7 +138,7 @@ export function GoogleDocsAlternativePage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: EDITORIAL_DARK, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">Feedback is evidence, not a shared editing queue.</Heading>
+              <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">Feedback is evidence, not a shared editing queue.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
               <p>BetaManuscript keeps annotations and surveys connected to the passage, chapter, and reader that produced them. You can return from a recurring reaction to its original context instead of reconstructing the trail across documents, email threads, and forms.</p>
@@ -149,7 +149,7 @@ export function GoogleDocsAlternativePage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-4xl">
-            <Heading level={2} className="max-w-2xl text-balance">Google Docs and beta reading</Heading>
+            <Heading level={2} reveal className="max-w-2xl text-balance">Google Docs and beta reading</Heading>
             <div className="mt-12">
               <FaqList items={[
                 {

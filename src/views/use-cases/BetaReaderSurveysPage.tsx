@@ -56,7 +56,7 @@ export function BetaReaderSurveysPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">Annotations tell you where. Surveys help you ask why.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">Annotations tell you where. Surveys help you ask why.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: BODY }}>
               <p>Inline feedback shows the exact moment that prompted a reader to react. Some of the questions you need to ask are broader: was the motivation clear, did the pacing work, or did the chapter create the intended feeling?</p>
@@ -67,7 +67,7 @@ export function BetaReaderSurveysPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} className="max-w-xl text-balance">Use the right feedback format for the question.</Heading>
+            <Heading level={2} reveal className="max-w-xl text-balance">Use the right feedback format for the question.</Heading>
             <div className="mt-12 grid gap-px border md:grid-cols-3" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {surveyRoles.map((role, index) => (
                 <Reveal as="article" order={index} key={role.title} className="min-h-full p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
@@ -85,7 +85,7 @@ export function BetaReaderSurveysPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: EDITORIAL_DARK, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">Ask less. Learn more.</Heading>
+              <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">Ask less. Learn more.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
               <p>A useful survey does not turn beta reading into homework. Start with a small, deliberate set of questions that helps you investigate the uncertainty you actually have about the draft.</p>
@@ -96,7 +96,7 @@ export function BetaReaderSurveysPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-4xl">
-            <Heading level={2} className="max-w-2xl text-balance">Beta reader surveys and questionnaires</Heading>
+            <Heading level={2} reveal className="max-w-2xl text-balance">Beta reader surveys and questionnaires</Heading>
             <div className="mt-12">
               <FaqList items={[
                 {

@@ -56,7 +56,7 @@ export function TrackBetaReaderProgressPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">Progress should clarify the round, not pressure the reader.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">Progress should clarify the round, not pressure the reader.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: BODY }}>
               <p>With several beta readers, it is easy to lose sight of the round: one reader has not opened the invitation, another is reading, and a third has already sent feedback. Repeatedly asking for updates adds work for everyone without improving the feedback.</p>
@@ -67,7 +67,7 @@ export function TrackBetaReaderProgressPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} className="max-w-xl text-balance">See the signals that matter in one reader overview.</Heading>
+            <Heading level={2} reveal className="max-w-xl text-balance">See the signals that matter in one reader overview.</Heading>
             <div className="mt-12 grid gap-px border md:grid-cols-3" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {progressSignals.map((signal, index) => (
                 <Reveal as="article" order={index} key={signal.title} className="min-h-full p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
@@ -85,7 +85,7 @@ export function TrackBetaReaderProgressPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: EDITORIAL_DARK, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">Different readers, different pace.</Heading>
+              <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">Different readers, different pace.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
               <p>A reader who takes longer is not necessarily less engaged, and a completed round does not tell you whether the feedback is useful. Progress is context for your beta round, not a score for the people helping you.</p>
@@ -96,7 +96,7 @@ export function TrackBetaReaderProgressPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-4xl">
-            <Heading level={2} className="max-w-2xl text-balance">Reader progress, without the guesswork</Heading>
+            <Heading level={2} reveal className="max-w-2xl text-balance">Reader progress, without the guesswork</Heading>
             <div className="mt-12">
               <FaqList items={[
                 {

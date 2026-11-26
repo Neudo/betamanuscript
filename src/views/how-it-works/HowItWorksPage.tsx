@@ -125,7 +125,7 @@ export function HowItWorksPage() {
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.74fr_1.26fr] lg:gap-20">
             <div>
               <Eyebrow>Reader access</Eyebrow>
-              <Heading level={2} className="max-w-md text-balance">
+              <Heading level={2} reveal className="max-w-md text-balance">
                 Invite readers personally, or open a public reading link.
               </Heading>
               <p className="mt-6 max-w-md text-base leading-7" style={{ color: BODY }}>
@@ -183,7 +183,7 @@ export function HowItWorksPage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-8 md:grid-cols-[0.72fr_1.28fr] md:items-end">
               <div>
-                <Heading level={2} className="max-w-md text-balance">
+                <Heading level={2} reveal className="max-w-md text-balance">
                   A clear workflow from manuscript to revision.
                 </Heading>
               </div>
@@ -260,7 +260,7 @@ export function HowItWorksPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20">
             <div>
               <Eyebrow inverse>From reaction to decision</Eyebrow>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">
+              <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">
                 Review the original passage before deciding what to revise.
               </Heading>
               <p className="mt-6 max-w-lg text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
@@ -274,7 +274,7 @@ export function HowItWorksPage() {
         <section className="px-6 py-20 md:px-12 md:py-28" style={{ background: CARD }}>
           <div className="mx-auto max-w-4xl border px-6 py-12 text-center sm:px-12 sm:py-16" style={{ borderColor: "hsl(var(--ink) / 0.16)", background: PAPER }}>
             <Eyebrow centered>Ready for a clearer beta round?</Eyebrow>
-            <Heading level={2} className="mx-auto max-w-2xl text-balance">
+            <Heading level={2} reveal className="mx-auto max-w-2xl text-balance">
               Let every reader reaction find its way into your <em>revision.</em>
             </Heading>
             <p className="mx-auto mt-6 max-w-xl text-base leading-7" style={{ color: BODY }}>

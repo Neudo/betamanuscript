@@ -2,6 +2,8 @@ import { type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
 
 import { INVERSE_FOREGROUND, MONO, MUTED, SANS, SERIF } from "@/shared/config/design-tokens";
 
+import { Reveal } from "@/shared/ui/motion";
+
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 type HeadingSize = "display" | "section" | "page" | "card" | "feature" | "workspace" | "subsection" | "small" | "label";
 type HeadingTone = "default" | "inverse" | "muted";
@@ -9,6 +11,7 @@ type HeadingTone = "default" | "inverse" | "muted";
 type HeadingProps = HTMLAttributes<HTMLHeadingElement> & {
   children: ReactNode;
   level: HeadingLevel;
+  reveal?: boolean;
   size?: HeadingSize;
   tone?: HeadingTone;
 };
@@ -101,12 +104,18 @@ const headingTones: Record<HeadingTone, CSSProperties> = {
   muted: { color: MUTED },
 };
 
-export function Heading({ children, level, size, style, tone = "default", ...props }: HeadingProps) {
+export function Heading({ children, level, size, style, tone = "default", reveal, ...props }: HeadingProps) {
   const Tag = headingTags[level];
   const resolvedSize = size ?? defaultSizeByLevel[level];
 
+  const appearance = { ...headingStyles[resolvedSize], ...headingTones[tone], ...style };
+
+  if (reveal && level === 2) {
+    return <Reveal as="h2" {...props} style={appearance}>{children}</Reveal>;
+  }
+
   return (
-    <Tag {...props} style={{ ...headingStyles[resolvedSize], ...headingTones[tone], ...style }}>
+    <Tag {...props} style={appearance}>
       {children}
     </Tag>
   );

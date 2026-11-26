@@ -254,7 +254,7 @@ export function PricingPage() {
                 <span className="h-px w-7" style={{ background: "hsl(var(--ink) / 0.2)" }} />
                 <p className="text-[10px] uppercase tracking-[0.24em]" style={{ color: MUTED, fontFamily: MONO }}>Frequently asked</p>
               </div>
-              <Heading level={2} size="display" className="max-w-md text-balance">
+              <Heading level={2} reveal size="display" className="max-w-md text-balance">
                 Questions authors ask <em>before subscribing.</em>
               </Heading>
             </div>
@@ -296,7 +296,7 @@ export function PricingPage() {
 
         <section className="px-6 py-20 text-center md:px-12 sm:py-24">
           <div className="mx-auto max-w-2xl">
-            <Heading level={2} size="display" className="text-balance">
+            <Heading level={2} reveal size="display" className="text-balance">
               Start free. <em>Upgrade when you&apos;re ready.</em>
             </Heading>
             <p className="mt-5 text-base" style={{ color: BODY }}>

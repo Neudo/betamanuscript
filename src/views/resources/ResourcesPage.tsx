@@ -64,7 +64,7 @@ export function ResourcesPage() {
 
         <section id="questionnaires" className="scroll-mt-28 border-b border-foreground/10 px-6 py-16 md:px-12 md:py-24" style={{ background: WARM }} aria-labelledby="questionnaires-title">
           <div className="mx-auto max-w-6xl">
-            <Heading id="questionnaires-title" level={2}>Ask once before the reveal, once after.</Heading>
+            <Heading id="questionnaires-title" level={2} reveal>Ask once before the reveal, once after.</Heading>
             <div className="mt-9 grid gap-4 lg:grid-cols-2">
               {questionnaires.map(({ id, label, title, instructions, questions }, index) => (
                 <Reveal as="article" order={index} key={id} aria-labelledby={`${id}-title`} className="border border-foreground/15 p-6 sm:p-8" style={{ background: CARD }}>
@@ -83,7 +83,7 @@ export function ResourcesPage() {
 
         <section id="read-the-answers" className="scroll-mt-28 px-6 py-16 md:px-12 md:py-24" aria-labelledby="answers-title">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-            <Heading id="answers-title" level={2} className="max-w-md text-balance">Was the mystery working, or were readers lost?</Heading>
+            <Heading id="answers-title" level={2} reveal className="max-w-md text-balance">Was the mystery working, or were readers lost?</Heading>
             <div className="max-w-2xl space-y-4 text-base leading-7" style={{ color: BODY }}>
               <p>Compare what readers believed before the reveal with what they say afterward. If they misread a clue but then recognize it and feel the payoff was fair, you may already have the right amount of information on the page.</p>
               <p>If several readers still can’t explain what the magic cost after the reveal, find the first place their answers diverge. Try clarifying one earlier clue rather than explaining the whole system. Ask readers which detail changed their interpretation on the next pass.</p>

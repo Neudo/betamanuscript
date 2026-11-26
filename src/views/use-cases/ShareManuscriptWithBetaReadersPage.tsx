@@ -56,7 +56,7 @@ export function ShareManuscriptWithBetaReadersPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">Two ways to share a draft.</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">Two ways to share a draft.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: BODY }}>
               <p>Some beta rounds are private: you know each reader and want to invite them individually. Others work better through a reading link that a wider group can open. BetaManuscript supports both access paths within the same focused reading experience.</p>
@@ -67,7 +67,7 @@ export function ShareManuscriptWithBetaReadersPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} className="max-w-xl text-balance">Choose access based on the round you are running.</Heading>
+            <Heading level={2} reveal className="max-w-xl text-balance">Choose access based on the round you are running.</Heading>
             <div className="mt-12 grid gap-px border md:grid-cols-3" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {sharingOptions.map((option, index) => (
                 <Reveal as="article" order={index} key={option.title} className="min-h-full p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
@@ -85,7 +85,7 @@ export function ShareManuscriptWithBetaReadersPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: EDITORIAL_DARK, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} tone="inverse" className="max-w-md text-balance">A link is access, not a lock.</Heading>
+              <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">A link is access, not a lock.</Heading>
             </div>
             <div className="max-w-2xl space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
               <p>A shareable reading page gives anyone with the link access to read the draft. It can be disabled from the reader overview, but it should still be treated as a link that can be forwarded.</p>
@@ -96,7 +96,7 @@ export function ShareManuscriptWithBetaReadersPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-4xl">
-            <Heading level={2} className="max-w-2xl text-balance">Sharing a manuscript with beta readers</Heading>
+            <Heading level={2} reveal className="max-w-2xl text-balance">Sharing a manuscript with beta readers</Heading>
             <div className="mt-12">
               <FaqList items={[
                 {

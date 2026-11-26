@@ -16,7 +16,7 @@ export function HowItWorksSection() {
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <SectionLabel>How it works</SectionLabel>
         <Heading
-          level={2}
+          level={2} reveal
           className="mb-14"
           style={{
             fontFamily: SERIF,

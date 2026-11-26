@@ -18,7 +18,7 @@ export function ProductPreviewSection() {
         <div className="grid md:grid-cols-[280px_1fr] gap-12 items-start mb-8">
           <div>
             <Heading
-              level={2}
+              level={2} reveal
               className="mb-4 leading-snug"
               style={{
                 fontFamily: SERIF,

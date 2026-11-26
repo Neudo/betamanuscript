@@ -14,7 +14,7 @@ export function ProblemSection() {
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
         <SectionLabel>The problem</SectionLabel>
         <Heading
-          level={2}
+          level={2} reveal
           className="mb-4 max-w-2xl"
           style={{
             fontFamily: SERIF,

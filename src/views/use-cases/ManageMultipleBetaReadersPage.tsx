@@ -69,7 +69,7 @@ export function ManageMultipleBetaReadersPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">
+              <Heading level={2} reveal className="max-w-md text-balance">
                 More readers should mean better feedback, not more admin.
               </Heading>
             </div>
@@ -83,7 +83,7 @@ export function ManageMultipleBetaReadersPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
-              <Heading level={2} className="text-balance">One manuscript. Multiple independent readers.</Heading>
+              <Heading level={2} reveal className="text-balance">One manuscript. Multiple independent readers.</Heading>
             </div>
             <div className="mt-12 grid gap-px border sm:grid-cols-2" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {workflowSteps.map((step, index) => (
@@ -104,7 +104,7 @@ export function ManageMultipleBetaReadersPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: EDITORIAL_DARK, borderColor: "hsl(var(--inverse-foreground) / 0.16)", color: INVERSE_FOREGROUND }}>
           <div className="mx-auto max-w-6xl">
-            <Heading level={2} tone="inverse" className="max-w-md text-balance">
+            <Heading level={2} reveal tone="inverse" className="max-w-md text-balance">
               One opinion is useful. Repeated reactions are a pattern.
             </Heading>
             <div className="mt-6 max-w-lg space-y-5 text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>
@@ -117,7 +117,7 @@ export function ManageMultipleBetaReadersPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.73fr_1.27fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">When managing multiple beta readers becomes difficult</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">When managing multiple beta readers becomes difficult</Heading>
             </div>
             <ul
               className="grid min-w-0 auto-cols-[100%] grid-flow-col gap-3 overflow-x-auto pb-3 pr-6 [scrollbar-width:none] snap-x snap-mandatory md:auto-cols-[calc((100%_-_1.5rem)/2.3)] [&::-webkit-scrollbar]:hidden"
@@ -136,7 +136,7 @@ export function ManageMultipleBetaReadersPage() {
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
             <div>
-              <Heading level={2} className="max-w-md text-balance">You may not need BetaManuscript if…</Heading>
+              <Heading level={2} reveal className="max-w-md text-balance">You may not need BetaManuscript if…</Heading>
             </div>
             <div className="space-y-4">
               {[
@@ -152,7 +152,7 @@ export function ManageMultipleBetaReadersPage() {
 
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto max-w-4xl">
-            <Heading level={2} className="max-w-2xl text-balance">Managing a beta round, clearly.</Heading>
+            <Heading level={2} reveal className="max-w-2xl text-balance">Managing a beta round, clearly.</Heading>
             <div className="mt-12">
               <FaqList items={[
                 {

@@ -126,7 +126,7 @@ export function FinalCta({ children, description, title }: { children: ReactNode
   return (
     <section className="px-6 py-20 md:px-12 md:py-28" style={{ background: CARD }}>
       <div className="mx-auto max-w-4xl border px-6 py-12 text-center sm:px-12 sm:py-16" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.2)", background: EDITORIAL_DARK }}>
-        <Heading level={2} tone="inverse" className="mx-auto max-w-2xl text-balance">
+        <Heading level={2} reveal tone="inverse" className="mx-auto max-w-2xl text-balance">
           {title}
         </Heading>
         <p className="mx-auto mt-6 max-w-xl text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>{description}</p>
