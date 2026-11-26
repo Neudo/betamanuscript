@@ -1,6 +1,6 @@
 import { ProductMockup, TAGS, TagBadge, type TagKey } from "../../../features/product-preview";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
-import { Lift, Reveal } from "../../../shared/ui/motion";
+import { Lift } from "../../../shared/ui/motion";
 import { BODY, CARD, INK, INVERSE_FOREGROUND, MONO, MUTED, OXBLOOD, SANS, SERIF } from "../../../shared/config/design-tokens";
 import Link from "next/link";
 import { Heading } from "@/shared/ui/Heading";
@@ -14,10 +14,8 @@ export function ProductPreviewSection() {
       style={{ borderColor: "hsl(var(--ink) / 0.1)" }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
-        <Reveal>
-          <SectionLabel>Product preview</SectionLabel>
-        </Reveal>
-        <Reveal delay={0.08} className="grid md:grid-cols-[280px_1fr] gap-12 items-start mb-8">
+        <SectionLabel>Product preview</SectionLabel>
+        <div className="grid md:grid-cols-[280px_1fr] gap-12 items-start mb-8">
           <div>
             <Heading
               level={2}
@@ -79,7 +77,7 @@ export function ProductPreviewSection() {
             </Lift>
 
             {/* Revision priority summary */}
-            <Lift
+            <Lift order={1}
               className="p-6 border"
               style={{ borderColor: "hsl(var(--ink) / 0.12)", background: CARD }}
             >
@@ -108,9 +106,9 @@ export function ProductPreviewSection() {
               </div>
             </Lift>
           </div>
-        </Reveal>
+        </div>
         <ProductMockup />
-        <Reveal delay={0.16} className="mt-10">
+        <div className="mt-10">
           <div className="flex flex-col items-center border-t pt-8 text-center" style={{ borderColor: "hsl(var(--ink) / 0.12)" }}>
             <Link
               href="/signup"
@@ -120,7 +118,7 @@ export function ProductPreviewSection() {
               Get started for free
             </Link>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
 

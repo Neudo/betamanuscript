@@ -1,8 +1,5 @@
-"use client";
-
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { Reveal } from "../../../shared/ui/motion";
 import { INVERSE_BACKGROUND, INVERSE_FOREGROUND, INVERSE_MUTED, MONO, OXBLOOD, SERIF, SANS } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -16,7 +13,7 @@ export function FinalCtaSection() {
       style={{ borderColor: "hsl(var(--border) / 0.72)", background: INVERSE_BACKGROUND }}
     >
       <div className="px-6 md:px-12 py-24 max-w-5xl mx-auto">
-        <Reveal className="grid md:grid-cols-[1fr_420px] gap-16 items-start">
+        <div className="grid md:grid-cols-[1fr_420px] gap-16 items-start">
           <div>
             <div className="w-8 h-px mb-8" style={{ background: "hsl(var(--inverse-foreground) / 0.25)" }} />
             <Heading
@@ -104,7 +101,7 @@ export function FinalCtaSection() {
               ))}
             </div>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
 

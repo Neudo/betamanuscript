@@ -1,7 +1,7 @@
 import { BarChart2, ChevronRight, Upload, Users } from "lucide-react";
 import Link from "next/link";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
-import { Lift, Reveal } from "../../../shared/ui/motion";
+import { Lift } from "../../../shared/ui/motion";
 import { INK, MONO, MUTED, OXBLOOD_TEXT, PAPER, SANS, SERIF, WARM } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -14,22 +14,20 @@ export function HowItWorksSection() {
       style={{ borderColor: "hsl(var(--ink) / 0.1)", background: WARM }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
-        <Reveal>
-          <SectionLabel>How it works</SectionLabel>
-          <Heading
-            level={2}
-            className="mb-14"
-            style={{
-              fontFamily: SERIF,
-              fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
-              fontWeight: 400,
-              color: INK,
-              letterSpacing: "-0.015em",
-            }}
-          >
-            Three steps to a cleaner beta round.
-          </Heading>
-        </Reveal>
+        <SectionLabel>How it works</SectionLabel>
+        <Heading
+          level={2}
+          className="mb-14"
+          style={{
+            fontFamily: SERIF,
+            fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
+            fontWeight: 400,
+            color: INK,
+            letterSpacing: "-0.015em",
+          }}
+        >
+          Three steps to a cleaner beta round.
+        </Heading>
         <div className="grid md:grid-cols-3 gap-12">
           {[
             {
@@ -54,7 +52,7 @@ export function HowItWorksSection() {
                 "Review annotations by tag and chapter. Notice recurring feedback across readers and decide what to revise next.",
             },
           ].map((step, i) => (
-            <Lift key={i} delay={i * 0.08} className="relative p-4">
+            <Lift key={i} order={i} className="relative p-4">
               <div className="text-[10px] mb-4" style={{ fontFamily: MONO, color: MUTED }}>
                 {step.num}
               </div>

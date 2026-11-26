@@ -1,6 +1,6 @@
 import { FileText, ListChecks, MessageSquare, Tag } from "lucide-react";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
-import { Lift, Reveal } from "../../../shared/ui/motion";
+import { Lift } from "../../../shared/ui/motion";
 import { CARD, OXBLOOD_TEXT, PAPER } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
@@ -13,13 +13,11 @@ export function FeaturesSection() {
       style={{ borderColor: "hsl(var(--ink) / 0.1)" }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
-        <Reveal>
-          <SectionLabel>Features</SectionLabel>
-          <Heading level={2} size="page" className="mb-12 max-w-xl">
-            Built for authors who want signal,
-            <em> not more noise.</em>
-          </Heading>
-        </Reveal>
+        <SectionLabel>Features</SectionLabel>
+        <Heading level={2} size="page" className="mb-12 max-w-xl">
+          Built for authors who want signal,
+          <em> not more noise.</em>
+        </Heading>
         <div className="grid sm:grid-cols-2 gap-px" style={{ background: "hsl(var(--ink) / 0.1)" }}>
           {[
             {
@@ -47,7 +45,7 @@ export function FeaturesSection() {
                 "Review annotations by tag and chapter, so recurring feedback is easier to assess when you revise.",
             },
           ].map((card, i) => (
-            <Lift key={i} delay={i * 0.08} className="p-8" style={{ background: PAPER }}>
+            <Lift key={i} order={i} className="p-8" style={{ background: PAPER }}>
               <div className="mb-5">
                 <div
                   className="w-9 h-9 flex items-center justify-center border"

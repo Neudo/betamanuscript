@@ -92,8 +92,7 @@ export function ForReadersPage() {
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
             <div className="mt-14 grid items-center gap-14 lg:mt-20 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.82fr)] lg:gap-20">
-              <Reveal
-              >
+              <div>
                 <Heading level={1} className="max-w-2xl text-balance">
                   Read the manuscript. Share your reactions as they happen.
                 </Heading>
@@ -103,7 +102,7 @@ export function ForReadersPage() {
                 <div className="mt-10 flex flex-wrap items-center gap-4">
                   <Link
                     href="/login"
-                    className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                    className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                     style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
                   >
                     I have an invitation
@@ -120,13 +119,11 @@ export function ForReadersPage() {
                 <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
                   Shared reading pages open without an account · Feedback is free for beta readers
                 </p>
-              </Reveal>
+              </div>
 
-              <Reveal delay={0.08}
-                className="relative mx-auto w-full max-w-[510px] lg:mr-0"
-              >
+              <div className="relative mx-auto w-full max-w-[510px] lg:mr-0">
                 <ReaderPreview />
-              </Reveal>
+              </div>
             </div>
           </div>
         </section>
@@ -139,22 +136,22 @@ export function ForReadersPage() {
               </Heading>
             </div>
             <div className="grid gap-px border border-black/10 sm:grid-cols-2" style={{ background: "hsl(var(--ink) / 0.1)" }}>
-              <ReaderPrinciple
+              <ReaderPrinciple order={0}
                 eyebrow="Read"
                 title="Stay with the story"
                 detail="Open a shared reading page directly, or keep privately invited manuscripts together in one reading list."
               />
-              <ReaderPrinciple
+              <ReaderPrinciple order={1}
                 eyebrow="Notice"
                 title="Mark the exact moment"
                 detail="Highlight the exact passage that made you pause, smile, doubt, or want to keep reading."
               />
-              <ReaderPrinciple
+              <ReaderPrinciple order={2}
                 eyebrow="Explain"
                 title="Describe your reaction"
                 detail="Confusion, delight, doubt, curiosity—tell the author what you experienced and which passage caused it."
               />
-              <ReaderPrinciple
+              <ReaderPrinciple order={3}
                 eyebrow="Continue"
                 title="Pick up where you left off"
                 detail="When you complete a chapter, your progress is saved, so you can return to the next chapter later."
@@ -174,7 +171,7 @@ export function ForReadersPage() {
 
             <ol className="mt-14 grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-4">
               {steps.map((step, index) => (
-                <Reveal as="li" delay={index * 0.08}
+                <Reveal as="li" order={index}
                   key={step.number}
                   className="group relative border-t pt-5"
                   style={{ borderColor: "hsl(var(--ink) / 0.18)" }}
@@ -204,7 +201,7 @@ export function ForReadersPage() {
             </div>
             <div className="grid gap-3">
               {feedbackPrompts.map((prompt, index) => (
-                <Reveal as="div" delay={index * 0.08}
+                <Reveal as="div" order={index}
                   key={prompt}
                   className="flex min-h-20 items-center gap-5 border px-5 py-4 sm:px-6"
                   style={{ background: index === 1 ? "hsl(var(--oxblood) / 0.42)" : "hsl(var(--inverse-foreground) / 0.055)", borderColor: "hsl(var(--inverse-foreground) / 0.16)" }}
@@ -326,13 +323,13 @@ function ReaderPreview() {
   );
 }
 
-function ReaderPrinciple({ eyebrow, title, detail }: { eyebrow: string; title: string; detail: string }) {
+function ReaderPrinciple({ eyebrow, title, detail, order }: { eyebrow: string; title: string; detail: string; order: number }) {
   return (
-    <article className="p-6 sm:p-7" style={{ background: WARM }}>
+    <Reveal as="article" order={order} className="p-6 sm:p-7" style={{ background: WARM }}>
       <p className="text-[9px] uppercase tracking-[0.2em]" style={{ color: MUTED, fontFamily: MONO }}>{eyebrow}</p>
       <Heading level={3} className="mt-5">{title}</Heading>
       <p className="mt-3 text-sm leading-6" style={{ color: BODY }}>{detail}</p>
-    </article>
+    </Reveal>
   );
 }
 

@@ -2,10 +2,10 @@
 
 import { type HTMLAttributes, type CSSProperties, useCallback, useEffect, useRef } from "react";
 
-type RevealTag = "article" | "div" | "li" | "section";
+type RevealTag = "article" | "div" | "li";
 type RevealProps = HTMLAttributes<HTMLElement> & {
   as?: RevealTag;
-  delay?: number;
+  order?: number;
 };
 
 const targets = new WeakSet<Element>();
@@ -36,7 +36,7 @@ function Reveal({
   as,
   children,
   className,
-  delay = 0,
+  order = 0,
   style,
   ...props
 }: RevealProps) {
@@ -58,18 +58,15 @@ function Reveal({
       ref={setRef}
       data-editorial-reveal=""
       className={className}
-      style={{ ...style, "--editorial-delay": `${Math.max(0, Math.min(delay, 0.16))}s` } as CSSProperties}
+      style={{ ...style, "--editorial-delay": `${Math.max(0, Math.min(order, 4)) * 110}ms` } as CSSProperties}
     >
       {children}
     </Tag>
   );
 }
 
-function Lift({ className, delay, ...props }: Omit<RevealProps, "as">) {
-  const classes = `${className ?? ""} editorial-lift`;
-  return delay === undefined
-    ? <div {...props} className={classes} />
-    : <Reveal {...props} className={classes} delay={delay} />;
+function Lift({ className, ...props }: Omit<RevealProps, "as">) {
+  return <Reveal {...props} className={`${className ?? ""} editorial-lift`} />;
 }
 
 export { Lift, Reveal };

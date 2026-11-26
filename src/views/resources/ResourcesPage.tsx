@@ -67,7 +67,7 @@ export function ResourcesPage() {
             <Heading id="questionnaires-title" level={2}>Ask once before the reveal, once after.</Heading>
             <div className="mt-9 grid gap-4 lg:grid-cols-2">
               {questionnaires.map(({ id, label, title, instructions, questions }, index) => (
-                <Reveal as="article" delay={index * 0.08} key={id} aria-labelledby={`${id}-title`} className="border border-foreground/15 p-6 sm:p-8" style={{ background: CARD }}>
+                <Reveal as="article" order={index} key={id} aria-labelledby={`${id}-title`} className="border border-foreground/15 p-6 sm:p-8" style={{ background: CARD }}>
                   <p className="text-xs uppercase tracking-widest" style={{ color: OXBLOOD_TEXT, fontFamily: MONO }}>{label}</p>
                   <Heading level={3} id={`${id}-title`} className="mt-4">{title}</Heading>
                   <p className="mt-3 text-sm leading-6" style={{ color: BODY }}>{instructions}</p>

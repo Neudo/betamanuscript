@@ -1,4 +1,4 @@
-import { Lift, Reveal } from "../../../shared/ui/motion";
+import { Lift } from "../../../shared/ui/motion";
 import { SectionLabel } from "../../../shared/ui/SectionLabel";
 import { INK, OXBLOOD_TEXT, SERIF, WARM } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
@@ -12,27 +12,25 @@ export function ProblemSection() {
       style={{ borderColor: "hsl(var(--ink) / 0.1)", background: WARM }}
     >
       <div className="px-6 md:px-12 py-20 max-w-5xl mx-auto">
-        <Reveal>
-          <SectionLabel>The problem</SectionLabel>
-          <Heading
-            level={2}
-            className="mb-4 max-w-2xl"
-            style={{
-              fontFamily: SERIF,
-              fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
-              fontWeight: 400,
-              color: INK,
-              letterSpacing: "-0.015em",
-            }}
-          >
-            Most beta reading rounds generate noise,
-            <br />
-            <em>not clarity.</em>
-          </Heading>
-          <p className="mb-12 max-w-xl text-sm leading-6 md:text-base" style={{ color: "hsl(var(--body))" }}>
-            No AI-generated ideas or rewrites. Just human reader reactions, with you in control of every creative decision.
-          </p>
-        </Reveal>
+        <SectionLabel>The problem</SectionLabel>
+        <Heading
+          level={2}
+          className="mb-4 max-w-2xl"
+          style={{
+            fontFamily: SERIF,
+            fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
+            fontWeight: 400,
+            color: INK,
+            letterSpacing: "-0.015em",
+          }}
+        >
+          Most beta reading rounds generate noise,
+          <br />
+          <em>not clarity.</em>
+        </Heading>
+        <p className="mb-12 max-w-xl text-sm leading-6 md:text-base" style={{ color: "hsl(var(--body))" }}>
+          No AI-generated ideas or rewrites. Just human reader reactions, with you in control of every creative decision.
+        </p>
         <div className="grid md:grid-cols-3 gap-px" style={{ background: "hsl(var(--ink) / 0.1)" }}>
           {[
             {
@@ -54,7 +52,7 @@ export function ProblemSection() {
                 "One reader's pet peeve is not the same as a structural problem. Without aggregation, everything looks equally urgent — and nothing gets fixed.",
             },
           ].map((card, i) => (
-            <Lift key={i} delay={i * 0.08} className="p-8" style={{ background: WARM }}>
+            <Lift key={i} order={i} className="p-8" style={{ background: WARM }}>
               <div
                 className="text-2xl mb-5"
                 style={{ fontFamily: SERIF, color: OXBLOOD_TEXT, opacity: 0.75 }}

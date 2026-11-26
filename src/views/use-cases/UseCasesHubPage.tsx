@@ -77,14 +77,14 @@ export function UseCasesHubPage() {
           <div className="pointer-events-none absolute inset-0 -z-10 opacity-75" style={{ backgroundImage: "radial-gradient(circle at 88% 16%, hsl(var(--forest) / 0.12), transparent 23rem), radial-gradient(circle at 2% 90%, hsl(var(--oxblood) / 0.1), transparent 25rem)" }} />
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
-            <Reveal className="mt-16 max-w-3xl">
+            <div className="mt-16 max-w-3xl">
               <Heading level={1} className="text-balance">
                 A better workflow for every stage of your beta reading round.
               </Heading>
               <p className="mt-7 max-w-2xl text-pretty text-base leading-8 sm:text-lg" style={{ color: BODY }}>
                 BetaManuscript helps authors manage their own beta readers, keep manuscript feedback organized, and see which reactions deserve attention before revision.
               </p>
-            </Reveal>
+            </div>
           </div>
         </section>
 
@@ -92,7 +92,7 @@ export function UseCasesHubPage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-4 lg:grid-cols-2">
               {useCases.map((useCase, index) => (
-                <Reveal as="article" delay={index * 0.08} key={useCase.title} className="flex min-h-full flex-col border p-5 sm:p-7" style={{ background: index === 0 ? PAPER : CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
+                <Reveal as="article" order={index} key={useCase.title} className="flex min-h-full flex-col border p-5 sm:p-7" style={{ background: index === 0 ? PAPER : CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
                   <span className="flex h-10 w-10 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
                     <useCase.Icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
                   </span>

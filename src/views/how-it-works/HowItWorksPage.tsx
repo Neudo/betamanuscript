@@ -85,9 +85,7 @@ export function HowItWorksPage() {
           />
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
-            <Reveal
-              className="mt-14 md:mt-20"
-            >
+            <div className="mt-14 md:mt-20">
               <Heading level={1} className="max-w-2xl text-balance">
                 Run your beta reading round without the Google Docs mess.
               </Heading>
@@ -97,7 +95,7 @@ export function HowItWorksPage() {
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
                   href="/signup"
-                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                   style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
                 >
                   Start for free
@@ -118,7 +116,7 @@ export function HowItWorksPage() {
                 Still managing beta readers in Google Docs? See the dedicated Google Docs alternative for beta reading.
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
-            </Reveal>
+            </div>
 
           </div>
         </section>
@@ -157,7 +155,7 @@ export function HowItWorksPage() {
                 </p>
               </Reveal>
 
-              <Reveal as="article" delay={0.08}
+              <Reveal as="article" order={1}
                 className="border p-6 sm:p-7"
                 style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.16)" }}
               >

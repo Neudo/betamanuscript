@@ -126,7 +126,7 @@ export function PricingPage() {
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
           </div>
-          <Reveal className="mx-auto mt-14 max-w-3xl text-center sm:mt-16">
+          <div className="mx-auto mt-14 max-w-3xl text-center sm:mt-16">
             <Heading level={1} className="text-balance">
               Make every reader note <em>count.</em>
             </Heading>
@@ -156,7 +156,7 @@ export function PricingPage() {
                 Save {authorPricing.yearly.savingsPercentage}% yearly
               </span>
             </div>
-          </Reveal>
+          </div>
         </section>
 
         <section id="plans" className="scroll-mt-24 px-6 pb-24 md:px-12">
@@ -190,7 +190,7 @@ export function PricingPage() {
                 </p>
               </Reveal>
 
-              <Reveal as="article" delay={0.08} className="relative flex min-w-0 flex-col border-t px-6 py-8 sm:border-l sm:border-t-0 sm:px-9 sm:py-10" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", background: INVERSE_BACKGROUND }}>
+              <Reveal as="article" order={1} className="relative flex min-w-0 flex-col border-t px-6 py-8 sm:border-l sm:border-t-0 sm:px-9 sm:py-10" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", background: INVERSE_BACKGROUND }}>
                 <span className="absolute right-0 top-0 px-3 py-1.5 text-[9px] uppercase tracking-[0.15em]" style={{ background: OXBLOOD, color: INVERSE_FOREGROUND, fontFamily: MONO }}>
                   Most popular
                 </span>
@@ -295,7 +295,7 @@ export function PricingPage() {
         </section>
 
         <section className="px-6 py-20 text-center md:px-12 sm:py-24">
-          <Reveal className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-2xl">
             <Heading level={2} size="display" className="text-balance">
               Start free. <em>Upgrade when you&apos;re ready.</em>
             </Heading>
@@ -310,7 +310,7 @@ export function PricingPage() {
                 View Author plan
               </a>
             </div>
-          </Reveal>
+          </div>
         </section>
       </main>
 

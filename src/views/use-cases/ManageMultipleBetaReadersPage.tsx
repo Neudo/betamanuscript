@@ -87,7 +87,7 @@ export function ManageMultipleBetaReadersPage() {
             </div>
             <div className="mt-12 grid gap-px border sm:grid-cols-2" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {workflowSteps.map((step, index) => (
-                <Reveal as="article" delay={index * 0.08} key={step.title} className="p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
+                <Reveal as="article" order={index} key={step.title} className="p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.16em]" style={{ color: MUTED, fontFamily: MONO }}>{String(index + 1).padStart(2, "0")}</span>
                     <span className="flex h-9 w-9 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>

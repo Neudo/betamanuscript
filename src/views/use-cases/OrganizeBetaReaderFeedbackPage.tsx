@@ -86,7 +86,7 @@ export function OrganizeBetaReaderFeedbackPage() {
             </div>
             <div className="mt-12 grid gap-px border sm:grid-cols-2 lg:grid-cols-5" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {feedbackContext.map((item, index) => (
-                <Reveal as="article" delay={index * 0.08} key={item.title} className="min-h-full p-5 sm:p-6" style={{ background: index === 2 ? CARD : PAPER }}>
+                <Reveal as="article" order={index} key={item.title} className="min-h-full p-5 sm:p-6" style={{ background: index === 2 ? CARD : PAPER }}>
                   <span className="flex h-9 w-9 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
                     <item.Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                   </span>
