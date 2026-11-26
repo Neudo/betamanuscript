@@ -20,6 +20,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 const navigationLinks = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-readers", label: "For readers" },
+  { href: "/resources", label: "Resources" },
   { href: "/pricing", label: "Pricing" },
 ];
 

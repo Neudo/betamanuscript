@@ -107,6 +107,20 @@ export function OrganizeBetaReaderFeedbackPage() {
           </div>
         </section>
 
+        <section id="worked-example" className="scroll-mt-28 border-b border-foreground/10 px-6 py-16 md:px-12 md:py-24" style={{ background: WARM }} aria-labelledby="worked-example-title">
+          <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
+            <div>
+              <Heading id="worked-example-title" level={2} className="max-w-md text-balance">Worked example: what should change in chapter four?</Heading>
+              <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>Illustrative feedback on the fictional manuscript <cite>The Salt Orchard</cite>.</p>
+            </div>
+            <ol className="list-decimal space-y-4 pl-5 text-base leading-7" style={{ color: BODY }}>
+              <li><strong>Count readers, not notes.</strong> Three pacing annotations from one reader tell you where that person struggled. Three readers flagging the same scene independently give you a stronger reason to look there.</li>
+              <li><strong>Separate the reaction from the proposed fix.</strong> One reader wants the reveal sooner and another likes the suspense. Check whether readers who struggled can identify what the guild wanted from the survey. That gives you a more precise question than whether the chapter is too slow.</li>
+              <li><strong>Test one revision.</strong> Keep the reveal where it is, add an earlier clue about the guild’s interest, and ask the next readers where they first understood what was at stake.</li>
+            </ol>
+          </div>
+        </section>
+
         <section className="border-b px-6 py-20 md:px-12 md:py-28" style={{ background: PAPER, borderColor: "hsl(var(--ink) / 0.1)" }}>
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
             <div>

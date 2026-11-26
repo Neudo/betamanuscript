@@ -129,6 +129,11 @@ export function BetaReaderSurveysPage() {
 
         <RelatedLinks items={[
           {
+            description: "Copy a chapter check-in and a whole-book questionnaire for your next fantasy beta round.",
+            href: "/resources",
+            title: "Fantasy beta reader questionnaire",
+          },
+          {
             description: "Keep broad survey answers and inline reactions connected before revision.",
             href: "/use-cases/organize-beta-reader-feedback",
             title: "Organize beta reader feedback",
