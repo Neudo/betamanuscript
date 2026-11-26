@@ -54,7 +54,7 @@ export function HowItWorksSection() {
                 "Review annotations by tag and chapter. Notice recurring feedback across readers and decide what to revise next.",
             },
           ].map((step, i) => (
-            <Lift key={i} className="relative p-4">
+            <Lift key={i} delay={i * 0.08} className="relative p-4">
               <div className="text-[10px] mb-4" style={{ fontFamily: MONO, color: MUTED }}>
                 {step.num}
               </div>

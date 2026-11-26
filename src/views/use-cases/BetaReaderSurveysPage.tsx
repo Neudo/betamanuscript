@@ -1,3 +1,4 @@
+import { Reveal } from "@/shared/ui/motion";
 import { BookOpenCheck, FileQuestion, MessageSquareQuote } from "lucide-react";
 
 import { BODY, CARD, EDITORIAL_DARK, INVERSE_FOREGROUND, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
@@ -69,13 +70,13 @@ export function BetaReaderSurveysPage() {
             <Heading level={2} className="max-w-xl text-balance">Use the right feedback format for the question.</Heading>
             <div className="mt-12 grid gap-px border md:grid-cols-3" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {surveyRoles.map((role, index) => (
-                <article key={role.title} className="min-h-full p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
+                <Reveal as="article" delay={index * 0.08} key={role.title} className="min-h-full p-6 sm:p-7" style={{ background: index === 1 ? CARD : PAPER }}>
                   <span className="flex h-9 w-9 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
                     <role.Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                   </span>
                   <Heading level={3} className="mt-8 text-balance">{role.title}</Heading>
                   <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>{role.detail}</p>
-                </article>
+                </Reveal>
               ))}
             </div>
           </div>

@@ -1,4 +1,4 @@
-"use client";
+import { Reveal } from "@/shared/ui/motion";
 
 import {
   ArrowRight,
@@ -8,7 +8,6 @@ import {
   Upload,
   Users,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 
 import {
@@ -27,7 +26,6 @@ import {
   SANS,
   SERIF,
   WARM,
-  premiumEase,
 } from "@/shared/config/design-tokens";
 import { Breadcrumbs } from "@/shared/ui/Breadcrumbs";
 import { Heading } from "@/shared/ui/Heading";
@@ -72,8 +70,6 @@ const breadcrumbs = [
 ] as const;
 
 export function HowItWorksPage() {
-  const reduceMotion = useReducedMotion();
-
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
       <Nav />
@@ -89,11 +85,8 @@ export function HowItWorksPage() {
           />
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
-            <motion.div
+            <Reveal
               className="mt-14 md:mt-20"
-              initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-              animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-              transition={{ duration: 0.72, ease: premiumEase }}
             >
               <Heading level={1} className="max-w-2xl text-balance">
                 Run your beta reading round without the Google Docs mess.
@@ -104,11 +97,11 @@ export function HowItWorksPage() {
               <div className="mt-10 flex flex-wrap items-center gap-4">
                 <Link
                   href="/signup"
-                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                  className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                   style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
                 >
                   Start for free
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" />
                 </Link>
                 <a
                   href="#flow"
@@ -125,7 +118,7 @@ export function HowItWorksPage() {
                 Still managing beta readers in Google Docs? See the dedicated Google Docs alternative for beta reading.
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </Link>
-            </motion.div>
+            </Reveal>
 
           </div>
         </section>
@@ -143,13 +136,9 @@ export function HowItWorksPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <motion.article
+              <Reveal as="article"
                 className="border p-6 sm:p-7"
                 style={{ background: CARD, borderColor: "hsl(var(--ink) / 0.16)" }}
-                initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-                whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.52, ease: premiumEase }}
               >
                 <div className="flex items-center gap-3">
                   <span className="grid h-9 w-9 place-items-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
@@ -166,15 +155,11 @@ export function HowItWorksPage() {
                 <p className="mt-6 border-t pt-4 text-xs leading-5" style={{ borderColor: "hsl(var(--ink) / 0.12)", color: MUTED }}>
                   Their feedback stays connected to their reading progress and survey responses.
                 </p>
-              </motion.article>
+              </Reveal>
 
-              <motion.article
+              <Reveal as="article" delay={0.08}
                 className="border p-6 sm:p-7"
                 style={{ background: WARM, borderColor: "hsl(var(--ink) / 0.16)" }}
-                initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-                whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.52, delay: reduceMotion ? 0 : 0.08, ease: premiumEase }}
               >
                 <div className="flex items-center gap-3">
                   <span className="grid h-9 w-9 place-items-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: FOREST }}>
@@ -191,7 +176,7 @@ export function HowItWorksPage() {
                 <p className="mt-6 border-t pt-4 text-xs leading-5" style={{ borderColor: "hsl(var(--ink) / 0.12)", color: MUTED }}>
                   Readers create a free account only when they want to leave feedback.
                 </p>
-              </motion.article>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -211,14 +196,10 @@ export function HowItWorksPage() {
 
             <ol className="mt-14 space-y-12 md:mt-16 md:space-y-16">
               {steps.map((step, index) => (
-                <motion.li
+                <Reveal as="li"
                   key={step.number}
                   className="grid items-center gap-9 border-t pt-7 md:grid-cols-[minmax(0,0.86fr)_minmax(320px,0.8fr)] md:gap-16 md:pt-9 odd:md:grid-cols-[minmax(320px,0.8fr)_minmax(0,0.86fr)]"
                   style={{ borderColor: "hsl(var(--ink) / 0.16)" }}
-                  initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-                  whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.25 }}
-                  transition={{ duration: 0.58, ease: premiumEase }}
                 >
                   <div className={index % 2 === 1 ? "md:order-2" : undefined}>
                     <div className="flex items-center gap-4">
@@ -257,7 +238,7 @@ export function HowItWorksPage() {
                   <div className={index % 2 === 1 ? "md:order-1" : undefined}>
                     <StepPreview kind={step.preview} />
                   </div>
-                </motion.li>
+                </Reveal>
               ))}
             </ol>
 
@@ -267,11 +248,11 @@ export function HowItWorksPage() {
               </p>
               <Link
                 href="/signup"
-                className="inline-flex min-h-11 shrink-0 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                className="inline-flex min-h-11 shrink-0 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                 style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
               >
                 Start your beta round
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -303,11 +284,11 @@ export function HowItWorksPage() {
             </p>
             <Link
               href="/signup"
-              className="mt-9 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+              className="mt-9 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
               style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
             >
               Start for free
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </section>

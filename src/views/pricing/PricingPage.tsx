@@ -1,5 +1,7 @@
 "use client";
 
+import { Reveal } from "@/shared/ui/motion";
+
 import { Check, Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
@@ -124,7 +126,7 @@ export function PricingPage() {
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
           </div>
-          <div className="mx-auto mt-14 max-w-3xl text-center sm:mt-16">
+          <Reveal className="mx-auto mt-14 max-w-3xl text-center sm:mt-16">
             <Heading level={1} className="text-balance">
               Make every reader note <em>count.</em>
             </Heading>
@@ -154,7 +156,7 @@ export function PricingPage() {
                 Save {authorPricing.yearly.savingsPercentage}% yearly
               </span>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         <section id="plans" className="scroll-mt-24 px-6 pb-24 md:px-12">
@@ -167,7 +169,7 @@ export function PricingPage() {
             </p>
 
             <div className="grid border sm:grid-cols-2" style={{ borderColor: "hsl(var(--ink) / 0.18)" }}>
-              <article className="flex min-w-0 flex-col px-6 py-8 sm:px-9 sm:py-10" style={{ background: CARD }}>
+              <Reveal as="article" className="flex min-w-0 flex-col px-6 py-8 sm:px-9 sm:py-10" style={{ background: CARD }}>
                 <PlanEyebrow>Free</PlanEyebrow>
                 <div className="mt-4 flex items-end gap-2">
                   <span className="leading-none tracking-[-0.04em]" style={{ fontFamily: SERIF, fontSize: "4.5rem" }}>$0</span>
@@ -177,7 +179,7 @@ export function PricingPage() {
                 </p>
                 <Link
                   href="/signup"
-                  className="mt-8 inline-flex min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  className="mt-8 inline-flex editorial-action min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   style={{ borderColor: "hsl(var(--ink) / 0.26)", color: INK }}
                 >
                   Start for free
@@ -186,9 +188,9 @@ export function PricingPage() {
                 <p className="mt-auto border-t pt-5 text-xs leading-5" style={{ borderColor: "hsl(var(--ink) / 0.12)", color: MUTED }}>
                   Free plan is permanent — we don&apos;t downgrade you after a trial period.
                 </p>
-              </article>
+              </Reveal>
 
-              <article className="relative flex min-w-0 flex-col border-t px-6 py-8 sm:border-l sm:border-t-0 sm:px-9 sm:py-10" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", background: INVERSE_BACKGROUND }}>
+              <Reveal as="article" delay={0.08} className="relative flex min-w-0 flex-col border-t px-6 py-8 sm:border-l sm:border-t-0 sm:px-9 sm:py-10" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", background: INVERSE_BACKGROUND }}>
                 <span className="absolute right-0 top-0 px-3 py-1.5 text-[9px] uppercase tracking-[0.15em]" style={{ background: OXBLOOD, color: INVERSE_FOREGROUND, fontFamily: MONO }}>
                   Most popular
                 </span>
@@ -204,7 +206,7 @@ export function PricingPage() {
                 </p>
                 <Link
                   href={authorSignupHref}
-                  className="mt-8 inline-flex min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f0e8]"
+                  className="mt-8 inline-flex editorial-action min-h-12 items-center justify-center border px-5 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f0e8]"
                   style={{ borderColor: OXBLOOD, background: OXBLOOD, color: INVERSE_FOREGROUND }}
                 >
                   {authorCta}
@@ -213,7 +215,7 @@ export function PricingPage() {
                 <p className="mt-auto border-t pt-5 text-xs leading-5" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.18)", color: INVERSE_FOREGROUND }}>
                   Cancel anytime from your plan settings.
                 </p>
-              </article>
+              </Reveal>
             </div>
 
             <section className="mt-20">
@@ -273,7 +275,7 @@ export function PricingPage() {
                       <span>{faq.question}</span>
                       {isOpen ? <Minus className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" /> : <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />}
                     </button>
-                    <div id={answerId} hidden={!isOpen} className="pb-6 pr-9 text-sm leading-6" style={{ color: BODY }}>
+                    <div id={answerId} hidden={!isOpen} className="editorial-answer pb-6 pr-9 text-sm leading-6" style={{ color: BODY }}>
                       {faq.answer}
                     </div>
                   </div>
@@ -293,7 +295,7 @@ export function PricingPage() {
         </section>
 
         <section className="px-6 py-20 text-center md:px-12 sm:py-24">
-          <div className="mx-auto max-w-2xl">
+          <Reveal className="mx-auto max-w-2xl">
             <Heading level={2} size="display" className="text-balance">
               Start free. <em>Upgrade when you&apos;re ready.</em>
             </Heading>
@@ -301,14 +303,14 @@ export function PricingPage() {
               No credit card required to start. Cancel anytime.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href="/signup" className="inline-flex min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:opacity-92 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ borderColor: OXBLOOD, background: OXBLOOD, color: INVERSE_FOREGROUND }}>
+              <Link href="/signup" className="inline-flex editorial-action min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:opacity-92 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ borderColor: OXBLOOD, background: OXBLOOD, color: INVERSE_FOREGROUND }}>
                 Start for free
               </Link>
-              <a href="#plans" className="inline-flex min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ borderColor: "hsl(var(--ink) / 0.22)", color: INK }}>
+              <a href="#plans" className="inline-flex editorial-action min-h-12 items-center justify-center border px-6 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ borderColor: "hsl(var(--ink) / 0.22)", color: INK }}>
                 View Author plan
               </a>
             </div>
-          </div>
+          </Reveal>
         </section>
       </main>
 

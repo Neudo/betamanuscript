@@ -54,7 +54,7 @@ export function ProblemSection() {
                 "One reader's pet peeve is not the same as a structural problem. Without aggregation, everything looks equally urgent — and nothing gets fixed.",
             },
           ].map((card, i) => (
-            <Lift key={i} className="p-8" style={{ background: WARM }}>
+            <Lift key={i} delay={i * 0.08} className="p-8" style={{ background: WARM }}>
               <div
                 className="text-2xl mb-5"
                 style={{ fontFamily: SERIF, color: OXBLOOD_TEXT, opacity: 0.75 }}

@@ -1,15 +1,12 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { Reveal } from "../../../shared/ui/motion";
-import { INVERSE_BACKGROUND, INVERSE_FOREGROUND, INVERSE_MUTED, MONO, OXBLOOD, SERIF, SANS, premiumEase } from "../../../shared/config/design-tokens";
+import { INVERSE_BACKGROUND, INVERSE_FOREGROUND, INVERSE_MUTED, MONO, OXBLOOD, SERIF, SANS } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function FinalCtaSection() {
-  const reduceMotion = useReducedMotion();
-
   return (
     <>
       {/* ── Final CTA ────────────────────────────────────────────────────────── */}
@@ -80,7 +77,7 @@ export function FinalCtaSection() {
             </div>
             <Link
               href="/signup"
-              className="inline-flex w-full items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex w-full items-center justify-center border px-6 py-3 text-sm font-medium editorial-action hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               style={{ background: INVERSE_FOREGROUND, borderColor: INVERSE_FOREGROUND, color: OXBLOOD, fontFamily: SANS }}
             >
               Start for free
@@ -95,19 +92,15 @@ export function FinalCtaSection() {
                 "Reader feedback patterns, organized in one workspace",
                 "Designed for indie authors, not publishing houses",
               ].map((point, i) => (
-                <motion.div
+                <div
                   key={i}
                   className="flex items-start gap-3"
-                  initial={reduceMotion ? false : { opacity: 0, x: -8 }}
-                  whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ duration: 0.45, delay: i * 0.04, ease: premiumEase }}
                 >
                   <Check size={11} strokeWidth={2.5} className="flex-shrink-0 mt-1" style={{ color: INVERSE_MUTED }} />
                   <span className="text-sm" style={{ color: INVERSE_MUTED, lineHeight: 1.55 }}>
                     {point}
                   </span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>

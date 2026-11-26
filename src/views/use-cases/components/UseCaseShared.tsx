@@ -1,3 +1,4 @@
+import { Reveal } from "@/shared/ui/motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -73,7 +74,7 @@ export function UseCaseHero({
         style={{ backgroundImage: "radial-gradient(circle at 86% 12%, hsl(var(--oxblood) / 0.12), transparent 23rem), radial-gradient(circle at 4% 96%, hsl(var(--forest) / 0.1), transparent 25rem)" }}
       />
       <div className="mx-auto max-w-6xl">
-        <div className="max-w-3xl">
+        <Reveal className="max-w-3xl">
           <Heading level={1} className="max-w-3xl text-balance">
             {title}
           </Heading>
@@ -86,16 +87,16 @@ export function UseCaseHero({
                 key={action.href}
                 href={action.href}
                 className={action.primary
-                  ? "inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                  ? "inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                   : "inline-flex min-h-11 items-center gap-1.5 text-sm underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"}
                 style={action.primary ? { background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND } : { color: INK }}
               >
                 {action.label}
-                {action.primary ? <ArrowRight className="h-4 w-4" aria-hidden="true" /> : null}
+                {action.primary ? <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" /> : null}
               </Link>
             ))}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -110,9 +111,9 @@ export function FaqList({ items }: { items: Array<{ answer: ReactNode; question:
             <Heading level={3} size="subsection" className="text-balance">
               {item.question}
             </Heading>
-            <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" style={{ color: MUTED }} aria-hidden="true" />
+            <ChevronDown className="h-4 w-4 shrink-0 motion-safe:transition-transform group-open:rotate-180" style={{ color: MUTED }} aria-hidden="true" />
           </summary>
-          <div className="px-1 pb-6 sm:px-3">
+          <div className="editorial-disclosure-answer px-1 pb-6 sm:px-3">
             <div className="max-w-3xl text-sm leading-6" style={{ color: BODY }}>{item.answer}</div>
           </div>
         </details>
@@ -124,20 +125,20 @@ export function FaqList({ items }: { items: Array<{ answer: ReactNode; question:
 export function FinalCta({ children, description, title }: { children: ReactNode; description: string; title: ReactNode }) {
   return (
     <section className="px-6 py-20 md:px-12 md:py-28" style={{ background: CARD }}>
-      <div className="mx-auto max-w-4xl border px-6 py-12 text-center sm:px-12 sm:py-16" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.2)", background: EDITORIAL_DARK }}>
+      <Reveal className="mx-auto max-w-4xl border px-6 py-12 text-center sm:px-12 sm:py-16" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.2)", background: EDITORIAL_DARK }}>
         <Heading level={2} tone="inverse" className="mx-auto max-w-2xl text-balance">
           {title}
         </Heading>
         <p className="mx-auto mt-6 max-w-xl text-base leading-7" style={{ color: INVERSE_FOREGROUND }}>{description}</p>
         <Link
           href="/signup"
-          className="mt-9 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="mt-9 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
           style={{ background: INVERSE_FOREGROUND, borderColor: INVERSE_FOREGROUND, color: EDITORIAL_DARK }}
         >
           {children}
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" />
         </Link>
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -148,18 +149,19 @@ export function RelatedLinks({ items }: { items: Array<{ description: string; hr
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-3 md:grid-cols-3">
           {items.map((item, index) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative flex min-h-48 flex-col border p-6 transition-colors duration-200 hover:bg-foreground/[0.045] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:p-7 ${index === 1 ? "bg-[hsl(var(--paper))]" : "bg-card"}`}
-              style={{ borderColor: "hsl(var(--ink) / 0.16)" }}
-            >
-              <ArrowRight className="absolute right-5 top-5 h-4 w-4 sm:right-6 sm:top-6" style={{ color: INK }} aria-hidden="true" />
-              <p className="max-w-[15rem] pr-7 text-[1.45rem] leading-[1.1] tracking-[-0.015em]" style={{ color: INK, fontFamily: "'EB Garamond', serif" }}>
-                {item.title}
-              </p>
-              <p className="mt-auto max-w-sm pt-8 text-sm leading-6" style={{ color: BODY }}>{item.description}</p>
-            </Link>
+            <Reveal key={item.href} delay={index * 0.08} className="min-w-0">
+              <Link
+                href={item.href}
+                className={`editorial-action relative flex h-full min-h-48 flex-col border p-6 transition-colors duration-200 hover:bg-foreground/[0.045] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:p-7 ${index === 1 ? "bg-[hsl(var(--paper))]" : "bg-card"}`}
+                style={{ borderColor: "hsl(var(--ink) / 0.16)" }}
+              >
+                <ArrowRight data-editorial-arrow="" className="absolute right-5 top-5 h-4 w-4 sm:right-6 sm:top-6" style={{ color: INK }} aria-hidden="true" />
+                <p className="max-w-[15rem] pr-7 text-[1.45rem] leading-[1.1] tracking-[-0.015em]" style={{ color: INK, fontFamily: "'EB Garamond', serif" }}>
+                  {item.title}
+                </p>
+                <p className="mt-auto max-w-sm pt-8 text-sm leading-6" style={{ color: BODY }}>{item.description}</p>
+              </Link>
+            </Reveal>
           ))}
         </div>
       </div>

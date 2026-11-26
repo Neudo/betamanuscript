@@ -60,12 +60,9 @@ export function Nav() {
   }, []);
 
   return (
-    <motion.nav
+    <nav
       className="sticky top-0 z-20 flex items-center justify-between border-b px-6 py-4 md:px-12"
       style={{ borderColor: "hsl(var(--border) / 0.72)", background: "hsl(var(--paper) / 0.94)", backdropFilter: "blur(8px)" }}
-      initial={reduceMotion ? false : { opacity: 0, y: -10 }}
-      animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, ease: premiumEase }}
     >
       <BrandLogo href="/" priority imageClassName="h-12" />
       <div
@@ -234,6 +231,6 @@ export function Nav() {
           </AnimatePresence>,
           document.body,
         )}
-    </motion.nav>
+    </nav>
   );
 }

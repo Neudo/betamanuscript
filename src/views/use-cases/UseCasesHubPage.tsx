@@ -1,3 +1,4 @@
+import { Reveal } from "@/shared/ui/motion";
 import { ArrowRight, ChartNoAxesCombined, FileQuestion, FileText, FolderTree, Mail, UsersRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -76,14 +77,14 @@ export function UseCasesHubPage() {
           <div className="pointer-events-none absolute inset-0 -z-10 opacity-75" style={{ backgroundImage: "radial-gradient(circle at 88% 16%, hsl(var(--forest) / 0.12), transparent 23rem), radial-gradient(circle at 2% 90%, hsl(var(--oxblood) / 0.1), transparent 25rem)" }} />
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
-            <div className="mt-16 max-w-3xl">
+            <Reveal className="mt-16 max-w-3xl">
               <Heading level={1} className="text-balance">
                 A better workflow for every stage of your beta reading round.
               </Heading>
               <p className="mt-7 max-w-2xl text-pretty text-base leading-8 sm:text-lg" style={{ color: BODY }}>
                 BetaManuscript helps authors manage their own beta readers, keep manuscript feedback organized, and see which reactions deserve attention before revision.
               </p>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -91,7 +92,7 @@ export function UseCasesHubPage() {
           <div className="mx-auto max-w-6xl">
             <div className="grid gap-4 lg:grid-cols-2">
               {useCases.map((useCase, index) => (
-                <article key={useCase.title} className="flex min-h-full flex-col border p-5 sm:p-7" style={{ background: index === 0 ? PAPER : CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
+                <Reveal as="article" delay={index * 0.08} key={useCase.title} className="flex min-h-full flex-col border p-5 sm:p-7" style={{ background: index === 0 ? PAPER : CARD, borderColor: "hsl(var(--ink) / 0.16)" }}>
                   <span className="flex h-10 w-10 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
                     <useCase.Icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
                   </span>
@@ -99,11 +100,11 @@ export function UseCasesHubPage() {
                     {useCase.title}
                   </Heading>
                   <p className="mt-5 max-w-lg text-base leading-7" style={{ color: BODY }}>{useCase.description}</p>
-                  <Link href={useCase.href} className="mt-auto inline-flex pt-8 items-center gap-1.5 text-sm font-medium underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary" style={{ color: INK }}>
+                  <Link href={useCase.href} className="editorial-action mt-auto inline-flex pt-8 items-center gap-1.5 text-sm font-medium underline decoration-1 underline-offset-4 transition-opacity hover:opacity-65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary" style={{ color: INK }}>
                     {useCase.label}
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    <ArrowRight data-editorial-arrow="" className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
-                </article>
+                </Reveal>
               ))}
             </div>
           </div>

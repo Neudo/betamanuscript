@@ -1,25 +1,15 @@
-"use client";
-
-import { motion, useReducedMotion } from "motion/react";
+import { Reveal } from "@/shared/ui/motion";
 import { PublicManuscriptDropzone } from "@/features/manuscript/components/PublicManuscriptDropzone";
-import { BODY, INK, SERIF, premiumEase } from "../../../shared/config/design-tokens";
+import { BODY, INK, SERIF } from "../../../shared/config/design-tokens";
 import { Heading } from "@/shared/ui/Heading";
 
 export function HeroSection() {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <motion.section
+    <section
       className="relative z-10 mx-auto max-w-4xl px-6 pb-28 pt-20 md:px-12"
-      initial={reduceMotion ? false : { opacity: 0 }}
-      animate={reduceMotion ? undefined : { opacity: 1 }}
-      transition={{ duration: 0.55, ease: premiumEase }}
     >
-      <motion.div
+      <Reveal
         className="max-w-2xl"
-        initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(4px)" }}
-        animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: 0.82, delay: 0.08, ease: premiumEase }}
       >
         <Heading
           level={1}
@@ -42,15 +32,12 @@ export function HeroSection() {
           BetaManuscript is a beta reading platform for authors to manage readers, collect
           private annotations, and review chapter surveys in one place.
         </p>
-      </motion.div>
-      <motion.div
+      </Reveal>
+      <Reveal delay={0.08}
         className="max-w-[46rem]"
-        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
-        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.72, delay: 0.18, ease: premiumEase }}
       >
         <PublicManuscriptDropzone />
-      </motion.div>
-    </motion.section>
+      </Reveal>
+    </section>
   );
 }

@@ -114,7 +114,7 @@ export function ProductPreviewSection() {
           <div className="flex flex-col items-center border-t pt-8 text-center" style={{ borderColor: "hsl(var(--ink) / 0.12)" }}>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium transition-transform hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex items-center justify-center border px-6 py-3 text-sm font-medium editorial-action hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND, fontFamily: SANS }}
             >
               Get started for free

@@ -1,3 +1,4 @@
+import { Reveal } from "@/shared/ui/motion";
 import { BookMarked, MessageSquareQuote, Tags, UserRoundCheck, FileQuestion } from "lucide-react";
 
 import { BODY, CARD, INVERSE_BACKGROUND, INVERSE_FOREGROUND, OXBLOOD_TEXT, PAPER, WARM } from "@/shared/config/design-tokens";
@@ -85,13 +86,13 @@ export function OrganizeBetaReaderFeedbackPage() {
             </div>
             <div className="mt-12 grid gap-px border sm:grid-cols-2 lg:grid-cols-5" style={{ background: "hsl(var(--ink) / 0.12)", borderColor: "hsl(var(--ink) / 0.12)" }}>
               {feedbackContext.map((item, index) => (
-                <article key={item.title} className="min-h-full p-5 sm:p-6" style={{ background: index === 2 ? CARD : PAPER }}>
+                <Reveal as="article" delay={index * 0.08} key={item.title} className="min-h-full p-5 sm:p-6" style={{ background: index === 2 ? CARD : PAPER }}>
                   <span className="flex h-9 w-9 items-center justify-center border" style={{ borderColor: "hsl(var(--ink) / 0.14)", color: OXBLOOD_TEXT }}>
                     <item.Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                   </span>
                   <Heading level={3} className="mt-6">{item.title}</Heading>
                   <p className="mt-3 text-sm leading-6" style={{ color: BODY }}>{item.detail}</p>
-                </article>
+                </Reveal>
               ))}
             </div>
           </div>

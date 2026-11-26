@@ -1,65 +1,75 @@
 "use client";
 
-import { CSSProperties, ReactNode } from "react";
-import { motion, useReducedMotion } from "motion/react";
-import { premiumEase } from "../config/design-tokens";
+import { type HTMLAttributes, type CSSProperties, useCallback, useEffect, useRef } from "react";
+
+type RevealTag = "article" | "div" | "li" | "section";
+type RevealProps = HTMLAttributes<HTMLElement> & {
+  as?: RevealTag;
+  delay?: number;
+};
+
+const targets = new WeakSet<Element>();
+let revealObserver: IntersectionObserver | undefined;
+
+function observeReveal(node: HTMLElement) {
+  if (!("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+
+  revealObserver ??= new IntersectionObserver((entries, observer) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting || !targets.has(entry.target)) continue;
+      (entry.target as HTMLElement).dataset.editorialEntered = "true";
+      observer.unobserve(entry.target);
+    }
+  }, { rootMargin: "0px 0px -24px 0px" });
+
+  targets.add(node);
+  revealObserver.observe(node);
+  return () => {
+    targets.delete(node);
+    revealObserver?.unobserve(node);
+  };
+}
 
 function Reveal({
+  as,
   children,
   className,
   delay = 0,
-  amount = 0.22,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-  amount?: number;
-}) {
-  const reduceMotion = useReducedMotion();
+  style,
+  ...props
+}: RevealProps) {
+  const Tag = as ?? "div";
+  const ref = useRef<HTMLElement | null>(null);
+  const setRef = useCallback((node: HTMLElement | null) => {
+    ref.current = node;
+  }, []);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || node.dataset.editorialEntered) return;
+    return observeReveal(node);
+  }, [Tag]);
 
   return (
-    <motion.div
+    <Tag
+      {...props}
+      ref={setRef}
+      data-editorial-reveal=""
       className={className}
-      initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(5px)" }}
-      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, amount }}
-      transition={{ duration: 0.72, delay, ease: premiumEase }}
+      style={{ ...style, "--editorial-delay": `${Math.max(0, Math.min(delay, 0.16))}s` } as CSSProperties}
     >
       {children}
-    </motion.div>
+    </Tag>
   );
 }
 
-function Lift({
-  children,
-  className,
-  style,
-}: {
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
-}) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <motion.div
-      className={className}
-      style={style}
-      whileHover={
-        reduceMotion
-          ? undefined
-          : {
-              y: -3,
-              boxShadow:
-                "0 18px 48px hsl(var(--ink) / 0.10), 0 2px 8px hsl(var(--ink) / 0.05)",
-            }
-      }
-      transition={{ duration: 0.32, ease: premiumEase }}
-    >
-      {children}
-    </motion.div>
-  );
+function Lift({ className, delay, ...props }: Omit<RevealProps, "as">) {
+  const classes = `${className ?? ""} editorial-lift`;
+  return delay === undefined
+    ? <div {...props} className={classes} />
+    : <Reveal {...props} className={classes} delay={delay} />;
 }
 
 export { Lift, Reveal };
-

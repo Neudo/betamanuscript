@@ -21,7 +21,7 @@ export function CopyQuestionnaire({ id, text }: { id: string; text: string }) {
         type="button"
         aria-controls={id}
         onClick={copyQuestions}
-        className="inline-flex min-h-11 items-center gap-2 border border-foreground/20 px-3 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        className="editorial-action inline-flex min-h-11 items-center gap-2 border border-foreground/20 px-3 text-sm font-medium transition-colors hover:bg-foreground/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
       >
         <Copy size={15} aria-hidden="true" />
         Copy questions

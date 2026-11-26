@@ -47,7 +47,7 @@ export function FeaturesSection() {
                 "Review annotations by tag and chapter, so recurring feedback is easier to assess when you revise.",
             },
           ].map((card, i) => (
-            <Lift key={i} className="p-8" style={{ background: PAPER }}>
+            <Lift key={i} delay={i * 0.08} className="p-8" style={{ background: PAPER }}>
               <div className="mb-5">
                 <div
                   className="w-9 h-9 flex items-center justify-center border"

@@ -1,4 +1,4 @@
-"use client";
+import { Reveal } from "@/shared/ui/motion";
 
 import {
   ArrowRight,
@@ -10,7 +10,6 @@ import {
   MessageSquareText,
   MousePointer2,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 
 import { Footer } from "@/views/marketing/components/Footer";
@@ -33,7 +32,6 @@ import {
   SANS,
   SERIF,
   WARM,
-  premiumEase,
 } from "@/shared/config/design-tokens";
 
 const steps = [
@@ -79,8 +77,6 @@ const breadcrumbs = [
 ] as const;
 
 export function ForReadersPage() {
-  const reduceMotion = useReducedMotion();
-
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ background: PAPER, color: INK, fontFamily: SANS }}>
       <Nav />
@@ -96,10 +92,7 @@ export function ForReadersPage() {
           <div className="mx-auto max-w-6xl">
             <Breadcrumbs items={breadcrumbs} />
             <div className="mt-14 grid items-center gap-14 lg:mt-20 lg:grid-cols-[minmax(0,0.96fr)_minmax(420px,0.82fr)] lg:gap-20">
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-                animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-                transition={{ duration: 0.72, ease: premiumEase }}
+              <Reveal
               >
                 <Heading level={1} className="max-w-2xl text-balance">
                   Read the manuscript. Share your reactions as they happen.
@@ -110,11 +103,11 @@ export function ForReadersPage() {
                 <div className="mt-10 flex flex-wrap items-center gap-4">
                   <Link
                     href="/login"
-                    className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+                    className="inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
                     style={{ background: OXBLOOD, borderColor: OXBLOOD, color: INVERSE_FOREGROUND }}
                   >
                     I have an invitation
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" />
                   </Link>
                   <a
                     href="#how-it-works"
@@ -127,16 +120,13 @@ export function ForReadersPage() {
                 <p className="mt-5 text-xs leading-5" style={{ color: MUTED }}>
                   Shared reading pages open without an account · Feedback is free for beta readers
                 </p>
-              </motion.div>
+              </Reveal>
 
-              <motion.div
+              <Reveal delay={0.08}
                 className="relative mx-auto w-full max-w-[510px] lg:mr-0"
-                initial={reduceMotion ? false : { opacity: 0, y: 26, rotate: 1.2 }}
-                animate={reduceMotion ? undefined : { opacity: 1, y: 0, rotate: 0 }}
-                transition={{ duration: 0.82, delay: 0.12, ease: premiumEase }}
               >
                 <ReaderPreview />
-              </motion.div>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -184,14 +174,10 @@ export function ForReadersPage() {
 
             <ol className="mt-14 grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-4">
               {steps.map((step, index) => (
-                <motion.li
+                <Reveal as="li" delay={index * 0.08}
                   key={step.number}
                   className="group relative border-t pt-5"
                   style={{ borderColor: "hsl(var(--ink) / 0.18)" }}
-                  initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-                  whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                  transition={{ duration: 0.52, delay: index * 0.06, ease: premiumEase }}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.16em]" style={{ fontFamily: MONO, color: MUTED }}>{step.number}</span>
@@ -199,7 +185,7 @@ export function ForReadersPage() {
                   </div>
                   <Heading level={3} className="mt-7">{step.title}</Heading>
                   <p className="mt-4 text-sm leading-6" style={{ color: BODY }}>{step.detail}</p>
-                </motion.li>
+                </Reveal>
               ))}
             </ol>
           </div>
@@ -218,18 +204,14 @@ export function ForReadersPage() {
             </div>
             <div className="grid gap-3">
               {feedbackPrompts.map((prompt, index) => (
-                <motion.div
+                <Reveal as="div" delay={index * 0.08}
                   key={prompt}
                   className="flex min-h-20 items-center gap-5 border px-5 py-4 sm:px-6"
                   style={{ background: index === 1 ? "hsl(var(--oxblood) / 0.42)" : "hsl(var(--inverse-foreground) / 0.055)", borderColor: "hsl(var(--inverse-foreground) / 0.16)" }}
-                  initial={reduceMotion ? false : { opacity: 0, x: 12 }}
-                  whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.4 }}
-                  transition={{ duration: 0.46, delay: index * 0.07, ease: premiumEase }}
                 >
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[10px]" style={{ borderColor: "hsl(var(--inverse-foreground) / 0.36)", color: INVERSE_FOREGROUND, fontFamily: MONO }}>{String(index + 1).padStart(2, "0")}</span>
                   <p className="text-lg leading-6" style={{ fontFamily: SERIF }}>{prompt}</p>
-                </motion.div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -280,11 +262,11 @@ export function ForReadersPage() {
           </p>
           <Link
             href="/login"
-            className="mt-8 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
+            className="mt-8 inline-flex min-h-12 items-center gap-2 border px-5 text-sm font-medium editorial-action focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7b1d1d]"
             style={{ borderColor: "hsl(var(--ink) / 0.24)", color: INK }}
           >
             Log in to read
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <ArrowRight data-editorial-arrow="" className="h-4 w-4" aria-hidden="true" />
           </Link>
           <p className="mt-6 text-xs" style={{ color: MUTED }}>
             Are you an author?{" "}
